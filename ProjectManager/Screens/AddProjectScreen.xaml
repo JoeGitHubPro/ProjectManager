@@ -1,0 +1,58 @@
+﻿<Window x:Class="ProjectManager.Screens.AddProjectScreen"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Add New Project"
+        WindowState="Maximized"
+        SizeToContent="Manual"
+        ResizeMode="CanResize"
+        WindowStartupLocation="CenterScreen" WindowStyle="None">
+
+    <Grid Margin="20">
+        <ScrollViewer VerticalScrollBarVisibility="Auto">
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="*"/>
+                    <RowDefinition Height="Auto"/>
+                </Grid.RowDefinitions>
+
+                <TextBlock Text="Add New Project"
+                           FontSize="24"
+                           FontWeight="Bold"
+                           Margin="0,0,0,20"
+                           HorizontalAlignment="Center"/>
+
+                <UniformGrid Grid.Row="1" Columns="2" Rows="0" Margin="0,0,0,20">
+                    <TextBlock Text="Project Details" Margin="5"/>
+                    <TextBox Text="{Binding ProjectDetails}" Margin="5"/>
+
+                    <TextBlock Text="Project Price" Margin="5"/>
+                    <TextBox Text="{Binding ProjectPrice}" Margin="5"/>
+
+                    <TextBlock Text="Folder Serial" Margin="5"/>
+                    <TextBox Text="{Binding FolderSerial}" Margin="5"/>
+
+                    <TextBlock Text="Owner Name" Margin="5"/>
+                    <TextBox Text="{Binding OwnerName}" Margin="5"/>
+
+                    <TextBlock Text="Commercial Register" Margin="5"/>
+                    <TextBox Text="{Binding OwnerCommercialRegister}" Margin="5"/>
+
+                    <TextBlock Text="Owner Phone" Margin="5"/>
+                    <TextBox Text="{Binding OwnerPhone}" Margin="5"/>
+
+                    <TextBlock Text="System Details" Margin="5"/>
+                    <TextBox Text="{Binding OwnerSystemDetails}" Margin="5"/>
+
+                    <TextBlock Text="Notes" Margin="5"/>
+                    <TextBox Text="{Binding Notes}" Margin="5"/>
+                </UniformGrid>
+
+                <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Center">
+                    <Button Content="Save" Command="{Binding SaveCommand}" Width="100" Margin="10"/>
+                    <Button Content="Cancel" Command="{Binding CancelCommand}" Width="100" Margin="10"/>
+                </StackPanel>
+            </Grid>
+        </ScrollViewer>
+    </Grid>
+</Window>
