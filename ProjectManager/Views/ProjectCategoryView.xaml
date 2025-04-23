@@ -3,28 +3,143 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
              xmlns:vm="clr-namespace:ProjectManager.ViewModels"
              mc:Ignorable="d"
-             d:DesignHeight="400" d:DesignWidth="600">
+             d:DesignHeight="600" d:DesignWidth="800">
 
     <Grid Margin="10">
-        <StackPanel>
-            <TextBlock Text="Project Category Name" />
-            <TextBox Text="{Binding CategoryName, UpdateSourceTrigger=PropertyChanged}" />
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
 
-            <StackPanel Orientation="Horizontal" Margin="0 10">
-                <Button Content="Add" Command="{Binding AddCommand}" Margin="5"/>
-                <Button Content="Update" Command="{Binding UpdateCommand}" Margin="5"/>
-                <Button Content="Delete" Command="{Binding DeleteCommand}" Margin="5"/>
-            </StackPanel>
+        <!-- Search and Action Bar -->
+        <Border Grid.Row="0"
+                BorderThickness="0 0 0 1" Padding="0 0 0 5" Margin="0 0 0 10">
+            <DockPanel>
+                <!-- Search Box -->
+                <TextBox DockPanel.Dock="Left" 
+                         Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}"
+                         materialDesign:HintAssist.Hint="Search categories..."
+                         Width="250" Margin="0 0 10 0"
+                         Style="{StaticResource MaterialDesignOutlinedTextBox}">
+                    <TextBox.InputBindings>
+                        <KeyBinding Key="Enter" Command="{Binding SearchCommand}"/>
+                    </TextBox.InputBindings>
+                </TextBox>
 
-            <DataGrid ItemsSource="{Binding ProjectCategories}" SelectedItem="{Binding SelectedCategory}" 
-                      AutoGenerateColumns="False" Height="200" Margin="0 10">
+                <!-- Action Buttons -->
+                <StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
+                    <Button Command="{Binding RefreshCommand}"
+            Style="{StaticResource MaterialDesignOutlinedButton}"
+            Margin="0 0 10 0"
+            Width="100">
+                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                            <materialDesign:PackIcon Kind="Refresh" Width="16" Height="16" Margin="0 0 5 0"/>
+                            <TextBlock Text="Refresh" VerticalAlignment="Center"/>
+                        </StackPanel>
+                    </Button>
+
+                    <Button Command="{Binding AddNewCommand}"
+            Style="{StaticResource MaterialDesignOutlinedButton}"
+            Width="100">
+                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                            <materialDesign:PackIcon Kind="Plus" Width="16" Height="16" Margin="0 0 5 0"/>
+                            <TextBlock Text="Add New" VerticalAlignment="Center"/>
+                        </StackPanel>
+                    </Button>
+                </StackPanel>
+
+            </DockPanel>
+        </Border>
+
+        <!-- DataGrid -->
+        <Border Grid.Row="1" 
+                BorderThickness="1" CornerRadius="4" Padding="1">
+            <DataGrid ItemsSource="{Binding FilteredCategories}"
+                      SelectedItem="{Binding SelectedCategory}"
+                      AutoGenerateColumns="False"
+                      Style="{StaticResource MaterialDesignDataGrid}"
+                      GridLinesVisibility="None"
+                      IsReadOnly="True"
+                      HeadersVisibility="Column"
+                      ColumnHeaderHeight="35"
+                      RowHeight="35"
+                      SelectionMode="Single">
                 <DataGrid.Columns>
-                    <DataGridTextColumn Header="ID" Binding="{Binding Id}"/>
-                    <DataGridTextColumn Header="Name" Binding="{Binding Name}"/>
+                    <DataGridTextColumn Header="ID" Binding="{Binding Id}" Width="Auto"/>
+                    <DataGridTextColumn Header="Name" Binding="{Binding Name}" Width="*"/>
+                    <DataGridTemplateColumn Header="Actions" Width="Auto">
+                        <DataGridTemplateColumn.CellTemplate>
+                            <DataTemplate>
+                                <Button Content="✏️" ToolTip="Edit"
+                                        Command="{Binding DataContext.EditCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                        CommandParameter="{Binding}"
+                                        Width="30" Height="30" 
+                                        Style="{StaticResource {x:Static ToolBar.ButtonStyleKey}}"/>
+                            </DataTemplate>
+                        </DataGridTemplateColumn.CellTemplate>
+                    </DataGridTemplateColumn>
                 </DataGrid.Columns>
             </DataGrid>
-        </StackPanel>
+        </Border>
+
+        <!-- Form Controls -->
+        <Border Grid.Row="2" 
+                BorderThickness="1" CornerRadius="4" Padding="15"
+                Margin="0 10 0 0">
+            <StackPanel>
+                <TextBlock Text="Category Details" 
+               Style="{StaticResource MaterialDesignHeadline6TextBlock}"
+               Margin="0 0 0 15"/>
+
+                <!-- Name Field -->
+                <TextBox materialDesign:HintAssist.Hint="Category name"
+             Text="{Binding CategoryName, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True}"
+             Style="{StaticResource MaterialDesignOutlinedTextBox}"
+             Margin="0 0 0 10"/>
+                <TextBlock Text="{Binding ErrorCollection[CategoryName]}"
+               Foreground="Red" Margin="0 -10 0 10" TextWrapping="Wrap"/>
+
+                <!-- Action Buttons -->
+                <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                    <!-- Save Button -->
+                    <Button Command="{Binding SaveCommand}"
+                Style="{StaticResource MaterialDesignRaisedButton}"
+                Margin="0 0 10 0"
+                Width="80">
+                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                            <materialDesign:PackIcon Kind="ContentSave" Width="16" Height="16" Margin="0 0 5 0"/>
+                            <TextBlock Text="Save" VerticalAlignment="Center"/>
+                        </StackPanel>
+                    </Button>
+
+                    <!-- Delete Button -->
+                    <Button Command="{Binding DeleteCommand}"
+                Style="{StaticResource MaterialDesignOutlinedButton}"
+                Width="80"
+                IsEnabled="{Binding CanDelete}">
+                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                            <materialDesign:PackIcon Kind="Delete" Width="16" Height="16" Margin="0 0 5 0"/>
+                            <TextBlock Text="Delete" VerticalAlignment="Center"/>
+                        </StackPanel>
+                    </Button>
+
+                    <!-- Clear Button -->
+                    <Button Command="{Binding ClearCommand}"
+                Style="{StaticResource MaterialDesignOutlinedButton}"
+                Width="80"
+                Margin="10 0 0 0">
+                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                            <materialDesign:PackIcon Kind="Close" Width="16" Height="16" Margin="0 0 5 0"/>
+                            <TextBlock Text="Clear" VerticalAlignment="Center"/>
+                        </StackPanel>
+                    </Button>
+                </StackPanel>
+            </StackPanel>
+
+        </Border>
     </Grid>
 </UserControl>
