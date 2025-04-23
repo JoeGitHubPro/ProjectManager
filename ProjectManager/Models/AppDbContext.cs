@@ -3,6 +3,8 @@
 using System;
 using System.Collections.Generic;
 using Microsoft.EntityFrameworkCore;
+using ProjectManager.Config;
+using ProjectManager.Helpers;
 
 namespace ProjectManager.Models;
 
@@ -27,7 +29,10 @@ public partial class AppDbContext : DbContext
     }
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
     {
-        optionsBuilder.UseSqlServer($"Server =.;Database=PM;Integrated Security = SSPI ; TrustServerCertificate = True ; MultipleActiveResultSets=true");
+        var config = ConfigHelper.LoadConfig<AppConfig>("jsconfig.json");
+
+         optionsBuilder.UseSqlServer(config.ConnectionString);
+        // optionsBuilder.UseSqlServer($"Server =.;Database=PM;Integrated Security = SSPI ; TrustServerCertificate = True ; MultipleActiveResultSets=true");
     }
     partial void OnModelCreatingPartial(ModelBuilder modelBuilder);
 }

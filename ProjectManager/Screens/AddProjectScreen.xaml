@@ -29,9 +29,6 @@
                     <TextBlock Text="Project Price" Margin="5"/>
                     <TextBox Text="{Binding ProjectPrice}" Margin="5"/>
 
-                    <TextBlock Text="Folder Serial" Margin="5"/>
-                    <TextBox Text="{Binding FolderSerial}" Margin="5"/>
-
                     <TextBlock Text="Owner Name" Margin="5"/>
                     <TextBox Text="{Binding OwnerName}" Margin="5"/>
 

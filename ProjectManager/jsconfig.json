@@ -1,0 +1,11 @@
+{
+  "ConnectionString": "Server =.;Database=PM;Integrated Security = SSPI ; TrustServerCertificate = True ; MultipleActiveResultSets=true",
+
+  "mainFolder": "Dir",
+  "subfolders": [
+    "Contract",
+    "Set-Up",
+    "Source-Code",
+    "Drivers"
+  ]
+}

@@ -1,4 +1,6 @@
-﻿using ProjectManager.Models;
+﻿using ProjectManager.Config;
+using ProjectManager.Helpers;
+using ProjectManager.Models;
 using ProjectManager.Screens;
 using System.IO;
 using System.Windows;
@@ -111,8 +113,10 @@ namespace ProjectManager.ViewModels
         }
         public static string CreateUniqueFolder()
         {
+            var config = ConfigHelper.LoadConfig<AppConfig>("jsconfig.json");
+
             // Ensure the base folder (e.g., \Dir) exists in the application root
-            string baseDir = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Dir");
+            string baseDir = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, config.MainFolder is not null ? config.MainFolder : "Dir");
             Directory.CreateDirectory(baseDir);
 
             // Build unique folder name
@@ -126,7 +130,7 @@ namespace ProjectManager.ViewModels
             Directory.CreateDirectory(fullPath);
 
             // Define subfolders to create
-            string[] subfolders = { "Contract", "Set-Up", "Source-Code", "Drivers" };
+            List<string> subfolders = config.Subfolders is not null ? config.Subfolders : ["Contract", "Set-Up", "Source-Code", "Drivers"];
 
             foreach (var subfolder in subfolders)
             {

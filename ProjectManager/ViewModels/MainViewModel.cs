@@ -77,14 +77,18 @@ namespace ProjectManager.ViewModels
             DeleteProjectCommand = new RelayCommand(DeleteProject);
         }
 
+
         private void LoadProjects()
         {
             var projectInfos = _context.ProjectInfos.ToList();
-            if (projectInfos is null)
-                return;
+            if (projectInfos == null || projectInfos.Count == 0)
 
-            Projects = new ObservableCollection<ProjectInfo>();
+                Projects = new ObservableCollection<ProjectInfo>(); // keep it empty
+
+            else
+                Projects = new ObservableCollection<ProjectInfo>(projectInfos);
         }
+
 
         private void FilterProjects()
         {
