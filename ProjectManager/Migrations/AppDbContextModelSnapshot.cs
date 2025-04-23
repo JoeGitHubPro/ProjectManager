@@ -22,47 +22,150 @@ namespace ProjectManager.Migrations
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
 
-            modelBuilder.Entity("ProjectManager.Models.ProjectInfo", b =>
+            modelBuilder.Entity("ProjectManager.Models.Consumer", b =>
                 {
-                    b.Property<int>("ProjectId")
+                    b.Property<string>("Phone")
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<string>("CommercialRegisterNo")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Phone");
+
+                    b.ToTable("Consumers");
+                });
+
+            modelBuilder.Entity("ProjectManager.Models.Project", b =>
+                {
+                    b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("int");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("ProjectId"));
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<DateTime>("CreatedDate")
-                        .HasColumnType("datetime");
-
-                    b.Property<string>("FolderSerial")
+                    b.Property<string>("Details")
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<DateTime?>("ModifiedDate")
-                        .HasColumnType("datetime");
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<decimal>("Price")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<int>("ProjectCategoryId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ProjectCategoryId");
+
+                    b.ToTable("Projects");
+                });
+
+            modelBuilder.Entity("ProjectManager.Models.ProjectCategory", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("ProjectCategories");
+                });
+
+            modelBuilder.Entity("ProjectManager.Models.ProjectOrder", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("ConsumerPhone")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<decimal>("Discount")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<string>("FolderSerial")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("InstallationSystemInfo")
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("Notes")
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<string>("OwnerCommercialRegister")
-                        .HasColumnType("nvarchar(max)");
+                    b.Property<int>("ProjectId")
+                        .HasColumnType("int");
 
-                    b.Property<string>("OwnerName")
-                        .HasColumnType("nvarchar(max)");
+                    b.Property<DateTime>("SoldDate")
+                        .HasColumnType("datetime2");
 
-                    b.Property<string>("OwnerPhone")
-                        .HasColumnType("nvarchar(max)");
+                    b.Property<decimal>("TotalPrice")
+                        .HasColumnType("decimal(18,2)");
 
-                    b.Property<string>("OwnerSystemDetails")
-                        .HasColumnType("nvarchar(max)");
+                    b.HasKey("Id");
 
-                    b.Property<string>("ProjectDetails")
-                        .HasColumnType("nvarchar(max)");
+                    b.HasIndex("ConsumerPhone");
 
-                    b.Property<decimal?>("ProjectPrice")
-                        .HasColumnType("decimal(18, 2)");
+                    b.HasIndex("ProjectId");
 
-                    b.HasKey("ProjectId");
+                    b.ToTable("ProjectOrders");
+                });
 
-                    b.ToTable("ProjectInfo", (string)null);
+            modelBuilder.Entity("ProjectManager.Models.Project", b =>
+                {
+                    b.HasOne("ProjectManager.Models.ProjectCategory", "ProjectCategory")
+                        .WithMany("Projects")
+                        .HasForeignKey("ProjectCategoryId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("ProjectCategory");
+                });
+
+            modelBuilder.Entity("ProjectManager.Models.ProjectOrder", b =>
+                {
+                    b.HasOne("ProjectManager.Models.Consumer", "Consumer")
+                        .WithMany("ProjectOrders")
+                        .HasForeignKey("ConsumerPhone")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("ProjectManager.Models.Project", "Project")
+                        .WithMany("ProjectOrders")
+                        .HasForeignKey("ProjectId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Consumer");
+
+                    b.Navigation("Project");
+                });
+
+            modelBuilder.Entity("ProjectManager.Models.Consumer", b =>
+                {
+                    b.Navigation("ProjectOrders");
+                });
+
+            modelBuilder.Entity("ProjectManager.Models.Project", b =>
+                {
+                    b.Navigation("ProjectOrders");
+                });
+
+            modelBuilder.Entity("ProjectManager.Models.ProjectCategory", b =>
+                {
+                    b.Navigation("Projects");
                 });
 #pragma warning restore 612, 618
         }
