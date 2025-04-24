@@ -1,63 +1,29 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using ProjectManager.Models;
 using System.Collections.ObjectModel;
-using System.ComponentModel;
 using System.Windows;
 
 namespace ProjectManager.ViewModels
 {
-    public class ProjectCategoryViewModel : BaseViewModel, IDataErrorInfo
+    public class ProjectCategoryViewModel : BaseViewModel
     {
         private AppDbContext _context;
-        private bool _isBusy;
         private string _searchText = string.Empty;
-        public Dictionary<string, string> ErrorCollection =>
-    new Dictionary<string, string>
-    {
-        [nameof(CategoryName)] = this[nameof(CategoryName)]
-    };
-        public ObservableCollection<ProjectCategory> ProjectCategories { get; set; } = new();
-        public ObservableCollection<ProjectCategory> FilteredCategories { get; set; } = new();
+        private ProjectCategory _selectedCategory;
+        private string _categoryName = string.Empty;
+        private bool _isNewRecord = true;
 
         public ProjectCategoryViewModel()
         {
-            _context = new AppDbContext();
-
-            // Initialize commands first
-            SaveCommand = new RelayCommand(
-                _ => SaveCategory(),
-                _ => !IsBusy && !HasErrors);
-
-            DeleteCommand = new RelayCommand(
-                _ => DeleteCategory(),
-                _ => !IsBusy && CanDelete);
-
-            RefreshCommand = new RelayCommand(
-                _ => LoadData(),
-                _ => !IsBusy);
-
-            SearchCommand = new RelayCommand(
-                _ => FilterCategories(),
-                _ => !IsBusy);
-
-            AddNewCommand = new RelayCommand(
-                _ => AddNewCategory(),
-                _ => !IsBusy);
-
-            EditCommand = new RelayCommand(
-                category => SelectedCategory = category as ProjectCategory,
-                _ => !IsBusy);
-
-            ClearCommand = new RelayCommand(
-                _ => ClearFields(),
-                _ => !IsBusy);
-
+            InitializeCommands();
             LoadData();
         }
 
         #region Properties
 
-        private string _categoryName = string.Empty;
+        public ObservableCollection<ProjectCategory> ProjectCategories { get; private set; } = new();
+        public ObservableCollection<ProjectCategory> FilteredCategories { get; private set; } = new();
+
         public string CategoryName
         {
             get => _categoryName;
@@ -65,11 +31,10 @@ namespace ProjectManager.ViewModels
             {
                 _categoryName = value;
                 OnPropertyChanged();
-                SaveCommand?.RaiseCanExecuteChanged();
+                ValidateProperty(nameof(CategoryName));
             }
         }
 
-        private ProjectCategory _selectedCategory;
         public ProjectCategory SelectedCategory
         {
             get => _selectedCategory;
@@ -78,16 +43,18 @@ namespace ProjectManager.ViewModels
                 _selectedCategory = value;
                 OnPropertyChanged();
                 OnPropertyChanged(nameof(CanDelete));
+
                 if (value != null)
                 {
+                    _isNewRecord = false;
                     CategoryName = value.Name;
                 }
                 else
                 {
                     CategoryName = string.Empty;
+                    _isNewRecord = true;
                 }
-                SaveCommand?.RaiseCanExecuteChanged();
-                DeleteCommand?.RaiseCanExecuteChanged();
+
             }
         }
 
@@ -99,22 +66,6 @@ namespace ProjectManager.ViewModels
                 _searchText = value;
                 OnPropertyChanged();
                 FilterCategories();
-            }
-        }
-
-        public bool IsBusy
-        {
-            get => _isBusy;
-            set
-            {
-                _isBusy = value;
-                OnPropertyChanged();
-
-                // Null-conditional checks for commands
-                SaveCommand?.RaiseCanExecuteChanged();
-                DeleteCommand?.RaiseCanExecuteChanged();
-                RefreshCommand?.RaiseCanExecuteChanged();
-                SearchCommand?.RaiseCanExecuteChanged();
             }
         }
 
@@ -132,6 +83,32 @@ namespace ProjectManager.ViewModels
         public RelayCommand EditCommand { get; private set; }
         public RelayCommand ClearCommand { get; private set; }
 
+        private void InitializeCommands()
+        {
+            SaveCommand = new RelayCommand(
+               SaveCategory,
+                () => !HasErrors);
+
+            DeleteCommand = new RelayCommand(
+                 DeleteCategory,
+                () => CanDelete);
+
+            RefreshCommand = new RelayCommand(
+                LoadData);
+
+            SearchCommand = new RelayCommand(
+                FilterCategories);
+
+            AddNewCommand = new RelayCommand(
+                AddNewCategory);
+
+            EditCommand = new RelayCommand(
+                SaveCategory);
+
+            ClearCommand = new RelayCommand(
+                ClearFields);
+        }
+
         #endregion
 
         #region Methods
@@ -140,7 +117,6 @@ namespace ProjectManager.ViewModels
         {
             try
             {
-                IsBusy = true;
                 _context = new AppDbContext();
 
                 var categories = _context.ProjectCategories.ToList();
@@ -152,29 +128,7 @@ namespace ProjectManager.ViewModels
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Error loading data: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
-            }
-            finally
-            {
-                IsBusy = false;
-            }
-        }
-
-        private void RefreshData()
-        {
-            try
-            {
-                IsBusy = true;
-                LoadData();
-                MessageBox.Show("Data refreshed successfully.", "Success", MessageBoxButton.OK, MessageBoxImage.Information);
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show($"Error refreshing data: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
-            }
-            finally
-            {
-                IsBusy = false;
+                ShowError($"Error loading data: {ex.Message}");
             }
         }
 
@@ -196,127 +150,154 @@ namespace ProjectManager.ViewModels
 
         private void AddNewCategory()
         {
-            SelectedCategory = null;
-            CategoryName = string.Empty;
+            ClearFields();
+            _isNewRecord = true;
         }
 
         private void SaveCategory()
         {
+            if (HasErrors || string.IsNullOrWhiteSpace(CategoryName))
+            {
+                ShowWarning("Please fix validation errors before saving.");
+                return;
+            }
+
             try
             {
-                IsBusy = true;
 
-                if (HasErrors || string.IsNullOrWhiteSpace(CategoryName))
+                if (_isNewRecord)
                 {
-                    MessageBox.Show("Please fix validation errors before saving.", "Validation Error", MessageBoxButton.OK, MessageBoxImage.Warning);
-                    return;
-                }
-
-                if (SelectedCategory == null)
-                {
-                    // Add new category
-                    var existing = _context.ProjectCategories.FirstOrDefault(c => c.Name == CategoryName);
-                    if (existing != null)
-                    {
-                        MessageBox.Show("A category with this name already exists.", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
-                        return;
-                    }
-
-                    var category = new ProjectCategory { Name = CategoryName };
-                    _context.ProjectCategories.Add(category);
-                    ProjectCategories.Add(category);
+                    SaveNewCategory();
                 }
                 else
                 {
-                    // Update existing category
-                    SelectedCategory.Name = CategoryName;
-                    _context.Entry(SelectedCategory).State = EntityState.Modified;
+                    UpdateExistingCategory();
                 }
 
                 _context.SaveChanges();
                 FilterCategories();
-                MessageBox.Show("Category saved successfully.", "Success", MessageBoxButton.OK, MessageBoxImage.Information);
+                ShowInfo("Category saved successfully.");
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Error saving category: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                ShowError($"Error saving category: {ex.Message}");
             }
-            finally
+
+        }
+
+        private void SaveNewCategory()
+        {
+            var existing = _context.ProjectCategories.FirstOrDefault(c => c.Name == CategoryName);
+            if (existing != null)
             {
-                IsBusy = false;
+                throw new InvalidOperationException("A category with this name already exists.");
             }
+
+            var category = new ProjectCategory { Name = CategoryName };
+            _context.ProjectCategories.Add(category);
+            ProjectCategories.Add(category);
+        }
+
+        private void UpdateExistingCategory()
+        {
+            if (SelectedCategory == null) return;
+
+            SelectedCategory.Name = CategoryName;
+            _context.Entry(SelectedCategory).State = EntityState.Modified;
         }
 
         private void DeleteCategory()
         {
+            if (SelectedCategory == null) return;
+
+            var result = MessageBox.Show(
+                "Are you sure you want to delete this category? This action cannot be undone.",
+                "Confirm Delete",
+                MessageBoxButton.YesNo,
+                MessageBoxImage.Warning);
+
+            if (result != MessageBoxResult.Yes) return;
+
             try
             {
-                if (SelectedCategory == null) return;
-
-                var result = MessageBox.Show(
-                    "Are you sure you want to delete this category? This action cannot be undone.",
-                    "Confirm Delete",
-                    MessageBoxButton.YesNo,
-                    MessageBoxImage.Warning);
-
-                if (result != MessageBoxResult.Yes) return;
-
-                IsBusy = true;
-
                 _context.ProjectCategories.Remove(SelectedCategory);
                 _context.SaveChanges();
                 ProjectCategories.Remove(SelectedCategory);
-                FilterCategories();
+                FilteredCategories.Remove(SelectedCategory);
                 ClearFields();
 
-                MessageBox.Show("Category deleted successfully.", "Success", MessageBoxButton.OK, MessageBoxImage.Information);
+                ShowInfo("Category deleted successfully.");
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Error deleting category: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                ShowError($"Error deleting category: {ex.Message}");
             }
-            finally
-            {
-                IsBusy = false;
-            }
+
         }
 
         private void ClearFields()
         {
             SelectedCategory = null;
             CategoryName = string.Empty;
+            _isNewRecord = true;
         }
 
         #endregion
 
         #region Validation
 
-        public string Error => string.Empty;
-
-        public string this[string columnName]
+        public string this[string propertyName]
         {
             get
             {
-                switch (columnName)
+                string error = string.Empty;
+
+                switch (propertyName)
                 {
                     case nameof(CategoryName):
                         if (string.IsNullOrWhiteSpace(CategoryName))
-                            return "Category name is required";
-                        if (CategoryName.Length > 100)
-                            return "Category name cannot exceed 100 characters";
+                            error = "Category name is required";
+                        else if (CategoryName.Length > 100)
+                            error = "Category name cannot exceed 100 characters";
                         break;
                 }
 
-                return string.Empty;
+                return error;
             }
         }
+        public Dictionary<string, string> ErrorCollection =>
+       new Dictionary<string, string>
+       {
+           [nameof(CategoryName)] = this[nameof(CategoryName)]
+       };
 
-        public bool HasErrors
+        private void ValidateProperty(string propertyName)
         {
-            get
-            {
-                return !string.IsNullOrEmpty(this[nameof(CategoryName)]);
-            }
+            string error = this[propertyName];
+            ErrorCollection[propertyName] = error;
+            OnPropertyChanged(nameof(ErrorCollection));
+            OnPropertyChanged(nameof(HasErrors));
+        }
+
+        public bool HasErrors => ErrorCollection.Values.Any(error => !string.IsNullOrEmpty(error));
+
+        #endregion
+
+        #region Helper Methods
+
+        private void ShowError(string message)
+        {
+            MessageBox.Show(message, "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+        }
+
+        private void ShowWarning(string message)
+        {
+            MessageBox.Show(message, "Warning", MessageBoxButton.OK, MessageBoxImage.Warning);
+        }
+
+        private void ShowInfo(string message)
+        {
+            MessageBox.Show(message, "Information", MessageBoxButton.OK, MessageBoxImage.Information);
         }
 
         #endregion

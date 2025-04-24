@@ -10,7 +10,6 @@ namespace ProjectManager.ViewModels
     public class ProjectOrderViewModel : BaseViewModel, IDataErrorInfo
     {
         private AppDbContext _context;
-        private bool _isBusy;
 
         public ObservableCollection<ProjectOrder> ProjectOrders { get; set; } = new();
         public ObservableCollection<Consumer> Consumers { get; set; } = new();
@@ -28,7 +27,6 @@ namespace ProjectManager.ViewModels
                     _discount = value;
                     OnPropertyChanged();
                     UpdateTotalPrice();
-                    SaveCommand.RaiseCanExecuteChanged();
                 }
             }
         }
@@ -43,7 +41,6 @@ namespace ProjectManager.ViewModels
                 {
                     _installationSystemInfo = value;
                     OnPropertyChanged();
-                    SaveCommand.RaiseCanExecuteChanged();
                 }
             }
         }
@@ -58,7 +55,6 @@ namespace ProjectManager.ViewModels
                 {
                     _soldDate = value;
                     OnPropertyChanged();
-                    SaveCommand.RaiseCanExecuteChanged();
                 }
             }
         }
@@ -87,7 +83,6 @@ namespace ProjectManager.ViewModels
                 {
                     _selectedConsumerPhone = value;
                     OnPropertyChanged();
-                    SaveCommand.RaiseCanExecuteChanged();
                 }
             }
         }
@@ -103,7 +98,6 @@ namespace ProjectManager.ViewModels
                     _selectedProjectId = value;
                     OnPropertyChanged();
                     UpdateTotalPrice();
-                    SaveCommand.RaiseCanExecuteChanged();
                 }
             }
         }
@@ -157,27 +151,6 @@ namespace ProjectManager.ViewModels
                         SelectedConsumerPhone = _selectedOrder.ConsumerPhone;
                         SelectedProjectId = _selectedOrder.ProjectId;
                     }
-                    SaveCommand.RaiseCanExecuteChanged();
-                    DeleteCommand.RaiseCanExecuteChanged();
-                }
-            }
-        }
-
-        public bool IsBusy
-        {
-            get => _isBusy;
-            set
-            {
-                if (_isBusy != value)
-                {
-                    _isBusy = value;
-                    OnPropertyChanged();
-                    SaveCommand.RaiseCanExecuteChanged();
-                    DeleteCommand.RaiseCanExecuteChanged();
-                    RefreshCommand.RaiseCanExecuteChanged();
-                    ReloadPageCommand.RaiseCanExecuteChanged();
-                    AddCommand.RaiseCanExecuteChanged();
-                    UpdateCommand.RaiseCanExecuteChanged();
                 }
             }
         }
@@ -205,14 +178,14 @@ namespace ProjectManager.ViewModels
 
         private void InitializeCommands()
         {
-            SaveCommand = new RelayCommand(_ => Save(), _ => !IsBusy && !HasErrors);
-            DeleteCommand = new RelayCommand(_ => Delete(), _ => !IsBusy && CanDelete);
-            RefreshCommand = new RelayCommand(_ => LoadData(), _ => !IsBusy);
-            ReloadPageCommand = new RelayCommand(_ => { LoadData(); Clear(); }, _ => !IsBusy);
-            ClearCommand = new RelayCommand(_ => Clear(), _ => !IsBusy);
-            LocateCommand = new RelayCommand(_ => Locate(), _ => SelectedOrder != null);
-            AddCommand = new RelayCommand(_ => AddNewOrder(), _ => !IsBusy);
-            UpdateCommand = new RelayCommand(_ => UpdateOrder(), _ => !IsBusy && SelectedOrder != null);
+            SaveCommand = new RelayCommand(Save, () => !HasErrors);
+            DeleteCommand = new RelayCommand(Delete, () => CanDelete);
+            RefreshCommand = new RelayCommand(LoadData);
+            ReloadPageCommand = new RelayCommand(() => { LoadData(); Clear(); });
+            ClearCommand = new RelayCommand(Clear);
+            LocateCommand = new RelayCommand(Locate, () => SelectedOrder != null && !string.IsNullOrEmpty(SelectedOrder.FolderSerial));
+            AddCommand = new RelayCommand(AddNewOrder);
+            UpdateCommand = new RelayCommand(UpdateOrder, () => SelectedOrder != null && !HasErrors);
         }
 
         private void AddNewOrder()
@@ -223,14 +196,13 @@ namespace ProjectManager.ViewModels
 
         private void UpdateOrder()
         {
-            Save(); // Reuse save logic or implement specific update logic
+            Save();
         }
 
         private void LoadData()
         {
             try
             {
-                IsBusy = true;
                 _context = new AppDbContext();
 
                 ProjectOrders = new ObservableCollection<ProjectOrder>(
@@ -242,35 +214,38 @@ namespace ProjectManager.ViewModels
                 Consumers = new ObservableCollection<Consumer>(_context.Consumers.ToList());
                 Projects = new ObservableCollection<Project>(_context.Projects.ToList());
 
-                FilterData();
+                OnPropertyChanged(nameof(ProjectOrders));
+                OnPropertyChanged(nameof(Consumers));
+                OnPropertyChanged(nameof(Projects));
             }
             catch (Exception ex)
             {
                 MessageBox.Show($"Error loading data: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
             }
-            finally
-            {
-                IsBusy = false;
-            }
+
         }
 
         private void FilterData()
         {
             if (string.IsNullOrWhiteSpace(SearchText))
             {
-                ProjectOrders = new ObservableCollection<ProjectOrder>(ProjectOrders);
+                OnPropertyChanged(nameof(ProjectOrders));
+                return;
             }
-            else
-            {
-                var searchLower = SearchText.ToLower();
-                ProjectOrders = new ObservableCollection<ProjectOrder>(
-                    ProjectOrders.Where(o =>
+
+            var searchLower = SearchText.ToLower();
+            var filtered = new ObservableCollection<ProjectOrder>(
+                _context.ProjectOrders
+                    .Include(p => p.Project)
+                    .Include(p => p.Consumer)
+                    .Where(o =>
                         o.Project.Name.ToLower().Contains(searchLower) ||
                         o.ConsumerPhone.Contains(searchLower) ||
                         (o.Notes != null && o.Notes.ToLower().Contains(searchLower)) ||
                         o.FolderSerial.Contains(searchLower))
-                );
-            }
+                    .ToList());
+
+            ProjectOrders = filtered;
             OnPropertyChanged(nameof(ProjectOrders));
         }
 
@@ -278,7 +253,6 @@ namespace ProjectManager.ViewModels
         {
             try
             {
-                IsBusy = true;
 
                 if (HasErrors)
                 {
@@ -330,10 +304,7 @@ namespace ProjectManager.ViewModels
             {
                 MessageBox.Show($"Error saving order: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
             }
-            finally
-            {
-                IsBusy = false;
-            }
+
         }
 
         private void Delete()
@@ -350,8 +321,6 @@ namespace ProjectManager.ViewModels
 
                 if (result != MessageBoxResult.Yes) return;
 
-                IsBusy = true;
-
                 _context.ProjectOrders.Remove(SelectedOrder);
                 _context.SaveChanges();
                 LoadData();
@@ -361,10 +330,6 @@ namespace ProjectManager.ViewModels
             catch (Exception ex)
             {
                 MessageBox.Show($"Error deleting order: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
-            }
-            finally
-            {
-                IsBusy = false;
             }
         }
 
@@ -376,6 +341,7 @@ namespace ProjectManager.ViewModels
             Notes = string.Empty;
             SelectedConsumerPhone = string.Empty;
             SelectedProjectId = 0;
+            SelectedOrder = null;
         }
 
         private void Locate()
@@ -418,12 +384,6 @@ namespace ProjectManager.ViewModels
                             return "Discount must be between 0 and 100";
                         break;
 
-                    case nameof(InstallationSystemInfo):
-                        if (string.IsNullOrWhiteSpace(InstallationSystemInfo))
-                            return "Installation info is required";
-                        if (InstallationSystemInfo.Length > 500)
-                            return "Installation info cannot exceed 500 characters";
-                        break;
 
                     case nameof(SoldDate):
                         if (SoldDate > DateTime.Today)
@@ -439,13 +399,12 @@ namespace ProjectManager.ViewModels
             }
         }
 
-        public bool HasErrors
+        private bool HasErrors
         {
             get
             {
                 return !string.IsNullOrEmpty(this[nameof(SelectedProjectId)]) ||
                        !string.IsNullOrEmpty(this[nameof(Discount)]) ||
-                       !string.IsNullOrEmpty(this[nameof(InstallationSystemInfo)]) ||
                        !string.IsNullOrEmpty(this[nameof(SoldDate)]) ||
                        !string.IsNullOrEmpty(this[nameof(SelectedConsumerPhone)]);
             }

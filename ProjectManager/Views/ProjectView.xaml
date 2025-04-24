@@ -3,11 +3,10 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-             xmlns:local="clr-namespace:ProjectManager.Views"
              xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
-             xmlns:packIcon="http://materialdesigninxaml.net/winfx/xaml/themes"
              mc:Ignorable="d"
              d:DesignHeight="600" d:DesignWidth="800">
+
 
     <Grid Margin="10">
         <Grid.RowDefinitions>
@@ -15,38 +14,27 @@
             <RowDefinition Height="*"/>
         </Grid.RowDefinitions>
 
-        <!-- Search and Action Bar -->
-        <Border Grid.Row="0" 
-                BorderThickness="0 0 0 1" Padding="0 0 0 5" Margin="0 0 0 10">
-            <DockPanel>
-                <!-- Search Box -->
-                <TextBox DockPanel.Dock="Left" 
-                         Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}"
-                         materialDesign:HintAssist.Hint="Search projects..."
-                         Width="250" Margin="0 0 10 0"
-                         Style="{StaticResource MaterialDesignOutlinedTextBox}">
-                    <TextBox.InputBindings>
-                        <KeyBinding Key="Enter" Command="{Binding SearchCommand}"/>
-                    </TextBox.InputBindings>
-                </TextBox>
+        <!-- Toolbar -->
+        <DockPanel Grid.Row="0" Margin="0 0 0 10" LastChildFill="False">
+            <TextBox Width="250"
+                     Margin="0 0 10 0"
+                     Style="{StaticResource MaterialDesignOutlinedTextBox}"
+                     Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}"
+                     materialDesign:HintAssist.Hint="Search projects...">
+                <TextBox.InputBindings>
+                    <KeyBinding Key="Enter" Command="{Binding SearchCommand}" />
+                </TextBox.InputBindings>
+            </TextBox>
 
-                <!-- Action Buttons -->
-                <StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
-                    <Button                            Command="{Binding RefreshCommand}"
-                            Style="{StaticResource MaterialDesignOutlinedButton}"
-                            Margin="0 0 10 0"
-                            Width="80">
-                        <materialDesign:PackIcon Kind="Refresh" Width="16" Height="16"/>
-                    </Button>
-                    <Button
-                            Command="{Binding AddNewCommand}"
-                            Style="{StaticResource MaterialDesignOutlinedButton}"
-                            Width="100">
-                        <materialDesign:PackIcon Kind="Plus" Width="16" Height="16"/>
-                    </Button>
-                </StackPanel>
-            </DockPanel>
-        </Border>
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                <Button Command="{Binding RefreshCommand}" Style="{StaticResource MaterialDesignOutlinedButton}" Margin="0 0 10 0">
+                    <materialDesign:PackIcon Kind="Refresh"/>
+                </Button>
+                <Button Command="{Binding AddNewCommand}" Style="{StaticResource MaterialDesignOutlinedButton}">
+                    <materialDesign:PackIcon Kind="Plus"/>
+                </Button>
+            </StackPanel>
+        </DockPanel>
 
         <!-- Main Content -->
         <Grid Grid.Row="1">
@@ -57,87 +45,50 @@
             </Grid.ColumnDefinitions>
 
             <!-- Project List -->
-            <Border Grid.Column="0" 
-                    BorderThickness="1" CornerRadius="4" Padding="1">
-                <DataGrid ItemsSource="{Binding FilteredProjects}"
-                          SelectedItem="{Binding SelectedProject}"
-                          AutoGenerateColumns="False"
-                          Style="{StaticResource MaterialDesignDataGrid}"
-                          GridLinesVisibility="None"
-                          IsReadOnly="True"
-                          HeadersVisibility="Column"
-                          ColumnHeaderHeight="35"
-                          RowHeight="35"
-                          SelectionMode="Single">
-                    <DataGrid.Columns>
-                        <DataGridTextColumn Header="Name" Binding="{Binding Name}" Width="*"/>
-                        <DataGridTextColumn Header="Details" Binding="{Binding Details}" Width="2*"/>
-                        <DataGridTextColumn Header="Price" Binding="{Binding Price, StringFormat=C}" Width="Auto"/>
-                        <DataGridTextColumn Header="Category" Binding="{Binding ProjectCategory.Name}" Width="*"/>
-                    </DataGrid.Columns>
-                </DataGrid>
-            </Border>
+            <DataGrid Grid.Column="0" ItemsSource="{Binding FilteredProjects}" SelectedItem="{Binding SelectedProject}"
+                      AutoGenerateColumns="False" IsReadOnly="True" Style="{StaticResource MaterialDesignDataGrid}">
+                <DataGrid.Columns>
+                    <DataGridTextColumn Header="Name" Binding="{Binding Name}" Width="*"/>
+                    <DataGridTextColumn Header="Details" Binding="{Binding Details}" Width="2*"/>
+                    <DataGridTextColumn Header="Price" Binding="{Binding Price, StringFormat=C}" Width="Auto"/>
+                    <DataGridTextColumn Header="Category" Binding="{Binding ProjectCategory.Name}" Width="*"/>
+                </DataGrid.Columns>
+            </DataGrid>
 
-            <!-- Form Controls -->
-            <Border Grid.Column="2" 
-                    BorderThickness="1" CornerRadius="4" Padding="15"
-                    >
+            <!-- Project Form -->
+            <Border Grid.Column="2" Padding="15" BorderThickness="1" CornerRadius="4">
                 <StackPanel>
-                    <TextBlock Text="Project Details" 
-                               Style="{StaticResource MaterialDesignHeadline6TextBlock}"
-                               Margin="0 0 0 15"/>
+                    <TextBlock Text="Project Details" Style="{StaticResource MaterialDesignHeadline6TextBlock}" Margin="0 0 0 15"/>
 
-                    <!-- Name Field -->
-                    <TextBox materialDesign:HintAssist.Hint="Project name"
-                             Text="{Binding SelectedProject.Name, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True}"
+                    <TextBox Text="{Binding SelectedProject.Name, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True}"
                              Style="{StaticResource MaterialDesignOutlinedTextBox}"
-                             Margin="0 0 0 10"/>
-                    <TextBlock Text="{Binding SelectedProject.ErrorCollection[Name]}"
-                               Foreground="Red" Margin="0 -10 0 10" TextWrapping="Wrap"/>
+                             materialDesign:HintAssist.Hint="Project name" Margin="0 0 0 10"/>
+                    <TextBlock Text="{Binding SelectedProject.ErrorCollection[SelectedProject.Name]}" Foreground="Red" Margin="0 -10 0 10"/>
 
-                    <!-- Details Field -->
-                    <TextBox materialDesign:HintAssist.Hint="Project details"
-                             Text="{Binding SelectedProject.Details, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True}"
+                    <TextBox Text="{Binding SelectedProject.Details, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True}"
+                             AcceptsReturn="True" TextWrapping="Wrap" Height="80"
                              Style="{StaticResource MaterialDesignOutlinedTextBox}"
-                             Margin="0 0 0 10"
-                             AcceptsReturn="True" TextWrapping="Wrap" Height="80"/>
-                    <TextBlock Text="{Binding SelectedProject.ErrorCollection[Details]}"
-                               Foreground="Red" Margin="0 -10 0 10" TextWrapping="Wrap"/>
+                             materialDesign:HintAssist.Hint="Details" Margin="0 0 0 10"/>
+                    <TextBlock Text="{Binding SelectedProject.ErrorCollection[SelectedProject.Details]}" Foreground="Red" Margin="0 -10 0 10"/>
 
-                    <!-- Price Field -->
-                    <TextBox materialDesign:HintAssist.Hint="Price"
-                             Text="{Binding SelectedProject.Price, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True}"
+                    <TextBox Text="{Binding SelectedProject.Price, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True}"
                              Style="{StaticResource MaterialDesignOutlinedTextBox}"
-                             Margin="0 0 0 10"/>
-                    <TextBlock Text="{Binding SelectedProject.ErrorCollection[Price]}"
-                               Foreground="Red" Margin="0 -10 0 10" TextWrapping="Wrap"/>
+                             materialDesign:HintAssist.Hint="Price" Margin="0 0 0 10"/>
+                    <TextBlock Text="{Binding SelectedProject.ErrorCollection[SelectedProject.Price]}" Foreground="Red" Margin="0 -10 0 10"/>
 
-                    <!-- Category Field -->
-                    <ComboBox materialDesign:HintAssist.Hint="Project category"
-                              ItemsSource="{Binding ProjectCategories}"
+                    <ComboBox ItemsSource="{Binding ProjectCategories}" 
                               SelectedValue="{Binding SelectedProject.ProjectCategoryId, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True}"
-                              SelectedValuePath="Id"
-                              DisplayMemberPath="Name"
+                              SelectedValuePath="Id" DisplayMemberPath="Name"
                               Style="{StaticResource MaterialDesignOutlinedComboBox}"
-                              Margin="0 0 0 15"/>
-                    <TextBlock Text="{Binding SelectedProject.ErrorCollection[ProjectCategoryId]}"
-                               Foreground="Red" Margin="0 -15 0 10" TextWrapping="Wrap"/>
+                              materialDesign:HintAssist.Hint="Category" Margin="0 0 0 15"/>
+                    <TextBlock Text="{Binding SelectedProject.ErrorCollection[SelectedProject.ProjectCategoryId]}" Foreground="Red" Margin="0 -10 0 10"/>
 
-                    <!-- Action Buttons -->
                     <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
-                        <Button 
-                                Command="{Binding SaveCommand}"
-                                Style="{StaticResource MaterialDesignRaisedButton}"
-                                Margin="0 0 10 0"
-                                Width="80">
-                            <materialDesign:PackIcon Kind="ContentSave" Width="16" Height="16"/>
+                        <Button Command="{Binding SaveCommand}" Style="{StaticResource MaterialDesignRaisedButton}" Margin="0 0 10 0">
+                            <materialDesign:PackIcon Kind="ContentSave"/>
                         </Button>
-                        <Button 
-                                Command="{Binding DeleteCommand}"
-                                Style="{StaticResource MaterialDesignOutlinedButton}"
-                                Width="80"
-                                IsEnabled="{Binding CanDelete}">
-                            <materialDesign:PackIcon Kind="Delete" Width="16" Height="16"/>
+                        <Button Command="{Binding DeleteCommand}" IsEnabled="{Binding CanDelete}" Style="{StaticResource MaterialDesignOutlinedButton}">
+                            <materialDesign:PackIcon Kind="Delete"/>
                         </Button>
                     </StackPanel>
                 </StackPanel>

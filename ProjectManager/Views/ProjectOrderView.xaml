@@ -28,33 +28,36 @@
                 <StackPanel Orientation="Vertical" Grid.Column="0">
                     <TextBlock Text="Project" Margin="0,0,0,2" FontWeight="SemiBold"/>
                     <ComboBox ItemsSource="{Binding Projects}" 
-          DisplayMemberPath="Name"
-          SelectedValuePath="Id"
-          SelectedValue="{Binding SelectedProjectId, UpdateSourceTrigger=PropertyChanged}"
-          Margin="0,0,0,10"/>
+                              DisplayMemberPath="Name"
+                              SelectedValuePath="Id"
+                              SelectedValue="{Binding SelectedProjectId, UpdateSourceTrigger=PropertyChanged}"
+                              Margin="0,0,0,10"/>
 
                     <TextBlock Text="Discount (%)" Margin="0,0,0,2" FontWeight="SemiBold"/>
-                    <TextBox Text="{Binding Discount, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,10"/>
+                    <TextBox Text="{Binding Discount, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True}" 
+                             Margin="0,0,0,10"/>
 
                     <TextBlock Text="Installation System Info" Margin="0,0,0,2" FontWeight="SemiBold"/>
-                    <TextBox Text="{Binding InstallationSystemInfo, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,10"/>
+                    <TextBox Text="{Binding InstallationSystemInfo, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True}" 
+                             Margin="0,0,0,10"/>
                 </StackPanel>
 
                 <!-- Right Column -->
                 <StackPanel Orientation="Vertical" Grid.Column="2">
                     <TextBlock Text="Sold Date" Margin="0,0,0,2" FontWeight="SemiBold"/>
-                    <DatePicker SelectedDate="{Binding SoldDate, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,10"/>
-
+                    <DatePicker SelectedDate="{Binding SoldDate, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True}" 
+                                Margin="0,0,0,10"/>
 
                     <TextBlock Text="Notes" Margin="0,0,0,2" FontWeight="SemiBold"/>
-                    <TextBox Text="{Binding Notes, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,10"/>
+                    <TextBox Text="{Binding Notes, UpdateSourceTrigger=PropertyChanged}" 
+                             Margin="0,0,0,10"/>
 
                     <TextBlock Text="Consumer Phone" Margin="0,0,0,2" FontWeight="SemiBold"/>
                     <ComboBox ItemsSource="{Binding Consumers}" 
-          DisplayMemberPath="Phone"
-          SelectedValuePath="Phone"
-          SelectedValue="{Binding SelectedConsumerPhone, UpdateSourceTrigger=PropertyChanged}" 
-          Margin="0,0,0,10"/>
+                              DisplayMemberPath="Phone"
+                              SelectedValuePath="Phone"
+                              SelectedValue="{Binding SelectedConsumerPhone, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True}" 
+                              Margin="0,0,0,10"/>
 
                     <!-- Total Price Calculation Display -->
                     <StackPanel Orientation="Horizontal" Margin="0,10,0,0">
@@ -93,6 +96,7 @@
                     <DataGridTextColumn Header="Notes" Binding="{Binding Notes}" Width="*"/>
                     <DataGridTextColumn Header="Consumer Phone" Binding="{Binding ConsumerPhone}" Width="Auto"/>
                     <DataGridTextColumn Header="Total Price" Binding="{Binding TotalPrice, StringFormat=C}" Width="Auto"/>
+                    <DataGridTextColumn Header="Folder Serial" Binding="{Binding FolderSerial}" Width="Auto"/>
 
                     <DataGridTemplateColumn Header="Actions" Width="Auto">
                         <DataGridTemplateColumn.CellTemplate>
@@ -114,6 +118,7 @@
             <Button Content="Update" Command="{Binding UpdateCommand}" Margin="5" Width="80" Height="30"/>
             <Button Content="Delete" Command="{Binding DeleteCommand}" Margin="5" Width="80" Height="30"/>
             <Button Content="Clear" Command="{Binding ClearCommand}" Margin="5" Width="80" Height="30"/>
+            <Button Content="Save" Command="{Binding SaveCommand}" Margin="5" Width="80" Height="30"/>
         </StackPanel>
     </Grid>
 </UserControl>

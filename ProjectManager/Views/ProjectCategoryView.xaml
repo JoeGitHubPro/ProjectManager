@@ -16,130 +16,140 @@
         </Grid.RowDefinitions>
 
         <!-- Search and Action Bar -->
-        <Border Grid.Row="0"
-                BorderThickness="0 0 0 1" Padding="0 0 0 5" Margin="0 0 0 10">
-            <DockPanel>
-                <!-- Search Box -->
-                <TextBox DockPanel.Dock="Left" 
-                         Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}"
-                         materialDesign:HintAssist.Hint="Search categories..."
-                         Width="250" Margin="0 0 10 0"
-                         Style="{StaticResource MaterialDesignOutlinedTextBox}">
-                    <TextBox.InputBindings>
-                        <KeyBinding Key="Enter" Command="{Binding SearchCommand}"/>
-                    </TextBox.InputBindings>
-                </TextBox>
+        <Grid Grid.Row="0" Margin="0,0,0,10">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="Auto"/>
+            </Grid.ColumnDefinitions>
 
-                <!-- Action Buttons -->
-                <StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
-                    <Button Command="{Binding RefreshCommand}"
-            Style="{StaticResource MaterialDesignOutlinedButton}"
-            Margin="0 0 10 0"
-            Width="100">
-                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
-                            <materialDesign:PackIcon Kind="Refresh" Width="16" Height="16" Margin="0 0 5 0"/>
-                            <TextBlock Text="Refresh" VerticalAlignment="Center"/>
-                        </StackPanel>
-                    </Button>
+            <!-- Search Box -->
+            <TextBox Grid.Column="0"
+                     Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}"
+                     materialDesign:HintAssist.Hint="Search categories..."
+                     Width="250"
+                     Style="{StaticResource MaterialDesignOutlinedTextBox}">
+                <TextBox.InputBindings>
+                    <KeyBinding Key="Enter" Command="{Binding SearchCommand}"/>
+                </TextBox.InputBindings>
+            </TextBox>
 
-                    <Button Command="{Binding AddNewCommand}"
-            Style="{StaticResource MaterialDesignOutlinedButton}"
-            Width="100">
-                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
-                            <materialDesign:PackIcon Kind="Plus" Width="16" Height="16" Margin="0 0 5 0"/>
-                            <TextBlock Text="Add New" VerticalAlignment="Center"/>
-                        </StackPanel>
-                    </Button>
-                </StackPanel>
+            <!-- Action Buttons -->
+            <StackPanel Grid.Column="2" Orientation="Horizontal">
+                <Button Command="{Binding RefreshCommand}"
+                        Style="{StaticResource MaterialDesignOutlinedButton}"
+                        Margin="0,0,10,0"
+                        ToolTip="Refresh data">
+                    <materialDesign:PackIcon Kind="Refresh" Width="20" Height="20"/>
+                </Button>
 
-            </DockPanel>
-        </Border>
+                <Button Command="{Binding AddNewCommand}"
+                        Style="{StaticResource MaterialDesignRaisedButton}"
+                        ToolTip="Add new category">
+                    <StackPanel Orientation="Horizontal">
+                        <materialDesign:PackIcon Kind="Plus" Width="20" Height="20" Margin="0,0,5,0"/>
+                        <TextBlock Text="Add New"/>
+                    </StackPanel>
+                </Button>
+            </StackPanel>
+        </Grid>
 
         <!-- DataGrid -->
-        <Border Grid.Row="1" 
-                BorderThickness="1" CornerRadius="4" Padding="1">
-            <DataGrid ItemsSource="{Binding FilteredCategories}"
-                      SelectedItem="{Binding SelectedCategory}"
-                      AutoGenerateColumns="False"
-                      Style="{StaticResource MaterialDesignDataGrid}"
-                      GridLinesVisibility="None"
-                      IsReadOnly="True"
-                      HeadersVisibility="Column"
-                      ColumnHeaderHeight="35"
-                      RowHeight="35"
-                      SelectionMode="Single">
-                <DataGrid.Columns>
-                    <DataGridTextColumn Header="ID" Binding="{Binding Id}" Width="Auto"/>
-                    <DataGridTextColumn Header="Name" Binding="{Binding Name}" Width="*"/>
-                    <DataGridTemplateColumn Header="Actions" Width="Auto">
-                        <DataGridTemplateColumn.CellTemplate>
-                            <DataTemplate>
-                                <Button Content="✏️" ToolTip="Edit"
-                                        Command="{Binding DataContext.EditCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
-                                        CommandParameter="{Binding}"
-                                        Width="30" Height="30" 
-                                        Style="{StaticResource {x:Static ToolBar.ButtonStyleKey}}"/>
-                            </DataTemplate>
-                        </DataGridTemplateColumn.CellTemplate>
-                    </DataGridTemplateColumn>
-                </DataGrid.Columns>
-            </DataGrid>
-        </Border>
+        <DataGrid Grid.Row="1"
+                  ItemsSource="{Binding FilteredCategories}"
+                  SelectedItem="{Binding SelectedCategory}"
+                  AutoGenerateColumns="False"
+                  Style="{StaticResource MaterialDesignDataGrid}"
+                  GridLinesVisibility="None"
+                  IsReadOnly="True"
+                  HeadersVisibility="Column"
+                  BorderThickness="1"
+                  BorderBrush="{DynamicResource MaterialDesignDivider}"
+                  Background="White"
+                  SelectionMode="Single">
+            <DataGrid.Columns>
+                <DataGridTextColumn Header="ID" Binding="{Binding Id}" Width="Auto"/>
+                <DataGridTextColumn Header="Name" Binding="{Binding Name}" Width="*"/>
+                <DataGridTemplateColumn Header="Actions" Width="Auto">
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate>
+                            <Button Command="{Binding DataContext.EditCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                    CommandParameter="{Binding}"
+                                    Style="{StaticResource MaterialDesignIconButton}">
+                                <materialDesign:PackIcon Kind="Pencil" Width="20" Height="20"/>
+                            </Button>
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                </DataGridTemplateColumn>
+            </DataGrid.Columns>
+        </DataGrid>
 
         <!-- Form Controls -->
-        <Border Grid.Row="2" 
-                BorderThickness="1" CornerRadius="4" Padding="15"
-                Margin="0 10 0 0">
-            <StackPanel>
-                <TextBlock Text="Category Details" 
-               Style="{StaticResource MaterialDesignHeadline6TextBlock}"
-               Margin="0 0 0 15"/>
+        <Border Grid.Row="2"
+                BorderThickness="1" 
+                BorderBrush="{DynamicResource MaterialDesignDivider}"
+                CornerRadius="4" 
+                Padding="15" 
+                Margin="0,10,0,0"
+                Background="White">
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                </Grid.RowDefinitions>
 
-                <!-- Name Field -->
-                <TextBox materialDesign:HintAssist.Hint="Category name"
-             Text="{Binding CategoryName, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True}"
-             Style="{StaticResource MaterialDesignOutlinedTextBox}"
-             Margin="0 0 0 10"/>
-                <TextBlock Text="{Binding ErrorCollection[CategoryName]}"
-               Foreground="Red" Margin="0 -10 0 10" TextWrapping="Wrap"/>
+                <!-- Header -->
+                <TextBlock Grid.Row="0" 
+                           Text="Category Details" 
+                           Style="{StaticResource MaterialDesignHeadline6TextBlock}"
+                           Margin="0,0,0,15"/>
+
+                <!-- Category Name Field -->
+                <StackPanel Grid.Row="1">
+                    <TextBox materialDesign:HintAssist.Hint="Category name *"
+                             Text="{Binding CategoryName, UpdateSourceTrigger=PropertyChanged}"
+                             Style="{StaticResource MaterialDesignOutlinedTextBox}"/>
+                    <TextBlock Text="{Binding ErrorCollection[CategoryName]}"
+                               Foreground="Red" 
+                               FontSize="12"
+                               Margin="2,4,0,0"
+                               TextWrapping="Wrap"/>
+                </StackPanel>
 
                 <!-- Action Buttons -->
-                <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
-                    <!-- Save Button -->
+                <StackPanel Grid.Row="2" 
+                            Orientation="Horizontal" 
+                            HorizontalAlignment="Right"
+                            Margin="0,15,0,0">
                     <Button Command="{Binding SaveCommand}"
-                Style="{StaticResource MaterialDesignRaisedButton}"
-                Margin="0 0 10 0"
-                Width="80">
-                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
-                            <materialDesign:PackIcon Kind="ContentSave" Width="16" Height="16" Margin="0 0 5 0"/>
-                            <TextBlock Text="Save" VerticalAlignment="Center"/>
+                            Style="{StaticResource MaterialDesignRaisedButton}"
+                            Margin="0,0,10,0">
+                        <StackPanel Orientation="Horizontal">
+                            <materialDesign:PackIcon Kind="ContentSave" Width="20" Height="20" Margin="0,0,5,0"/>
+                            <TextBlock Text="Save"/>
                         </StackPanel>
                     </Button>
 
-                    <!-- Delete Button -->
                     <Button Command="{Binding DeleteCommand}"
-                Style="{StaticResource MaterialDesignOutlinedButton}"
-                Width="80"
-                IsEnabled="{Binding CanDelete}">
-                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
-                            <materialDesign:PackIcon Kind="Delete" Width="16" Height="16" Margin="0 0 5 0"/>
-                            <TextBlock Text="Delete" VerticalAlignment="Center"/>
+                            Style="{StaticResource MaterialDesignOutlinedButton}"
+                            Margin="0,0,10,0"
+                            IsEnabled="{Binding CanDelete}">
+                        <StackPanel Orientation="Horizontal">
+                            <materialDesign:PackIcon Kind="Delete" Width="20" Height="20" Margin="0,0,5,0"/>
+                            <TextBlock Text="Delete"/>
                         </StackPanel>
                     </Button>
 
-                    <!-- Clear Button -->
                     <Button Command="{Binding ClearCommand}"
-                Style="{StaticResource MaterialDesignOutlinedButton}"
-                Width="80"
-                Margin="10 0 0 0">
-                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
-                            <materialDesign:PackIcon Kind="Close" Width="16" Height="16" Margin="0 0 5 0"/>
-                            <TextBlock Text="Clear" VerticalAlignment="Center"/>
+                            Style="{StaticResource MaterialDesignOutlinedButton}">
+                        <StackPanel Orientation="Horizontal">
+                            <materialDesign:PackIcon Kind="Close" Width="20" Height="20" Margin="0,0,5,0"/>
+                            <TextBlock Text="Clear"/>
                         </StackPanel>
                     </Button>
                 </StackPanel>
-            </StackPanel>
-
+            </Grid>
         </Border>
     </Grid>
 </UserControl>

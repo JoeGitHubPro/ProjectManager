@@ -1,68 +1,30 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using ProjectManager.Models;
 using System.Collections.ObjectModel;
-using System.ComponentModel;
 using System.Windows;
 
 namespace ProjectManager.ViewModels
 {
-    public class ConsumerViewModel : BaseViewModel, IDataErrorInfo
+    public class ConsumerViewModel : BaseViewModel
     {
         private AppDbContext _context;
-        private bool _isBusy;
         private string _searchText = string.Empty;
-
-        public ObservableCollection<Consumer> Consumers { get; set; } = new();
-        public ObservableCollection<Consumer> FilteredConsumers { get; set; } = new();
-
-        public Dictionary<string, string> ErrorCollection =>
-            new Dictionary<string, string>
-            {
-                [nameof(Phone)] = this[nameof(Phone)],
-                [nameof(CommercialRegisterNo)] = this[nameof(CommercialRegisterNo)]
-            };
+        private Consumer _selectedConsumer;
+        private string _phone = string.Empty;
+        private string _commercialRegisterNo = string.Empty;
+        private bool _isNewRecord = true;
 
         public ConsumerViewModel()
         {
-            _context = new AppDbContext();
-
-            // Initialize commands first
-            SaveCommand = new RelayCommand(
-            _ => SaveConsumer(),
-            _ => !IsBusy && !HasErrors);
-
-            DeleteCommand = new RelayCommand(
-                _ => DeleteConsumer(),
-                _ => !IsBusy && CanDelete);
-
-            RefreshCommand = new RelayCommand(
-                _ => LoadData(),
-                _ => !IsBusy);
-
-            SearchCommand = new RelayCommand(
-                _ => FilterConsumers(),
-                _ => !IsBusy);
-
-            AddNewCommand = new RelayCommand(
-                _ => AddNewConsumer(),
-                _ => !IsBusy);
-
-            EditCommand = new RelayCommand(
-                consumer => SelectedConsumer = consumer as Consumer,
-                _ => !IsBusy);
-
-            ClearCommand = new RelayCommand(
-                _ => ClearFields(),
-                _ => !IsBusy);
-
+            InitializeCommands();
             LoadData();
-
-
         }
-        bool firstTimeFlag = true;
+
         #region Properties
 
-        private Consumer _selectedConsumer;
+        public ObservableCollection<Consumer> Consumers { get; private set; } = new();
+        public ObservableCollection<Consumer> FilteredConsumers { get; private set; } = new();
+
         public Consumer SelectedConsumer
         {
             get => _selectedConsumer;
@@ -71,36 +33,35 @@ namespace ProjectManager.ViewModels
                 _selectedConsumer = value;
                 OnPropertyChanged();
                 OnPropertyChanged(nameof(CanDelete));
+
                 if (value != null)
                 {
+                    _isNewRecord = false;
                     Phone = value.Phone;
                     CommercialRegisterNo = value.CommercialRegisterNo;
                 }
             }
         }
 
-        private string _phone = string.Empty;
         public string Phone
         {
             get => _phone;
             set
             {
                 _phone = value;
-                firstTimeFlag = false;
                 OnPropertyChanged();
-                SaveCommand.RaiseCanExecuteChanged();
+                ValidateProperty(nameof(Phone));
             }
         }
 
-        private string _commercialRegisterNo = string.Empty;
         public string CommercialRegisterNo
         {
             get => _commercialRegisterNo;
             set
             {
                 _commercialRegisterNo = value;
-                firstTimeFlag = false;
                 OnPropertyChanged();
+                ValidateProperty(nameof(CommercialRegisterNo));
             }
         }
 
@@ -115,21 +76,6 @@ namespace ProjectManager.ViewModels
             }
         }
 
-        public bool IsBusy
-        {
-            get => _isBusy;
-            set
-            {
-                _isBusy = value;
-                OnPropertyChanged();
-
-                // Check if commands are initialized before raising can execute changed
-                SaveCommand?.RaiseCanExecuteChanged();
-                DeleteCommand?.RaiseCanExecuteChanged();
-                RefreshCommand?.RaiseCanExecuteChanged();
-                SearchCommand?.RaiseCanExecuteChanged();
-            }
-        }
 
         public bool CanDelete => SelectedConsumer != null;
 
@@ -145,6 +91,31 @@ namespace ProjectManager.ViewModels
         public RelayCommand EditCommand { get; private set; }
         public RelayCommand ClearCommand { get; private set; }
 
+        private void InitializeCommands()
+        {
+            SaveCommand = new RelayCommand(
+                 SaveConsumer,
+                () => !HasErrors);
+
+            DeleteCommand = new RelayCommand(
+              DeleteConsumer);
+
+            RefreshCommand = new RelayCommand(
+                LoadData);
+
+            SearchCommand = new RelayCommand(
+               FilterConsumers);
+
+            AddNewCommand = new RelayCommand(
+                AddNewConsumer);
+
+            EditCommand = new RelayCommand(
+                SaveConsumer);
+
+            ClearCommand = new RelayCommand(
+                ClearFields);
+        }
+
         #endregion
 
         #region Methods
@@ -153,7 +124,6 @@ namespace ProjectManager.ViewModels
         {
             try
             {
-                IsBusy = true;
                 _context = new AppDbContext();
 
                 var consumers = _context.Consumers.ToList();
@@ -165,12 +135,9 @@ namespace ProjectManager.ViewModels
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Error loading data: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                ShowError($"Error loading data: {ex.Message}");
             }
-            finally
-            {
-                IsBusy = false;
-            }
+
         }
 
         private void FilterConsumers()
@@ -194,95 +161,93 @@ namespace ProjectManager.ViewModels
 
         private void AddNewConsumer()
         {
-            SelectedConsumer = null;
-            Phone = string.Empty;
-            CommercialRegisterNo = string.Empty;
+            ClearFields();
+            _isNewRecord = true;
         }
 
         private void SaveConsumer()
         {
+            if (HasErrors)
+            {
+                ShowWarning("Please fix validation errors before saving.");
+                return;
+            }
+
             try
             {
-                IsBusy = true;
 
-                if (HasErrors)
+                if (_isNewRecord)
                 {
-                    MessageBox.Show("Please fix validation errors before saving.", "Validation Error", MessageBoxButton.OK, MessageBoxImage.Warning);
-                    return;
-                }
-
-                if (SelectedConsumer == null)
-                {
-                    // Add new consumer
-                    var existing = _context.Consumers.Find(Phone);
-                    if (existing != null)
-                    {
-                        MessageBox.Show("A consumer with this phone number already exists.", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
-                        return;
-                    }
-
-                    var consumer = new Consumer
-                    {
-                        Phone = Phone,
-                        CommercialRegisterNo = CommercialRegisterNo
-                    };
-
-                    _context.Consumers.Add(consumer);
-                    Consumers.Add(consumer);
+                    SaveNewConsumer();
                 }
                 else
                 {
-                    // Update existing consumer
-                    SelectedConsumer.CommercialRegisterNo = CommercialRegisterNo;
-                    _context.Entry(SelectedConsumer).State = EntityState.Modified;
+                    UpdateExistingConsumer();
                 }
 
                 _context.SaveChanges();
                 FilterConsumers();
-                MessageBox.Show("Consumer saved successfully.", "Success", MessageBoxButton.OK, MessageBoxImage.Information);
+                ShowInfo("Consumer saved successfully.");
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Error saving consumer: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                ShowError($"Error saving consumer: {ex.Message}");
             }
-            finally
+        }
+
+        private void SaveNewConsumer()
+        {
+            var existing = _context.Consumers.Find(Phone);
+            if (existing != null)
             {
-                IsBusy = false;
+                throw new InvalidOperationException("A consumer with this phone number already exists.");
             }
+
+            var consumer = new Consumer
+            {
+                Phone = Phone,
+                CommercialRegisterNo = CommercialRegisterNo
+            };
+
+            _context.Consumers.Add(consumer);
+            Consumers.Add(consumer);
+        }
+
+        private void UpdateExistingConsumer()
+        {
+            if (SelectedConsumer == null) return;
+
+            SelectedConsumer.CommercialRegisterNo = CommercialRegisterNo;
+            _context.Entry(SelectedConsumer).State = EntityState.Modified;
         }
 
         private void DeleteConsumer()
         {
+            if (SelectedConsumer == null) return;
+
+            var result = MessageBox.Show(
+                "Are you sure you want to delete this consumer? This action cannot be undone.",
+                "Confirm Delete",
+                MessageBoxButton.YesNo,
+                MessageBoxImage.Warning);
+
+            if (result != MessageBoxResult.Yes) return;
+
             try
             {
-                if (SelectedConsumer == null) return;
-
-                var result = MessageBox.Show(
-                    "Are you sure you want to delete this consumer? This action cannot be undone.",
-                    "Confirm Delete",
-                    MessageBoxButton.YesNo,
-                    MessageBoxImage.Warning);
-
-                if (result != MessageBoxResult.Yes) return;
-
-                IsBusy = true;
-
                 _context.Consumers.Remove(SelectedConsumer);
                 _context.SaveChanges();
                 Consumers.Remove(SelectedConsumer);
-                FilterConsumers();
+                FilteredConsumers.Remove(SelectedConsumer);
                 ClearFields();
 
-                MessageBox.Show("Consumer deleted successfully.", "Success", MessageBoxButton.OK, MessageBoxImage.Information);
+                ShowInfo("Consumer deleted successfully.");
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Error deleting consumer: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                ShowError($"Error deleting consumer: {ex.Message}");
             }
-            finally
-            {
-                IsBusy = false;
-            }
+
         }
 
         private void ClearFields()
@@ -290,48 +255,71 @@ namespace ProjectManager.ViewModels
             SelectedConsumer = null;
             Phone = string.Empty;
             CommercialRegisterNo = string.Empty;
+            _isNewRecord = true;
         }
 
         #endregion
 
         #region Validation
 
-        public string Error => string.Empty;
-
-        private string this[string columnName]
+        public string this[string propertyName]
         {
             get
             {
-                switch (columnName)
+                string error = string.Empty;
+
+                switch (propertyName)
                 {
                     case nameof(Phone):
-                        if (string.IsNullOrWhiteSpace(Phone) && !firstTimeFlag)
-                            return "Phone number is required";
-                        if (Phone.Length > 20)
-                            return "Phone number cannot exceed 20 characters";
+                        if (string.IsNullOrWhiteSpace(Phone))
+                            error = "Phone number is required";
+                        else if (Phone.Length > 20)
+                            error = "Phone number cannot exceed 20 characters";
                         break;
-
 
                     case nameof(CommercialRegisterNo):
                         if (!string.IsNullOrWhiteSpace(CommercialRegisterNo) && CommercialRegisterNo.Length > 50)
-                            return "Commercial register number cannot exceed 50 characters";
+                            error = "Commercial register number cannot exceed 50 characters";
                         break;
                 }
 
-                return string.Empty;
+                return error;
             }
         }
 
-
-        public bool HasErrors
+        private void ValidateProperty(string propertyName)
         {
-            get
-            {
-                if (firstTimeFlag)
-                    return true;
-                return !string.IsNullOrEmpty(this[nameof(Phone)]) ||
-                       !string.IsNullOrEmpty(this[nameof(CommercialRegisterNo)]);
-            }
+            string error = this[propertyName];
+            ErrorCollection[propertyName] = error;
+            OnPropertyChanged(nameof(ErrorCollection));
+            OnPropertyChanged(nameof(HasErrors));
+        }
+        public Dictionary<string, string> ErrorCollection =>
+           new Dictionary<string, string>
+           {
+               [nameof(Phone)] = this[nameof(Phone)],
+               [nameof(CommercialRegisterNo)] = this[nameof(CommercialRegisterNo)]
+           };
+
+        public bool HasErrors => ErrorCollection.Values.Any(error => !string.IsNullOrEmpty(error));
+
+        #endregion
+
+        #region Helper Methods
+
+        private void ShowError(string message)
+        {
+            MessageBox.Show(message, "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+        }
+
+        private void ShowWarning(string message)
+        {
+            MessageBox.Show(message, "Warning", MessageBoxButton.OK, MessageBoxImage.Warning);
+        }
+
+        private void ShowInfo(string message)
+        {
+            MessageBox.Show(message, "Information", MessageBoxButton.OK, MessageBoxImage.Information);
         }
 
         #endregion

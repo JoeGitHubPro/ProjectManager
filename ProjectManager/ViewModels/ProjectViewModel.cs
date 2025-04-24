@@ -1,104 +1,26 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using ProjectManager.Models;
 using System.Collections.ObjectModel;
-using System.ComponentModel;
-using System.Windows;
 
 namespace ProjectManager.ViewModels
 {
-    public class ProjectViewModel : BaseViewModel, IDataErrorInfo
+    public class ProjectViewModel : BaseViewModel
     {
-        private AppDbContext _context;
-        private bool _isBusy;
-        private string _searchText = string.Empty;
+        private readonly AppDbContext _context = new();
 
         public ObservableCollection<Project> Projects { get; set; } = new();
         public ObservableCollection<Project> FilteredProjects { get; set; } = new();
         public ObservableCollection<ProjectCategory> ProjectCategories { get; set; } = new();
 
-        public ProjectViewModel()
+        private string _searchText = string.Empty;
+        public string SearchText
         {
-            _context = new AppDbContext();
-
-            // Initialize commands first
-            SaveCommand = new RelayCommand(
-                _ => SaveProject(),
-                _ => !IsBusy && !HasErrors);
-
-            DeleteCommand = new RelayCommand(
-                _ => DeleteProject(),
-                _ => !IsBusy && CanDelete);
-
-            RefreshCommand = new RelayCommand(
-                _ => LoadData(),
-                _ => !IsBusy);
-
-            SearchCommand = new RelayCommand(
-                _ => FilterProjects(),
-                _ => !IsBusy);
-
-            AddNewCommand = new RelayCommand(
-                _ => AddNewProject(),
-                _ => !IsBusy);
-
-            EditCommand = new RelayCommand(
-                project => SelectedProject = project as Project,
-                _ => !IsBusy);
-
-            ClearCommand = new RelayCommand(
-                _ => ClearFields(),
-                _ => !IsBusy);
-
-            LoadData();
-        }
-
-        #region Properties
-
-        private string _name = string.Empty;
-        public string Name
-        {
-            get => _name;
+            get => _searchText;
             set
             {
-                _name = value;
+                _searchText = value;
                 OnPropertyChanged();
-                SaveCommand?.RaiseCanExecuteChanged();
-            }
-        }
-
-        private string _details = string.Empty;
-        public string Details
-        {
-            get => _details;
-            set
-            {
-                _details = value;
-                OnPropertyChanged();
-                SaveCommand?.RaiseCanExecuteChanged();
-            }
-        }
-
-        private decimal _price;
-        public decimal Price
-        {
-            get => _price;
-            set
-            {
-                _price = value;
-                OnPropertyChanged();
-                SaveCommand?.RaiseCanExecuteChanged();
-            }
-        }
-
-        private int _projectCategoryId;
-        public int ProjectCategoryId
-        {
-            get => _projectCategoryId;
-            set
-            {
-                _projectCategoryId = value;
-                OnPropertyChanged();
-                SaveCommand?.RaiseCanExecuteChanged();
+                FilterProjects();
             }
         }
 
@@ -111,298 +33,134 @@ namespace ProjectManager.ViewModels
                 _selectedProject = value;
                 OnPropertyChanged();
                 OnPropertyChanged(nameof(CanDelete));
-                if (value != null)
-                {
-                    Name = value.Name;
-                    Details = value.Details;
-                    Price = value.Price;
-                    ProjectCategoryId = value.ProjectCategoryId;
-                }
-                else
-                {
-                    Name = string.Empty;
-                    Details = string.Empty;
-                    Price = 0;
-                    ProjectCategoryId = 0;
-                }
-                SaveCommand?.RaiseCanExecuteChanged();
-                DeleteCommand?.RaiseCanExecuteChanged();
-            }
-        }
-
-        public string SearchText
-        {
-            get => _searchText;
-            set
-            {
-                _searchText = value;
-                OnPropertyChanged();
-                FilterProjects();
-            }
-        }
-
-        public bool IsBusy
-        {
-            get => _isBusy;
-            set
-            {
-                _isBusy = value;
-                OnPropertyChanged();
-
-                // Null-conditional checks for commands
-                SaveCommand?.RaiseCanExecuteChanged();
-                DeleteCommand?.RaiseCanExecuteChanged();
-                RefreshCommand?.RaiseCanExecuteChanged();
-                SearchCommand?.RaiseCanExecuteChanged();
             }
         }
 
         public bool CanDelete => SelectedProject != null;
 
-        #endregion
+        public RelayCommand SaveCommand { get; }
+        public RelayCommand DeleteCommand { get; }
+        public RelayCommand RefreshCommand { get; }
+        public RelayCommand SearchCommand { get; }
+        public RelayCommand AddNewCommand { get; }
 
-        #region Commands
+        public ProjectViewModel()
+        {
+            SaveCommand = new RelayCommand(SaveProject, () => !HasErrors);
+            DeleteCommand = new RelayCommand(DeleteProject, () => CanDelete);
+            RefreshCommand = new RelayCommand(LoadData);
+            SearchCommand = new RelayCommand(FilterProjects);
+            AddNewCommand = new RelayCommand(AddNewProject);
 
-        public RelayCommand SaveCommand { get; private set; }
-        public RelayCommand DeleteCommand { get; private set; }
-        public RelayCommand RefreshCommand { get; private set; }
-        public RelayCommand SearchCommand { get; private set; }
-        public RelayCommand AddNewCommand { get; private set; }
-        public RelayCommand EditCommand { get; private set; }
-        public RelayCommand ClearCommand { get; private set; }
-
-        #endregion
-
-        #region Methods
+            LoadData();
+        }
 
         private void LoadData()
         {
-            try
-            {
-                IsBusy = true;
-                _context = new AppDbContext();
 
-                var projects = _context.Projects.Include(p => p.ProjectCategory).ToList();
-                Projects = new ObservableCollection<Project>(projects);
-                FilteredProjects = new ObservableCollection<Project>(projects);
+            Projects.Clear();
+            FilteredProjects.Clear();
+            ProjectCategories.Clear();
 
-                ProjectCategories.Clear();
-                foreach (var category in _context.ProjectCategories.ToList())
-                {
-                    ProjectCategories.Add(category);
-                }
+            var projects = _context.Projects.Include(p => p.ProjectCategory).ToList();
+            foreach (var p in projects)
+                Projects.Add(p);
 
-                OnPropertyChanged(nameof(Projects));
-                OnPropertyChanged(nameof(FilteredProjects));
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show($"Error loading data: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
-            }
-            finally
-            {
-                IsBusy = false;
-            }
-        }
+            foreach (var p in projects)
+                FilteredProjects.Add(p);
 
-        private void RefreshData()
-        {
-            try
-            {
-                IsBusy = true;
-                LoadData();
-                MessageBox.Show("Data refreshed successfully.", "Success", MessageBoxButton.OK, MessageBoxImage.Information);
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show($"Error refreshing data: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
-            }
-            finally
-            {
-                IsBusy = false;
-            }
+            foreach (var c in _context.ProjectCategories.ToList())
+                ProjectCategories.Add(c);
+
+            SelectedProject = null;
         }
 
         private void FilterProjects()
         {
             if (string.IsNullOrWhiteSpace(SearchText))
             {
-                FilteredProjects = new ObservableCollection<Project>(Projects);
+                FilteredProjects.Clear();
+                foreach (var p in Projects)
+                    FilteredProjects.Add(p);
             }
             else
             {
-                var searchLower = SearchText.ToLower();
-                FilteredProjects = new ObservableCollection<Project>(
-                    Projects.Where(p =>
-                        p.Name.ToLower().Contains(searchLower) ||
-                        (p.Details != null && p.Details.ToLower().Contains(searchLower)) ||
-                        (p.ProjectCategory != null && p.ProjectCategory.Name.ToLower().Contains(searchLower)))
-                );
-            }
-            OnPropertyChanged(nameof(FilteredProjects));
-        }
+                var lowerSearch = SearchText.ToLower();
+                var filtered = Projects.Where(p =>
+                    (!string.IsNullOrWhiteSpace(p.Name) && p.Name.ToLower().Contains(lowerSearch)) ||
+                    (!string.IsNullOrWhiteSpace(p.Details) && p.Details.ToLower().Contains(lowerSearch)));
 
-        private void AddNewProject()
-        {
-            SelectedProject = null;
-            Name = string.Empty;
-            Details = string.Empty;
-            Price = 0;
-            ProjectCategoryId = 0;
+                FilteredProjects.Clear();
+                foreach (var p in filtered)
+                    FilteredProjects.Add(p);
+            }
         }
 
         private void SaveProject()
         {
-            try
-            {
-                IsBusy = true;
+            if (SelectedProject == null) return;
 
-                if (HasErrors)
-                {
-                    MessageBox.Show("Please fix validation errors before saving.", "Validation Error", MessageBoxButton.OK, MessageBoxImage.Warning);
-                    return;
-                }
+            if (SelectedProject.Id == 0)
+                _context.Projects.Add(SelectedProject);
+            else
+                _context.Projects.Update(SelectedProject);
 
-                if (SelectedProject == null)
-                {
-                    // Add new project
-                    var existing = _context.Projects.FirstOrDefault(p => p.Name == Name);
-                    if (existing != null)
-                    {
-                        MessageBox.Show("A project with this name already exists.", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
-                        return;
-                    }
-
-                    var project = new Project
-                    {
-                        Name = Name,
-                        Details = Details,
-                        Price = Price,
-                        ProjectCategoryId = ProjectCategoryId
-                    };
-
-                    _context.Projects.Add(project);
-                    Projects.Add(project);
-                }
-                else
-                {
-                    // Update existing project
-                    SelectedProject.Name = Name;
-                    SelectedProject.Details = Details;
-                    SelectedProject.Price = Price;
-                    SelectedProject.ProjectCategoryId = ProjectCategoryId;
-                    _context.Entry(SelectedProject).State = EntityState.Modified;
-                }
-
-                _context.SaveChanges();
-                FilterProjects();
-                MessageBox.Show("Project saved successfully.", "Success", MessageBoxButton.OK, MessageBoxImage.Information);
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show($"Error saving project: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
-            }
-            finally
-            {
-                IsBusy = false;
-            }
+            _context.SaveChanges();
+            LoadData();
         }
 
         private void DeleteProject()
         {
-            try
-            {
-                if (SelectedProject == null) return;
+            if (SelectedProject == null) return;
 
-                var result = MessageBox.Show(
-                    "Are you sure you want to delete this project? This action cannot be undone.",
-                    "Confirm Delete",
-                    MessageBoxButton.YesNo,
-                    MessageBoxImage.Warning);
-
-                if (result != MessageBoxResult.Yes) return;
-
-                IsBusy = true;
-
-                _context.Projects.Remove(SelectedProject);
-                _context.SaveChanges();
-                Projects.Remove(SelectedProject);
-                FilterProjects();
-                ClearFields();
-
-                MessageBox.Show("Project deleted successfully.", "Success", MessageBoxButton.OK, MessageBoxImage.Information);
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show($"Error deleting project: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
-            }
-            finally
-            {
-                IsBusy = false;
-            }
+            _context.Projects.Remove(SelectedProject);
+            _context.SaveChanges();
+            LoadData();
         }
 
-        private void ClearFields()
+        private void AddNewProject()
         {
-            SelectedProject = null;
-            Name = string.Empty;
-            Details = string.Empty;
-            Price = 0;
-            ProjectCategoryId = 0;
+            SelectedProject = new Project();
         }
 
-        #endregion
-
-        #region Validation
-
-        public string Error => string.Empty;
-
+        // --- Validation logic ---
+        public Dictionary<string, string> ErrorCollection =>
+   new Dictionary<string, string>
+   {
+       [nameof(SelectedProject.Name)] = this[nameof(SelectedProject.Name)],
+       [nameof(SelectedProject.Details)] = this[nameof(SelectedProject.Details)],
+       [nameof(SelectedProject.Price)] = this[nameof(SelectedProject.Price)],
+       [nameof(SelectedProject.ProjectCategoryId)] = this[nameof(SelectedProject.ProjectCategoryId)]
+   };
         public string this[string columnName]
         {
             get
             {
-                switch (columnName)
+                if (SelectedProject == null) return string.Empty;
+
+                return columnName switch
                 {
-                    case nameof(Name):
-                        if (string.IsNullOrWhiteSpace(Name))
-                            return "Project name is required";
-                        if (Name.Length > 100)
-                            return "Name cannot exceed 100 characters";
-                        break;
+                    nameof(SelectedProject.Name) =>
+                        string.IsNullOrWhiteSpace(SelectedProject.Name) ? "Project name is required." : null,
 
-                    case nameof(Details):
-                        if (string.IsNullOrWhiteSpace(Details))
-                            return "Project details are required";
-                        if (Details.Length > 500)
-                            return "Details cannot exceed 500 characters";
-                        break;
+                    nameof(SelectedProject.Details) =>
+                        string.IsNullOrWhiteSpace(SelectedProject.Details) ? "Project details are required." : null,
 
-                    case nameof(Price):
-                        if (Price <= 0)
-                            return "Price must be greater than 0";
-                        break;
+                    nameof(SelectedProject.Price) =>
+                        SelectedProject.Price <= 0 ? "Price must be greater than zero." : null,
 
-                    case nameof(ProjectCategoryId):
-                        if (ProjectCategoryId == 0)
-                            return "Project category is required";
-                        break;
-                }
+                    nameof(SelectedProject.ProjectCategoryId) =>
+                        SelectedProject.ProjectCategoryId == 0 ? "Project category is required." : null,
 
-                return string.Empty;
+                    _ => null
+                };
             }
         }
 
-        public bool HasErrors
-        {
-            get
-            {
-                return !string.IsNullOrEmpty(this[nameof(Name)]) ||
-                       !string.IsNullOrEmpty(this[nameof(Details)]) ||
-                       !string.IsNullOrEmpty(this[nameof(Price)]) ||
-                       !string.IsNullOrEmpty(this[nameof(ProjectCategoryId)]);
-            }
-        }
-
-        #endregion
+        public bool HasErrors =>
+            this[nameof(SelectedProject.Name)] != null ||
+            this[nameof(SelectedProject.Details)] != null ||
+            this[nameof(SelectedProject.Price)] != null ||
+            this[nameof(SelectedProject.ProjectCategoryId)] != null;
     }
 }
