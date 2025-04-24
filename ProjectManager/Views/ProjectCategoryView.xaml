@@ -110,11 +110,7 @@
                     <TextBox materialDesign:HintAssist.Hint="Category name *"
                              Text="{Binding CategoryName, UpdateSourceTrigger=PropertyChanged}"
                              Style="{StaticResource MaterialDesignOutlinedTextBox}"/>
-                    <TextBlock Text="{Binding ErrorCollection[CategoryName]}"
-                               Foreground="Red" 
-                               FontSize="12"
-                               Margin="2,4,0,0"
-                               TextWrapping="Wrap"/>
+             
                 </StackPanel>
 
                 <!-- Action Buttons -->

@@ -56,7 +56,7 @@
                     <ComboBox ItemsSource="{Binding Consumers}" 
                               DisplayMemberPath="Phone"
                               SelectedValuePath="Phone"
-                              SelectedValue="{Binding SelectedConsumerPhone, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True}" 
+                              SelectedValue="{Binding SelectedConsumerPhone, UpdateSourceTrigger=PropertyChanged}" 
                               Margin="0,0,0,10"/>
 
                     <!-- Total Price Calculation Display -->

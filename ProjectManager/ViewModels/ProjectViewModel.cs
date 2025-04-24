@@ -123,15 +123,6 @@ namespace ProjectManager.ViewModels
             SelectedProject = new Project();
         }
 
-        // --- Validation logic ---
-        public Dictionary<string, string> ErrorCollection =>
-   new Dictionary<string, string>
-   {
-       [nameof(SelectedProject.Name)] = this[nameof(SelectedProject.Name)],
-       [nameof(SelectedProject.Details)] = this[nameof(SelectedProject.Details)],
-       [nameof(SelectedProject.Price)] = this[nameof(SelectedProject.Price)],
-       [nameof(SelectedProject.ProjectCategoryId)] = this[nameof(SelectedProject.ProjectCategoryId)]
-   };
         public string this[string columnName]
         {
             get
@@ -159,7 +150,6 @@ namespace ProjectManager.ViewModels
 
         public bool HasErrors =>
             this[nameof(SelectedProject.Name)] != null ||
-            this[nameof(SelectedProject.Details)] != null ||
             this[nameof(SelectedProject.Price)] != null ||
             this[nameof(SelectedProject.ProjectCategoryId)] != null;
     }

@@ -63,25 +63,21 @@
                     <TextBox Text="{Binding SelectedProject.Name, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True}"
                              Style="{StaticResource MaterialDesignOutlinedTextBox}"
                              materialDesign:HintAssist.Hint="Project name" Margin="0 0 0 10"/>
-                    <TextBlock Text="{Binding SelectedProject.ErrorCollection[SelectedProject.Name]}" Foreground="Red" Margin="0 -10 0 10"/>
 
                     <TextBox Text="{Binding SelectedProject.Details, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True}"
                              AcceptsReturn="True" TextWrapping="Wrap" Height="80"
                              Style="{StaticResource MaterialDesignOutlinedTextBox}"
                              materialDesign:HintAssist.Hint="Details" Margin="0 0 0 10"/>
-                    <TextBlock Text="{Binding SelectedProject.ErrorCollection[SelectedProject.Details]}" Foreground="Red" Margin="0 -10 0 10"/>
 
                     <TextBox Text="{Binding SelectedProject.Price, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True}"
                              Style="{StaticResource MaterialDesignOutlinedTextBox}"
                              materialDesign:HintAssist.Hint="Price" Margin="0 0 0 10"/>
-                    <TextBlock Text="{Binding SelectedProject.ErrorCollection[SelectedProject.Price]}" Foreground="Red" Margin="0 -10 0 10"/>
 
                     <ComboBox ItemsSource="{Binding ProjectCategories}" 
                               SelectedValue="{Binding SelectedProject.ProjectCategoryId, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True}"
                               SelectedValuePath="Id" DisplayMemberPath="Name"
                               Style="{StaticResource MaterialDesignOutlinedComboBox}"
                               materialDesign:HintAssist.Hint="Category" Margin="0 0 0 15"/>
-                    <TextBlock Text="{Binding SelectedProject.ErrorCollection[SelectedProject.ProjectCategoryId]}" Foreground="Red" Margin="0 -10 0 10"/>
 
                     <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
                         <Button Command="{Binding SaveCommand}" Style="{StaticResource MaterialDesignRaisedButton}" Margin="0 0 10 0">

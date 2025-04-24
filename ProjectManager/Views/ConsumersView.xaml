@@ -117,11 +117,7 @@
                         <TextBox materialDesign:HintAssist.Hint="Phone number *"
                                  Text="{Binding Phone, UpdateSourceTrigger=PropertyChanged}"
                                  Style="{StaticResource MaterialDesignOutlinedTextBox}"/>
-                        <TextBlock Text="{Binding ErrorCollection[Phone]}"
-                                   Foreground="Red" 
-                                   FontSize="12"
-                                   Margin="2,4,0,0"
-                                   TextWrapping="Wrap"/>
+
                     </StackPanel>
 
                     <!-- Commercial Register Field -->
