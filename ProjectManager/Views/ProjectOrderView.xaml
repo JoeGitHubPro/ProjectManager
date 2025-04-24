@@ -7,16 +7,91 @@
 
     <Grid Margin="10">
         <Grid.RowDefinitions>
+            <!-- Search Panel -->
             <RowDefinition Height="Auto"/>
-            <RowDefinition Height="10"/>
-            <RowDefinition Height="Auto"/>
-            <RowDefinition Height="10"/>
+            <RowDefinition Height="5"/>
+            <!-- DataGrid -->
             <RowDefinition Height="*"/>
+            <RowDefinition Height="10"/>
+            <!-- Input Form -->
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="10"/>
+            <!-- Action Buttons -->
             <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
 
+        <!-- Search Panel -->
+        <Border Grid.Row="0" BorderThickness="1" CornerRadius="5" Padding="10" Background="#FFF5F5F5">
+            <DockPanel LastChildFill="True">
+                <StackPanel Orientation="Horizontal" DockPanel.Dock="Left" VerticalAlignment="Center">
+                    <TextBlock Text="Search Orders" Margin="0,0,10,0" FontWeight="SemiBold" VerticalAlignment="Center"/>
+                    <TextBox Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}" 
+                             Padding="5" MinWidth="200" VerticalAlignment="Center"/>
+                </StackPanel>
+
+                <StackPanel Orientation="Horizontal" DockPanel.Dock="Right" HorizontalAlignment="Right">
+                    <Button Content="Refresh" Width="80" Height="30"
+                            Command="{Binding RefreshCommand}" Margin="5,0,0,0"/>
+                    <Button Content="Reload" Width="80" Height="30"
+                            Command="{Binding ReloadPageCommand}" Margin="10,0,0,0"/>
+                </StackPanel>
+            </DockPanel>
+        </Border>
+
+        <!-- DataGrid -->
+        <Border Grid.Row="2" BorderThickness="1" CornerRadius="5">
+            <DataGrid ItemsSource="{Binding ProjectOrders}" SelectedItem="{Binding SelectedOrder}"
+                      AutoGenerateColumns="False" IsReadOnly="True" GridLinesVisibility="None"
+                      HeadersVisibility="Column" ColumnHeaderHeight="35" RowHeight="30"
+                      ScrollViewer.CanContentScroll="True" ScrollViewer.VerticalScrollBarVisibility="Auto"
+                      ScrollViewer.HorizontalScrollBarVisibility="Auto">
+                <DataGrid.Columns>
+                    <DataGridTextColumn Header="Project" Binding="{Binding Project.Name}" Width="*" MinWidth="120"/>
+                    <DataGridTextColumn Header="Discount" Binding="{Binding Discount, StringFormat={}{0}%}" Width="Auto" MinWidth="80"/>
+                    <DataGridTextColumn Header="Installation Info" Binding="{Binding InstallationSystemInfo}" Width="*" MinWidth="150"/>
+                    <DataGridTextColumn Header="Sold Date" Binding="{Binding SoldDate, StringFormat=d}" Width="Auto" MinWidth="100"/>
+                    <DataGridTextColumn Header="Notes" Binding="{Binding Notes}" Width="*" MinWidth="150"/>
+                    <DataGridTextColumn Header="Consumer Phone" Binding="{Binding ConsumerPhone}" Width="Auto" MinWidth="120"/>
+                    <DataGridTextColumn Header="Total Price" Binding="{Binding TotalPrice, StringFormat=C}" Width="Auto" MinWidth="100"/>
+                    <DataGridTextColumn Header="Folder Serial" Binding="{Binding FolderSerial}" Width="Auto" MinWidth="100"/>
+
+                    <DataGridTemplateColumn Header="Locate" Width="Auto" MinWidth="80">
+                        <DataGridTemplateColumn.CellTemplate>
+                            <DataTemplate>
+                                <Button Content="📂" ToolTip="Locate"
+                    Command="{Binding DataContext.LocateCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                    CommandParameter="{Binding}" 
+                    Width="30" Height="30"
+                    Padding="5"
+                    Background="Transparent"
+                    BorderThickness="0"
+                    Cursor="Hand">
+                                    <Button.Style>
+                                        <Style TargetType="Button">
+                                            <Setter Property="Template">
+                                                <Setter.Value>
+                                                    <ControlTemplate TargetType="Button">
+                                                        <ContentPresenter/>
+                                                    </ControlTemplate>
+                                                </Setter.Value>
+                                            </Setter>
+                                            <Style.Triggers>
+                                                <Trigger Property="IsMouseOver" Value="True">
+                                                    <Setter Property="Background" Value="#EEE"/>
+                                                </Trigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </Button.Style>
+                                </Button>
+                            </DataTemplate>
+                        </DataGridTemplateColumn.CellTemplate>
+                    </DataGridTemplateColumn>
+                </DataGrid.Columns>
+            </DataGrid>
+        </Border>
+
         <!-- Input Form -->
-        <Border Grid.Row="0" BorderThickness="1" CornerRadius="5" Padding="10">
+        <Border Grid.Row="4" BorderThickness="1" CornerRadius="5" Padding="10" Background="#FFF5F5F5">
             <Grid>
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*"/>
@@ -50,7 +125,7 @@
 
                     <TextBlock Text="Notes" Margin="0,0,0,2" FontWeight="SemiBold"/>
                     <TextBox Text="{Binding Notes, UpdateSourceTrigger=PropertyChanged}" 
-                             Margin="0,0,0,10"/>
+                             Margin="0,0,0,10" AcceptsReturn="True" />
 
                     <TextBlock Text="Consumer Phone" Margin="0,0,0,2" FontWeight="SemiBold"/>
                     <ComboBox ItemsSource="{Binding Consumers}" 
@@ -61,59 +136,15 @@
 
                     <!-- Total Price Calculation Display -->
                     <StackPanel Orientation="Horizontal" Margin="0,10,0,0">
-                        <TextBlock Text="Total Price:" FontWeight="Bold" Margin="0,0,5,0"/>
-                        <TextBlock Text="{Binding TotalPrice, StringFormat=C}" FontWeight="Bold" Foreground="Green"/>
+                        <TextBlock Text="Total Price:" FontWeight="Bold" FontSize="18" Margin="0,0,5,0"/>
+                        <TextBlock Text="{Binding TotalPrice, StringFormat=C}"  FontSize="18"  Foreground="Green"/>
                     </StackPanel>
                 </StackPanel>
             </Grid>
         </Border>
 
-        <!-- Search Panel -->
-        <Border Grid.Row="2" BorderThickness="1" CornerRadius="5" Padding="10">
-            <DockPanel LastChildFill="True">
-                <Button Content="Reload" DockPanel.Dock="Right" Width="60" Height="30"
-                        VerticalAlignment="Bottom" Command="{Binding ReloadPageCommand}" Margin="10,0,0,0"/>
-                <Button Content="Refresh" DockPanel.Dock="Right" Width="60" Height="30"
-                        VerticalAlignment="Bottom" Command="{Binding RefreshCommand}" Margin="10,0,0,0"/>
-
-                <StackPanel Orientation="Vertical">
-                    <TextBlock Text="Search Orders" Margin="0,0,0,5" FontWeight="SemiBold"/>
-                    <TextBox Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}" Padding="5" MinWidth="200"/>
-                </StackPanel>
-            </DockPanel>
-        </Border>
-
-        <!-- DataGrid -->
-        <Border Grid.Row="4" BorderThickness="1" CornerRadius="5">
-            <DataGrid ItemsSource="{Binding ProjectOrders}" SelectedItem="{Binding SelectedOrder}"
-                      AutoGenerateColumns="False" IsReadOnly="True" GridLinesVisibility="None"
-                      HeadersVisibility="Column" ColumnHeaderHeight="30" RowHeight="30">
-                <DataGrid.Columns>
-                    <DataGridTextColumn Header="Project" Binding="{Binding Project.Name}" Width="*"/>
-                    <DataGridTextColumn Header="Discount" Binding="{Binding Discount, StringFormat={}{0}%}" Width="Auto"/>
-                    <DataGridTextColumn Header="Installation Info" Binding="{Binding InstallationSystemInfo}" Width="*"/>
-                    <DataGridTextColumn Header="Sold Date" Binding="{Binding SoldDate, StringFormat=d}" Width="Auto"/>
-                    <DataGridTextColumn Header="Notes" Binding="{Binding Notes}" Width="*"/>
-                    <DataGridTextColumn Header="Consumer Phone" Binding="{Binding ConsumerPhone}" Width="Auto"/>
-                    <DataGridTextColumn Header="Total Price" Binding="{Binding TotalPrice, StringFormat=C}" Width="Auto"/>
-                    <DataGridTextColumn Header="Folder Serial" Binding="{Binding FolderSerial}" Width="Auto"/>
-
-                    <DataGridTemplateColumn Header="Actions" Width="Auto">
-                        <DataGridTemplateColumn.CellTemplate>
-                            <DataTemplate>
-                                <Button Content="📂" ToolTip="Locate"
-                                        Command="{Binding DataContext.LocateCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
-                                        CommandParameter="{Binding}" Width="30" Height="30"
-                                        Style="{StaticResource {x:Static ToolBar.ButtonStyleKey}}"/>
-                            </DataTemplate>
-                        </DataGridTemplateColumn.CellTemplate>
-                    </DataGridTemplateColumn>
-                </DataGrid.Columns>
-            </DataGrid>
-        </Border>
-
         <!-- Action Buttons -->
-        <StackPanel Grid.Row="5" Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,10,0,0">
+        <StackPanel Grid.Row="6" Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,10,0,0">
             <Button Content="Add" Command="{Binding AddCommand}" Margin="5" Width="80" Height="30"/>
             <Button Content="Update" Command="{Binding UpdateCommand}" Margin="5" Width="80" Height="30"/>
             <Button Content="Delete" Command="{Binding DeleteCommand}" Margin="5" Width="80" Height="30"/>

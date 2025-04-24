@@ -183,7 +183,8 @@ namespace ProjectManager.ViewModels
             RefreshCommand = new RelayCommand(LoadData);
             ReloadPageCommand = new RelayCommand(() => { LoadData(); Clear(); });
             ClearCommand = new RelayCommand(Clear);
-            LocateCommand = new RelayCommand(Locate, () => SelectedOrder != null && !string.IsNullOrEmpty(SelectedOrder.FolderSerial));
+            // LocateCommand = new RelayCommand(Locate, () => SelectedOrder != null && !string.IsNullOrEmpty(SelectedOrder.FolderSerial));
+            LocateCommand = new RelayCommand(Locate);
             AddCommand = new RelayCommand(AddNewOrder);
             UpdateCommand = new RelayCommand(UpdateOrder, () => SelectedOrder != null && !HasErrors);
         }
