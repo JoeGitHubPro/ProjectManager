@@ -1,7 +1,7 @@
 ﻿using ProjectManager.ViewModels;
 using System.Windows;
 
-namespace ProjectManager
+namespace ProjectManager.Views
 {
     /// <summary>
     /// Interaction logic for MainWindow.xaml

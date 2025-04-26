@@ -323,6 +323,7 @@ namespace ProjectManager.ViewModels
 
                 if (result != MessageBoxResult.Yes) return;
 
+                FolderHelper.DeleteFolder(SelectedOrder.FolderSerial);
                 _context.ProjectOrders.Remove(SelectedOrder);
                 _context.SaveChanges();
                 LoadData();

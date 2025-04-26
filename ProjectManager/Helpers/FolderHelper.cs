@@ -6,17 +6,17 @@ namespace ProjectManager.Helpers
 {
     public static class FolderHelper
     {
+        public static string baseDir = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Dir");
+
         public static string CreateUniqueFolder()
         {
             var config = ConfigHelper.LoadConfig<AppConfig>("jsconfig.json");
 
             // Ensure the base folder (e.g., \Dir) exists in the application root
-            string baseDir = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, config.MainFolder is not null ? config.MainFolder : "Dir");
             Directory.CreateDirectory(baseDir);
 
             // Build unique folder name
             string guid = Guid.NewGuid().ToString("N");
-
             string folderName = guid;
             string fullPath = Path.Combine(baseDir, folderName);
 
@@ -24,7 +24,7 @@ namespace ProjectManager.Helpers
             Directory.CreateDirectory(fullPath);
 
             // Define subfolders to create
-            List<string> subfolders = config.Subfolders is not null ? config.Subfolders : ["Contract", "Set-Up", "Source-Code", "Drivers"];
+            List<string> subfolders = config.Subfolders ?? new List<string> { "Contract", "Set-Up", "Source-Code", "Drivers" };
 
             foreach (var subfolder in subfolders)
             {
@@ -34,9 +34,9 @@ namespace ProjectManager.Helpers
 
             return folderName;
         }
+
         public static void OpenFolderByName(string FolderName)
         {
-            string baseDir = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Dir");
             string targetPath = Path.Combine(baseDir, FolderName);
 
             if (Directory.Exists(targetPath))
@@ -48,6 +48,29 @@ namespace ProjectManager.Helpers
                 System.Windows.MessageBox.Show("Folder not found!", "Error", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
             }
         }
+
+        public static void DeleteFolder(string FolderName)
+        {
+            try
+            {
+                string targetPath = Path.Combine(baseDir, FolderName);
+
+                // Check if the directory exists
+                if (Directory.Exists(targetPath)) // Use targetPath instead
+                {
+                    // Delete the directory and all its contents
+                    Directory.Delete(targetPath, true);
+                    Console.WriteLine($"Folder '{targetPath}' deleted successfully.");
+                }
+                else
+                {
+                    Console.WriteLine($"Folder '{targetPath}' does not exist.");
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"An error occurred: {ex.Message}");
+            }
+        }
     }
 }
-
