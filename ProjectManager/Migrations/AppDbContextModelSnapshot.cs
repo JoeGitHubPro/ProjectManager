@@ -24,13 +24,51 @@ namespace ProjectManager.Migrations
 
             modelBuilder.Entity("ProjectManager.Models.Consumer", b =>
                 {
-                    b.Property<string>("Phone")
-                        .HasColumnType("nvarchar(450)");
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
                     b.Property<string>("CommercialRegisterNo")
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<string>("Description")
                         .HasColumnType("nvarchar(max)");
 
-                    b.HasKey("Phone");
+                    b.Property<string>("Facebook")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Instagram")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Name")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Notes")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Phone")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<string>("Site")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("TikTok")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Whatsapp")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("X")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Phone", "CommercialRegisterNo")
+                        .IsUnique()
+                        .HasFilter("[CommercialRegisterNo] IS NOT NULL");
 
                     b.ToTable("Consumers");
                 });
@@ -88,9 +126,8 @@ namespace ProjectManager.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<string>("ConsumerPhone")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(450)");
+                    b.Property<int>("ConsumerId")
+                        .HasColumnType("int");
 
                     b.Property<decimal>("Discount")
                         .HasColumnType("decimal(18,2)");
@@ -116,7 +153,7 @@ namespace ProjectManager.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("ConsumerPhone");
+                    b.HasIndex("ConsumerId");
 
                     b.HasIndex("ProjectId");
 
@@ -138,7 +175,7 @@ namespace ProjectManager.Migrations
                 {
                     b.HasOne("ProjectManager.Models.Consumer", "Consumer")
                         .WithMany("ProjectOrders")
-                        .HasForeignKey("ConsumerPhone")
+                        .HasForeignKey("ConsumerId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 

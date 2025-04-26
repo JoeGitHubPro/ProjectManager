@@ -1,5 +1,4 @@
-﻿using Microsoft.EntityFrameworkCore;
-using ProjectManager.Models;
+﻿using ProjectManager.Models;
 using System.Collections.ObjectModel;
 using System.Windows;
 
@@ -12,6 +11,15 @@ namespace ProjectManager.ViewModels
         private Consumer _selectedConsumer;
         private string _phone = string.Empty;
         private string _commercialRegisterNo = string.Empty;
+        private string _name = string.Empty;
+        private string _description = string.Empty;
+        private string _whatsapp = string.Empty;
+        private string _facebook = string.Empty;
+        private string _tikTok = string.Empty;
+        private string _x = string.Empty;
+        private string _instagram = string.Empty;
+        private string _site = string.Empty;
+        private string _notes = string.Empty;
         private bool _isNewRecord = true;
 
         public ConsumerViewModel()
@@ -39,7 +47,113 @@ namespace ProjectManager.ViewModels
                     _isNewRecord = false;
                     Phone = value.Phone;
                     CommercialRegisterNo = value.CommercialRegisterNo;
+                    Name = value.Name;
+                    Description = value.Description;
+                    Whatsapp = value.Whatsapp;
+                    Facebook = value.Facebook;
+                    TikTok = value.TikTok;
+                    X = value.X;
+                    Instagram = value.Instagram;
+                    Site = value.Site;
+                    Notes = value.Notes;
                 }
+
+            }
+        }
+        public string Name
+        {
+            get => _name;
+            set
+            {
+                _name = value;
+                OnPropertyChanged();
+            }
+        }
+
+        public string Description
+        {
+            get => _description;
+            set
+            {
+                _description = value;
+                OnPropertyChanged();
+            }
+        }
+
+        public string Whatsapp
+        {
+            get
+            {
+                if (string.IsNullOrEmpty(_whatsapp))
+                {
+                    return Phone;
+                }
+                return _whatsapp;
+            }
+            set
+            {
+                _whatsapp = value;
+                OnPropertyChanged();
+            }
+        }
+
+        public string Facebook
+        {
+            get => _facebook;
+            set
+            {
+                _facebook = value;
+                OnPropertyChanged();
+            }
+        }
+
+        public string TikTok
+        {
+            get => _tikTok;
+            set
+            {
+                _tikTok = value;
+                OnPropertyChanged();
+            }
+        }
+
+        public string X
+        {
+            get => _x;
+            set
+            {
+                _x = value;
+                OnPropertyChanged();
+            }
+        }
+
+        public string Instagram
+        {
+            get => _instagram;
+            set
+            {
+                _instagram = value;
+                OnPropertyChanged();
+            }
+        }
+
+        public string Site
+        {
+            get => _site;
+            set
+            {
+                _site = value;
+                OnPropertyChanged();
+            }
+        }
+
+        public string Notes
+        {
+            get => _notes;
+            set
+            {
+                _notes = value;
+                OnPropertyChanged();
             }
         }
 
@@ -151,13 +265,23 @@ namespace ProjectManager.ViewModels
                 var searchLower = SearchText.ToLower();
                 FilteredConsumers = new ObservableCollection<Consumer>(
                     Consumers.Where(c =>
-                        c.Phone.ToLower().Contains(searchLower) ||
-                        (c.CommercialRegisterNo != null &&
-                         c.CommercialRegisterNo.ToLower().Contains(searchLower)))
+                        (!string.IsNullOrEmpty(c.Name) && c.Name.ToLower().Contains(searchLower)) ||
+                        (!string.IsNullOrEmpty(c.Description) && c.Description.ToLower().Contains(searchLower)) ||
+                        (!string.IsNullOrEmpty(c.Phone) && c.Phone.ToLower().Contains(searchLower)) ||
+                        (!string.IsNullOrEmpty(c.Whatsapp) && c.Whatsapp.ToLower().Contains(searchLower)) ||
+                        (!string.IsNullOrEmpty(c.Facebook) && c.Facebook.ToLower().Contains(searchLower)) ||
+                        (!string.IsNullOrEmpty(c.TikTok) && c.TikTok.ToLower().Contains(searchLower)) ||
+                        (!string.IsNullOrEmpty(c.X) && c.X.ToLower().Contains(searchLower)) ||
+                        (!string.IsNullOrEmpty(c.Instagram) && c.Instagram.ToLower().Contains(searchLower)) ||
+                        (!string.IsNullOrEmpty(c.Site) && c.Site.ToLower().Contains(searchLower)) ||
+                        (!string.IsNullOrEmpty(c.Notes) && c.Notes.ToLower().Contains(searchLower)) ||
+                        (!string.IsNullOrEmpty(c.CommercialRegisterNo) && c.CommercialRegisterNo.ToLower().Contains(searchLower))
+                    )
                 );
             }
             OnPropertyChanged(nameof(FilteredConsumers));
         }
+
 
         private void AddNewConsumer()
         {
@@ -197,7 +321,8 @@ namespace ProjectManager.ViewModels
 
         private void SaveNewConsumer()
         {
-            var existing = _context.Consumers.Find(Phone);
+            // Check if a consumer with the same phone already exists
+            var existing = _context.Consumers.FirstOrDefault(c => c.Phone == Phone);
             if (existing != null)
             {
                 throw new InvalidOperationException("A consumer with this phone number already exists.");
@@ -206,20 +331,48 @@ namespace ProjectManager.ViewModels
             var consumer = new Consumer
             {
                 Phone = Phone,
-                CommercialRegisterNo = CommercialRegisterNo
+                CommercialRegisterNo = CommercialRegisterNo,
+                Name = Name,
+                Description = Description,
+                Whatsapp = Whatsapp,
+                Facebook = Facebook,
+                TikTok = TikTok,
+                X = X,
+                Instagram = Instagram,
+                Site = Site,
+                Notes = Notes
             };
 
+
             _context.Consumers.Add(consumer);
+            _context.SaveChanges(); // Save immediately to get the auto-generated Id
+
             Consumers.Add(consumer);
+            FilteredConsumers.Add(consumer);
         }
 
         private void UpdateExistingConsumer()
         {
             if (SelectedConsumer == null) return;
 
+            // Update the SelectedConsumer properties
+            SelectedConsumer.Phone = Phone;
             SelectedConsumer.CommercialRegisterNo = CommercialRegisterNo;
-            _context.Entry(SelectedConsumer).State = EntityState.Modified;
+            SelectedConsumer.Name = Name;
+            SelectedConsumer.Description = Description;
+            SelectedConsumer.Whatsapp = Whatsapp;
+            SelectedConsumer.Facebook = Facebook;
+            SelectedConsumer.TikTok = TikTok;
+            SelectedConsumer.X = X;
+            SelectedConsumer.Instagram = Instagram;
+            SelectedConsumer.Site = Site;
+            SelectedConsumer.Notes = Notes;
+
+
+            _context.Consumers.Update(SelectedConsumer);
+            _context.SaveChanges();
         }
+
 
         private void DeleteConsumer()
         {
@@ -255,7 +408,17 @@ namespace ProjectManager.ViewModels
             SelectedConsumer = null;
             Phone = string.Empty;
             CommercialRegisterNo = string.Empty;
+            Name = string.Empty;
+            Description = string.Empty;
+            Whatsapp = string.Empty;
+            Facebook = string.Empty;
+            TikTok = string.Empty;
+            X = string.Empty;
+            Instagram = string.Empty;
+            Site = string.Empty;
+            Notes = string.Empty;
             _isNewRecord = true;
+
         }
 
         #endregion

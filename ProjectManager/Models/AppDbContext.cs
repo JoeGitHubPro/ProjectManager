@@ -14,12 +14,14 @@ public partial class AppDbContext : DbContext
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.Entity<Consumer>()
-    .HasKey(c => c.Phone);
+            .HasIndex(u => new { u.Phone, u.CommercialRegisterNo })
+            .IsUnique();
+
 
         modelBuilder.Entity<ProjectOrder>()
             .HasOne(po => po.Consumer)
             .WithMany(c => c.ProjectOrders)
-            .HasForeignKey(po => po.ConsumerPhone);
+            .HasForeignKey(po => po.ConsumerId);
 
         modelBuilder.Entity<ProjectOrder>()
             .HasOne(po => po.Project)

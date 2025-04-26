@@ -73,19 +73,20 @@ namespace ProjectManager.ViewModels
             }
         }
 
-        private string _selectedConsumerPhone = string.Empty;
-        public string SelectedConsumerPhone
+        private int _selectedConsumerId;
+        public int SelectedConsumerId
         {
-            get => _selectedConsumerPhone;
+            get => _selectedConsumerId;
             set
             {
-                if (_selectedConsumerPhone != value)
+                if (_selectedConsumerId != value)
                 {
-                    _selectedConsumerPhone = value;
+                    _selectedConsumerId = value;
                     OnPropertyChanged();
                 }
             }
         }
+
 
         private int _selectedProjectId;
         public int SelectedProjectId
@@ -148,7 +149,7 @@ namespace ProjectManager.ViewModels
                         InstallationSystemInfo = _selectedOrder.InstallationSystemInfo;
                         SoldDate = _selectedOrder.SoldDate;
                         Notes = _selectedOrder.Notes;
-                        SelectedConsumerPhone = _selectedOrder.ConsumerPhone;
+                        SelectedConsumerId = _selectedOrder.ConsumerId;
                         SelectedProjectId = _selectedOrder.ProjectId;
                     }
                 }
@@ -203,6 +204,7 @@ namespace ProjectManager.ViewModels
         {
             try
             {
+                _context?.Dispose();
                 _context = new AppDbContext();
 
                 ProjectOrders = new ObservableCollection<ProjectOrder>(
@@ -222,8 +224,8 @@ namespace ProjectManager.ViewModels
             {
                 MessageBox.Show($"Error loading data: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
             }
-
         }
+
 
         private void FilterData()
         {
@@ -240,7 +242,7 @@ namespace ProjectManager.ViewModels
                     .Include(p => p.Consumer)
                     .Where(o =>
                         o.Project.Name.ToLower().Contains(searchLower) ||
-                        o.ConsumerPhone.Contains(searchLower) ||
+                        o.Consumer.Phone.Contains(searchLower) ||
                         (o.Notes != null && o.Notes.ToLower().Contains(searchLower)) ||
                         o.FolderSerial.Contains(searchLower))
                     .ToList());
@@ -277,7 +279,7 @@ namespace ProjectManager.ViewModels
                         InstallationSystemInfo = InstallationSystemInfo,
                         SoldDate = SoldDate,
                         Notes = Notes,
-                        ConsumerPhone = SelectedConsumerPhone,
+                        ConsumerId = SelectedConsumerId,
                         ProjectId = SelectedProjectId,
                         TotalPrice = project.Price * (1 - Discount / 100)
                     };
@@ -291,7 +293,7 @@ namespace ProjectManager.ViewModels
                     SelectedOrder.InstallationSystemInfo = InstallationSystemInfo;
                     SelectedOrder.SoldDate = SoldDate;
                     SelectedOrder.Notes = Notes;
-                    SelectedOrder.ConsumerPhone = SelectedConsumerPhone;
+                    SelectedOrder.ConsumerId = SelectedConsumerId;
                     SelectedOrder.ProjectId = SelectedProjectId;
                     SelectedOrder.TotalPrice = project.Price * (1 - Discount / 100);
                 }
@@ -339,7 +341,7 @@ namespace ProjectManager.ViewModels
             InstallationSystemInfo = string.Empty;
             SoldDate = DateTime.Today;
             Notes = string.Empty;
-            SelectedConsumerPhone = string.Empty;
+            SelectedConsumerId = 0;
             SelectedProjectId = 0;
             SelectedOrder = null;
         }
@@ -390,9 +392,9 @@ namespace ProjectManager.ViewModels
                             return "Sold date cannot be in the future";
                         break;
 
-                    case nameof(SelectedConsumerPhone):
-                        if (string.IsNullOrWhiteSpace(SelectedConsumerPhone))
-                            return "Consumer phone is required";
+                    case nameof(SelectedConsumerId):
+                        if (SelectedConsumerId <= 0)
+                            return "Consumer is required";
                         break;
                 }
                 return string.Empty;
@@ -406,7 +408,7 @@ namespace ProjectManager.ViewModels
                 return !string.IsNullOrEmpty(this[nameof(SelectedProjectId)]) ||
                        !string.IsNullOrEmpty(this[nameof(Discount)]) ||
                        !string.IsNullOrEmpty(this[nameof(SoldDate)]) ||
-                       !string.IsNullOrEmpty(this[nameof(SelectedConsumerPhone)]);
+                       !string.IsNullOrEmpty(this[nameof(SelectedConsumerId)]);
             }
         }
         #endregion

@@ -51,7 +51,7 @@
                     <DataGridTextColumn Header="Installation Info" Binding="{Binding InstallationSystemInfo}" Width="*" MinWidth="150"/>
                     <DataGridTextColumn Header="Sold Date" Binding="{Binding SoldDate, StringFormat=d}" Width="Auto" MinWidth="100"/>
                     <DataGridTextColumn Header="Notes" Binding="{Binding Notes}" Width="*" MinWidth="150"/>
-                    <DataGridTextColumn Header="Consumer Phone" Binding="{Binding ConsumerPhone}" Width="Auto" MinWidth="120"/>
+                    <DataGridTextColumn Header="Consumer Phone" Binding="{Binding Consumer.Phone}" Width="Auto" MinWidth="120"/>
                     <DataGridTextColumn Header="Total Price" Binding="{Binding TotalPrice, StringFormat=C}" Width="Auto" MinWidth="100"/>
                     <DataGridTextColumn Header="Folder Serial" Binding="{Binding FolderSerial}" Width="Auto" MinWidth="100"/>
 
@@ -129,10 +129,11 @@
 
                     <TextBlock Text="Consumer Phone" Margin="0,0,0,2" FontWeight="SemiBold"/>
                     <ComboBox ItemsSource="{Binding Consumers}" 
-                              DisplayMemberPath="Phone"
-                              SelectedValuePath="Phone"
-                              SelectedValue="{Binding SelectedConsumerPhone, UpdateSourceTrigger=PropertyChanged}" 
-                              Margin="0,0,0,10"/>
+          DisplayMemberPath="Phone"
+          SelectedValuePath="Id"
+          SelectedValue="{Binding SelectedConsumerId, UpdateSourceTrigger=PropertyChanged}" 
+          Margin="0,0,0,10"/>
+
 
                     <!-- Total Price Calculation Display -->
                     <StackPanel Orientation="Horizontal" Margin="0,10,0,0">

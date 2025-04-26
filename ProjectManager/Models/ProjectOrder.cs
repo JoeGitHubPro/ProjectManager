@@ -16,8 +16,8 @@ public class ProjectOrder
 
     public string? Notes { get; set; }
 
-    // Foreign Key to Consumer.Phone
-    public string ConsumerPhone { get; set; }
+    // Foreign Key to Consumer.Id
+    public int ConsumerId { get; set; }
     public Consumer Consumer { get; set; }
 
     public int ProjectId { get; set; }
