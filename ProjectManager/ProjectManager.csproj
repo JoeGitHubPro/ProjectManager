@@ -9,12 +9,21 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <None Remove="Assets\Farahat-Pharmacy-logo.png" />
+    <None Remove="Assets\icepharmacy-horizontal.png" />
+    <None Remove="Assets\icepharmacy-icon.png" />
+    <None Remove="Assets\snowflakewhite.png" />
     <None Remove="jsconfig.json" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Page Remove="Assets\Styles.xaml" />
   </ItemGroup>
 
   <ItemGroup>
     <PackageReference Include="MaterialDesignColors" Version="5.2.1" />
     <PackageReference Include="MaterialDesignThemes" Version="5.2.1" />
+    <PackageReference Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" Version="9.0.4" />
     <PackageReference Include="Microsoft.EntityFrameworkCore" Version="9.0.4" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="9.0.4" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="9.0.4">
@@ -24,9 +33,32 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Resource Include="Assets\Styles.xaml" />
     <EmbeddedResource Include="jsconfig.json">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </EmbeddedResource>
+  </ItemGroup>
+
+  <ItemGroup>
+    <Resource Include="Assets\Farahat-Pharmacy-logo.png">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Resource>
+    <Resource Include="Assets\icepharmacy-horizontal.png">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Resource>
+    <Resource Include="Assets\icepharmacy-icon.png">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Resource>
+    <Resource Include="Assets\snowflakewhite.png">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Resource>
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Update="Converters\NullOrWhiteSpaceToVisibilityConverter.cs">
+      <Generator></Generator>
+      <CustomToolNamespace></CustomToolNamespace>
+    </Compile>
   </ItemGroup>
 
 </Project>

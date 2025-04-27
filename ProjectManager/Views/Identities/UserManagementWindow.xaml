@@ -1,0 +1,141 @@
+﻿<Window x:Class="ProjectManager.Views.Identities.UserManagementWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
+        xmlns:local="clr-namespace:ProjectManager.Views.Identities"
+        Title="User Management"  
+        Language="en-US"
+        WindowStartupLocation="CenterScreen"
+        ResizeMode="NoResize"
+        Background="LightGray" 
+        WindowStyle="None" 
+        WindowState="Maximized" 
+        FlowDirection="LeftToRight"
+        Height="467" Width="753">
+
+    <Window.InputBindings>
+        <KeyBinding Gesture="Ctrl+D" Command="{Binding AddUserCommand}" />
+        <KeyBinding Gesture="Ctrl+R" Command="{Binding RefreshCommand}" />
+        <KeyBinding Gesture="ESC" Command="{Binding CloseCommand}" />
+    </Window.InputBindings>
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="50"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <!-- 🟦 Title Bar -->
+        <Grid Background="DarkBlue" Grid.Row="0" Height="50">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto"/>
+            </Grid.ColumnDefinitions>
+
+            <TextBlock Text="User Management"
+               Foreground="White"
+               FontSize="18"
+               FontWeight="Bold"
+               VerticalAlignment="Center"
+               HorizontalAlignment="Right"
+               Margin="20,0,0,0"
+               Grid.Column="0"/>
+
+            <StackPanel Orientation="Horizontal" Grid.Column="2" HorizontalAlignment="Left" Margin="10">
+                <Button BorderThickness="0" Cursor="Hand" Background="Transparent" ToolTip="Refresh" Command="{Binding RefreshCommand}">
+                    <materialDesign:PackIcon Kind="Refresh" Width="24" Height="24" Foreground="White"/>
+                </Button>
+
+                <Button BorderThickness="0" Background="Transparent" Cursor="Hand">
+                    <Button.ToolTip>
+                        <ToolTip Content="Log Out"/>
+                    </Button.ToolTip>
+                    <materialDesign:PackIcon Kind="Shutdown" Width="24" Height="24" Foreground="White"/>
+                </Button>
+            </StackPanel>
+        </Grid>
+
+        <!-- 🔹 Users Table -->
+        <DataGrid ItemsSource="{Binding Users}" 
+                  Grid.Row="2"
+                  AutoGenerateColumns="False" 
+                  Background="White"  
+                  Foreground="black"
+                  BorderBrush="Gray"
+                  RowBackground="LightGray"
+                  AlternatingRowBackground="White"
+                  HeadersVisibility="Column"
+                  IsReadOnly="True"
+                  Margin="12"
+                  HorizontalAlignment="Stretch"
+                  VerticalAlignment="Stretch"
+                  SelectedItem="{Binding SelectedUser, Mode=TwoWay}"
+                  Width="Auto">
+            <DataGrid.Columns>
+                <DataGridTextColumn Header="Username" Binding="{Binding UserName}" Width="2*"/>
+                <DataGridTextColumn Header="Role" Binding="{Binding Roles}" Width="2*"/>
+                <DataGridTextColumn Header="Phone Number" Binding="{Binding PhoneNumber}" Width="2*"/>
+                <DataGridTextColumn Header="Email" Binding="{Binding Email}" Width="3*"/>
+
+                <DataGridTemplateColumn Header="Delete" Width="1*">
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate>
+                            <Button Background="#FFD13438" 
+                                    Foreground="White"
+                                    Padding="10,5"
+                                    BorderThickness="0"
+                                    Cursor="Hand"
+                                    Command="{Binding DataContext.DeleteUserCommand, RelativeSource={RelativeSource AncestorType=Window}}">
+                                <StackPanel Orientation="Horizontal">
+                                    <materialDesign:PackIcon Kind="Delete" Width="20" Height="20" Foreground="White"/>
+                                </StackPanel>
+                            </Button>
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                </DataGridTemplateColumn>
+
+                <DataGridTemplateColumn Header="Edit" Width="1*">
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate>
+                            <Button Background="Blue" BorderThickness="0" Command="{Binding DataContext.EditUserCommand, RelativeSource={RelativeSource AncestorType=Window}}">
+                                <materialDesign:PackIcon Kind="Pencil" Width="20" Height="20" Foreground="White"/>
+                            </Button>
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                </DataGridTemplateColumn>
+            </DataGrid.Columns>
+        </DataGrid>
+
+        <StackPanel Grid.Row="3" Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Bottom" Margin="0,10,0,20">
+            <Button Content="Add User"
+                    ToolTip="Ctrl + D"
+                    Width="500"
+                    Height="40"
+                    Margin="10,0,10,0"
+                    Background="DarkBlue" 
+                    Foreground="White"
+                    Command="{Binding AddUserCommand}"/>
+        </StackPanel>
+
+        <!-- Status Bar for Ads -->
+        <StatusBar Grid.Row="4" VerticalAlignment="Bottom" Height="30" Background="White">
+            <Border Background="White" Padding="1">
+                <Grid>
+                    <TextBlock x:Name="AdText" 
+                               Text="🚀 💊 'Ice Pharmacy Program' by Ice Code Software – the best solution for managing pharmacies!
+We also offer a range of customized Ice solutions for supermarkets, clothing stores, restaurants, and cafes.
+📞 Contact us now: +201120506082 🎉"
+                               Foreground="DarkBlue" 
+                               FontSize="13" FontWeight="Bold" 
+                               HorizontalAlignment="Center" 
+                               VerticalAlignment="Center"/>
+                </Grid>
+            </Border>
+        </StatusBar>
+
+    </Grid>
+</Window>

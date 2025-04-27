@@ -1,5 +1,4 @@
-﻿using Microsoft.EntityFrameworkCore;
-using ProjectManager.Data;
+﻿using ProjectManager.StartUp;
 using System.Windows;
 
 namespace ProjectManager
@@ -9,19 +8,18 @@ namespace ProjectManager
     /// </summary>
     public partial class App : Application
     {
-        protected override void OnStartup(StartupEventArgs e)
+        protected async override void OnStartup(StartupEventArgs e)
         {
             base.OnStartup(e);
 
-            using (AppDbContext _context = new AppDbContext())
-            {
-                var pendingMigrations = _context.Database.GetPendingMigrations();
-                if (pendingMigrations.Any())
-                {
-                    _context.Database.Migrate();
-                    MessageBox.Show("Database migrated successfully.");
-                }
-            }
+            await StartUp.SplashScreen.Start();
+
+            await AutoMigration.MigrateAsync();
+
+            await Seed.SeedRolesAsync();
+
+            await Seed.SeedAdminAsync();
+
         }
     }
 
