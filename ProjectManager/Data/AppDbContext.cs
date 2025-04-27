@@ -1,8 +1,9 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using ProjectManager.Config;
 using ProjectManager.Helpers;
+using ProjectManager.Models;
 
-namespace ProjectManager.Models;
+namespace ProjectManager.Data;
 
 public partial class AppDbContext : DbContext
 {

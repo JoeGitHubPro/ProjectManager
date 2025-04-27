@@ -1,5 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
-using ProjectManager.Models;
+using ProjectManager.Data;
 using System.Windows;
 
 namespace ProjectManager
