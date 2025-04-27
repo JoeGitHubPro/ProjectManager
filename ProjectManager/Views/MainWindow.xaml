@@ -3,19 +3,19 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:views="clr-namespace:ProjectManager.Views"
         Title="Project Manager" Height="600" Width="900" WindowState="Maximized" WindowStartupLocation="CenterScreen">
-    
+
     <Grid>
         <TabControl>
-            <TabItem Header="Project Order">
+            <TabItem Header="Project Order" IsEnabled="{Binding IsProjectOrderEnabled}">
                 <views:ProjectOrderView DataContext="{Binding ProjectOrderVM}" />
             </TabItem>
-            <TabItem Header="Project Categories">
+            <TabItem Header="Project Categories" IsEnabled="{Binding IsProjectCategoriesEnabled}">
                 <views:ProjectCategoryView DataContext="{Binding ProjectCategoryVM}" />
-            </TabItem>      
-            <TabItem Header="Projects">
+            </TabItem>
+            <TabItem Header="Projects" IsEnabled="{Binding IsProjectsEnabled}">
                 <views:ProjectView DataContext="{Binding ProjectVM}" />
             </TabItem>
-            <TabItem Header="Consumers">
+            <TabItem Header="Consumers" IsEnabled="{Binding IsConsumersEnabled}">
                 <views:ConsumerView DataContext="{Binding ConsumerVM}"/>
             </TabItem>
         </TabControl>
