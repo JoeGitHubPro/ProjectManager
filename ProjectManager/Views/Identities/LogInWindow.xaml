@@ -6,7 +6,7 @@
         xmlns:helpers="clr-namespace:ProjectManager.Helpers"
         xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
         mc:Ignorable="d"
-        Title="Login" Height="450" Width="800"
+        Title="Login" Height="450" Width="400"
         Language="en-US"
         FlowDirection="LeftToRight"
         WindowStartupLocation="CenterScreen"
@@ -18,43 +18,9 @@
     </Window.InputBindings>
 
     <Grid>
-        <Grid.ColumnDefinitions>
-            <ColumnDefinition/>
-            <ColumnDefinition/>
-        </Grid.ColumnDefinitions>
-
-        <!-- Left side: Logo and Slogan -->
-        <Border Grid.Column="0" Background="{StaticResource PrimaryBrush}">
-            <Grid>
-                <Image Source="/Assets/icepharmacy-horizontal.png"
-                       HorizontalAlignment="Center"
-                       VerticalAlignment="Center" Height="65" Width="250" Opacity="0.7" />
-                <Image Source="/Assets/snowflakewhite.png"
-                       HorizontalAlignment="Left"
-                       VerticalAlignment="Bottom"
-                       Margin="316,0,0,375" Height="99" Width="119" Opacity="0.3" />
-                <Label Content="F R E E Z E  Y O U R  W O R R I E S ,"
-                       HorizontalAlignment="Center"
-                       VerticalAlignment="Top"
-                       Margin="0,378,0,0"
-                       Foreground="{StaticResource WhiteBrush}"
-                       Width="168"
-                       Height="22"
-                       FontSize="10"
-                       FontWeight="Bold"/>
-                <Label Content="L E T  U S  H A N D L E  I T "
-                       HorizontalAlignment="Center"
-                       VerticalAlignment="Top"
-                       Margin="0,400,0,0"
-                       Foreground="{StaticResource WhiteBrush}"
-                       Width="122"
-                       Height="22"
-                       FontSize="10"/>
-            </Grid>
-        </Border>
 
         <!-- Right side: Login Form -->
-        <Border Grid.Column="1" Background="{StaticResource WhiteBrush}" Padding="40">
+        <Border Grid.Column="0" Background="{StaticResource WhiteBrush}" Padding="40">
             <StackPanel VerticalAlignment="Center" FocusManager.FocusedElement="{Binding ElementName=UsernameOrEmailTextBox}">
                 <TextBlock Text="Welcome Back"
                            Foreground="{StaticResource PrimaryBrush}"

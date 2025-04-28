@@ -1,116 +1,47 @@
 ﻿<Window x:Class="ProjectManager.Views.SplashWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        Title="SplashScreen" 
-        WindowStyle="None" 
-        AllowsTransparency="True"
-        Background="{StaticResource DarkBrush}"
+        Title="Project Manager"
         WindowStartupLocation="CenterScreen"
-        Loaded="Window_Loaded"
-        Height="300" 
-        Width="500">
-
-    <Window.Resources>
-        <!-- 🎬 First Animation: Logo Fade-In & Move -->
-        <Storyboard x:Key="LogoAnimation">
-            <DoubleAnimation Storyboard.TargetName="LogoImage"
-                             Storyboard.TargetProperty="Opacity"
-                             From="0" To="1"
-                             Duration="0:0:1"/>
-
-            <DoubleAnimation Storyboard.TargetName="LogoImage"
-                             Storyboard.TargetProperty="RenderTransform.(TranslateTransform.Y)"
-                             From="0" To="-30"
-                             Duration="0:0:0.5"/>
-        </Storyboard>
-
-        <!-- 🎬 Second Animation: Loading Text & Progress Bar -->
-        <Storyboard x:Key="LoadingAnimation">
-            <DoubleAnimation Storyboard.TargetName="LoadingText"
-                             Storyboard.TargetProperty="Opacity"
-                             From="0" To="1"
-                             Duration="0:0:1"/>
-            <DoubleAnimation Storyboard.TargetName="LoadingText"
-                             Storyboard.TargetProperty="RenderTransform.(TranslateTransform.Y)"
-                             From="0" To="-10"
-                             Duration="0:0:0.5"/>
-
-            <DoubleAnimation Storyboard.TargetName="info"
-                             Storyboard.TargetProperty="Opacity"
-                             From="0" To="1"
-                             Duration="0:0:0.5"/>
-
-            <DoubleAnimation Storyboard.TargetName="info"
-                             Storyboard.TargetProperty="RenderTransform.(TranslateTransform.Y)"
-                             From="0" To="-10"
-                             Duration="0:0:0.5"/>
-
-            <DoubleAnimation Storyboard.TargetName="LoadingBar"
-                             Storyboard.TargetProperty="Opacity"
-                             From="0" To="1"
-                             Duration="0:0:0.5"/>
-        </Storyboard>
-    </Window.Resources>
+        WindowStyle="None"
+        ResizeMode="NoResize"
+        Background="{StaticResource WhiteBrush}"
+        Width="500" Height="300">
 
     <Grid>
-        <!-- Background -->
-        <Border Background="{StaticResource DarkBrush}">
-            <Grid>
-                <!-- Logo or Image -->
-                <Image Source="/Assets/icepharmacy-icon.png" 
-                       x:Name="LogoImage"
-                       Width="150" 
-                       Height="150"
-                       HorizontalAlignment="Center"
-                       VerticalAlignment="Center"
-                       Opacity="0" 
-                       RenderTransformOrigin="0.5,0.5">
-                    <Image.RenderTransform>
-                        <TranslateTransform Y="0"/>
-                    </Image.RenderTransform>
-                </Image>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="3*" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
 
-                <!-- Loading Message -->
-                <TextBlock x:Name="LoadingText" Text="IcePharmacy"
-                   Style="{StaticResource HeadingTextStyle}"
-                   HorizontalAlignment="Center"
-                   VerticalAlignment="Top"
-                   Margin="0,230,0,0"
-                   Opacity="0">
-                    <TextBlock.RenderTransform>
-                        <TranslateTransform Y="0"/>
-                    </TextBlock.RenderTransform>
-                </TextBlock>
+        <!-- Title and Subtitle -->
+        <StackPanel Grid.Row="0" VerticalAlignment="Center" HorizontalAlignment="Center">
+            <TextBlock Text="Project Manager" 
+                       Style="{StaticResource HeadingTextStyle}"
+                       Margin="0,0,0,20" />
 
-                <!-- Loading Animation (Progress Bar) -->
-                <ProgressBar IsIndeterminate="True" 
-                             x:Name="LoadingBar"
-                             HorizontalAlignment="Center"
-                             VerticalAlignment="Top"
-                             Width="200"
-                             Height="10"
-                             Margin="0,260,0,0" 
-                             Background="{StaticResource WhiteBrush}" 
-                             BorderBrush="{StaticResource AccentBrush}" 
-                             Foreground="{StaticResource PrimaryBrush}"
-                             Opacity="0">
-                    <ProgressBar.RenderTransform>
-                        <TranslateTransform Y="0"/>
-                    </ProgressBar.RenderTransform>
-                </ProgressBar>
+            <TextBlock Text="Manage all your projects efficiently and easily."
+                       Style="{StaticResource BodyTextStyle}"
+                       TextAlignment="Center"
+                       TextWrapping="Wrap"
+                       Width="300" />
+        </StackPanel>
 
-                <!-- Footer Info Text -->
-                <TextBlock x:Name="info" Text="By: Icecode"
+        <!-- Progress Bar -->
+        <StackPanel Grid.Row="1" VerticalAlignment="Center" HorizontalAlignment="Center">
+            <ProgressBar Width="300"
+                         Height="10"
+                         IsIndeterminate="True"
+                         Foreground="{StaticResource PrimaryBrush}"
+                         Background="{StaticResource AccentBrush}" />
+        </StackPanel>
+
+        <!-- Footer Text (Optional: Loading...) -->
+        <TextBlock Grid.Row="2"
+                   Text="Loading..."
                    Style="{StaticResource BodyTextStyle}"
-                   HorizontalAlignment="Right"
-                   VerticalAlignment="Top"
-                   Margin="374,264,0,0"
-                   Opacity="0" RenderTransformOrigin="0.495,-1.401">
-                    <TextBlock.RenderTransform>
-                        <TranslateTransform Y="0"/>
-                    </TextBlock.RenderTransform>
-                </TextBlock>
-            </Grid>
-        </Border>
+                   HorizontalAlignment="Center"
+                   Margin="0,10,0,10"/>
     </Grid>
 </Window>
