@@ -5,6 +5,8 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              mc:Ignorable="d">
 
+   
+
     <Grid Margin="10">
         <Grid.RowDefinitions>
             <!-- Search Panel -->
@@ -24,16 +26,15 @@
         <Border Grid.Row="0" BorderThickness="1" CornerRadius="5" Padding="10" Background="#FFF5F5F5">
             <DockPanel LastChildFill="True">
                 <StackPanel Orientation="Horizontal" DockPanel.Dock="Left" VerticalAlignment="Center">
-                    <TextBlock Text="Search Orders" Margin="0,0,10,0" FontWeight="SemiBold" VerticalAlignment="Center"/>
-                    <TextBox Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}" 
-                             Padding="5" MinWidth="200" VerticalAlignment="Center"/>
+                    <TextBlock Text="Search Orders" Margin="0,0,10,0" FontWeight="SemiBold" VerticalAlignment="Center" Style="{StaticResource HeadingTextStyle}"/>
+                    <TextBox Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}" Padding="5" MinWidth="200" VerticalAlignment="Center"/>
                 </StackPanel>
 
                 <StackPanel Orientation="Horizontal" DockPanel.Dock="Right" HorizontalAlignment="Right">
                     <Button Content="Refresh" Width="80" Height="30"
-                            Command="{Binding RefreshCommand}" Margin="5,0,0,0"/>
+                            Command="{Binding RefreshCommand}" Margin="5,0,0,0" Style="{StaticResource PrimaryButtonStyle}"/>
                     <Button Content="Reload" Width="80" Height="30"
-                            Command="{Binding ReloadPageCommand}" Margin="10,0,0,0"/>
+                            Command="{Binding ReloadPageCommand}" Margin="10,0,0,0" Style="{StaticResource PrimaryButtonStyle}"/>
                 </StackPanel>
             </DockPanel>
         </Border>
@@ -54,35 +55,12 @@
                     <DataGridTextColumn Header="Consumer Phone" Binding="{Binding Consumer.Phone}" Width="Auto" MinWidth="120"/>
                     <DataGridTextColumn Header="Total Price" Binding="{Binding TotalPrice, StringFormat=C}" Width="Auto" MinWidth="100"/>
                     <DataGridTextColumn Header="Folder Serial" Binding="{Binding FolderSerial}" Width="Auto" MinWidth="100"/>
-
                     <DataGridTemplateColumn Header="Locate" Width="Auto" MinWidth="80">
                         <DataGridTemplateColumn.CellTemplate>
                             <DataTemplate>
                                 <Button Content="📂" ToolTip="Locate"
-                    Command="{Binding DataContext.LocateCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
-                    CommandParameter="{Binding}" 
-                    Width="30" Height="30"
-                    Padding="5"
-                    Background="Transparent"
-                    BorderThickness="0"
-                    Cursor="Hand">
-                                    <Button.Style>
-                                        <Style TargetType="Button">
-                                            <Setter Property="Template">
-                                                <Setter.Value>
-                                                    <ControlTemplate TargetType="Button">
-                                                        <ContentPresenter/>
-                                                    </ControlTemplate>
-                                                </Setter.Value>
-                                            </Setter>
-                                            <Style.Triggers>
-                                                <Trigger Property="IsMouseOver" Value="True">
-                                                    <Setter Property="Background" Value="#EEE"/>
-                                                </Trigger>
-                                            </Style.Triggers>
-                                        </Style>
-                                    </Button.Style>
-                                </Button>
+                                        Command="{Binding DataContext.LocateCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                        CommandParameter="{Binding}" Width="30" Height="30" Padding="5" Background="Transparent" BorderThickness="0" Cursor="Hand"/>
                             </DataTemplate>
                         </DataGridTemplateColumn.CellTemplate>
                     </DataGridTemplateColumn>
@@ -99,46 +77,33 @@
                     <ColumnDefinition Width="*"/>
                 </Grid.ColumnDefinitions>
 
-                <!-- Left Column -->
                 <StackPanel Orientation="Vertical" Grid.Column="0">
-                    <TextBlock Text="Project" Margin="0,0,0,2" FontWeight="SemiBold"/>
-                    <ComboBox ItemsSource="{Binding Projects}" 
-                              DisplayMemberPath="Name"
-                              SelectedValuePath="Id"
-                              SelectedValue="{Binding SelectedProjectId, UpdateSourceTrigger=PropertyChanged}"
-                              Margin="0,0,0,10"/>
+                    <TextBlock Text="Project" Margin="0,0,0,2" FontWeight="SemiBold" Style="{StaticResource BodyTextStyle}"/>
+                    <ComboBox ItemsSource="{Binding Projects}" DisplayMemberPath="Name"
+                              SelectedValuePath="Id" SelectedValue="{Binding SelectedProjectId, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,10"/>
 
-                    <TextBlock Text="Discount (%)" Margin="0,0,0,2" FontWeight="SemiBold"/>
-                    <TextBox Text="{Binding Discount, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True}" 
-                             Margin="0,0,0,10"/>
+                    <TextBlock Text="Discount (%)" Margin="0,0,0,2" FontWeight="SemiBold" Style="{StaticResource BodyTextStyle}"/>
+                    <TextBox Text="{Binding Discount, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True}" Margin="0,0,0,10"/>
 
-                    <TextBlock Text="Installation System Info" Margin="0,0,0,2" FontWeight="SemiBold"/>
-                    <TextBox Text="{Binding InstallationSystemInfo, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True}" 
-                             Margin="0,0,0,10"/>
+                    <TextBlock Text="Installation System Info" Margin="0,0,0,2" FontWeight="SemiBold" Style="{StaticResource BodyTextStyle}"/>
+                    <TextBox Text="{Binding InstallationSystemInfo, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True}" Margin="0,0,0,10"/>
                 </StackPanel>
 
-                <!-- Right Column -->
                 <StackPanel Orientation="Vertical" Grid.Column="2">
-                    <TextBlock Text="Sold Date" Margin="0,0,0,2" FontWeight="SemiBold"/>
-                    <DatePicker SelectedDate="{Binding SoldDate, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True}" 
-                                Margin="0,0,0,10"/>
+                    <TextBlock Text="Sold Date" Margin="0,0,0,2" FontWeight="SemiBold" Style="{StaticResource BodyTextStyle}"/>
+                    <DatePicker SelectedDate="{Binding SoldDate, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True}" Margin="0,0,0,10"/>
 
-                    <TextBlock Text="Notes" Margin="0,0,0,2" FontWeight="SemiBold"/>
-                    <TextBox Text="{Binding Notes, UpdateSourceTrigger=PropertyChanged}" 
-                             Margin="0,0,0,10" AcceptsReturn="True" />
+                    <TextBlock Text="Notes" Margin="0,0,0,2" FontWeight="SemiBold" Style="{StaticResource BodyTextStyle}"/>
+                    <TextBox Text="{Binding Notes, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,10" AcceptsReturn="True"/>
 
-                    <TextBlock Text="Consumer Phone" Margin="0,0,0,2" FontWeight="SemiBold"/>
-                    <ComboBox ItemsSource="{Binding Consumers}" 
-          DisplayMemberPath="Phone"
-          SelectedValuePath="Id"
-          SelectedValue="{Binding SelectedConsumerId, UpdateSourceTrigger=PropertyChanged}" 
-          Margin="0,0,0,10"/>
+                    <TextBlock Text="Consumer Phone" Margin="0,0,0,2" FontWeight="SemiBold" Style="{StaticResource BodyTextStyle}"/>
+                    <ComboBox ItemsSource="{Binding Consumers}" DisplayMemberPath="Phone"
+                              SelectedValuePath="Id" SelectedValue="{Binding SelectedConsumerId, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,10"/>
 
-
-                    <!-- Total Price Calculation Display -->
+                    <!-- Total Price Display -->
                     <StackPanel Orientation="Horizontal" Margin="0,10,0,0">
                         <TextBlock Text="Total Price:" FontWeight="Bold" FontSize="18" Margin="0,0,5,0"/>
-                        <TextBlock Text="{Binding TotalPrice, StringFormat=C}"  FontSize="18"  Foreground="Green"/>
+                        <TextBlock Text="{Binding TotalPrice, StringFormat=C}" FontSize="18" Foreground="Green"/>
                     </StackPanel>
                 </StackPanel>
             </Grid>
@@ -146,11 +111,11 @@
 
         <!-- Action Buttons -->
         <StackPanel Grid.Row="6" Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,10,0,0">
-            <Button Content="Add" Command="{Binding AddCommand}" Margin="5" Width="80" Height="30"/>
-            <Button Content="Update" Command="{Binding UpdateCommand}" Margin="5" Width="80" Height="30"/>
-            <Button Content="Delete" Command="{Binding DeleteCommand}" Margin="5" Width="80" Height="30"/>
-            <Button Content="Clear" Command="{Binding ClearCommand}" Margin="5" Width="80" Height="30"/>
-            <Button Content="Save" Command="{Binding SaveCommand}" Margin="5" Width="80" Height="30"/>
+            <Button Content="Add" Command="{Binding AddCommand}" Margin="5" Width="80" Height="30" Style="{StaticResource PrimaryButtonStyle}"/>
+            <Button Content="Update" Command="{Binding UpdateCommand}" Margin="5" Width="80" Height="30" Style="{StaticResource PrimaryButtonStyle}"/>
+            <Button Content="Delete" Command="{Binding DeleteCommand}" Margin="5" Width="80" Height="30" Style="{StaticResource PrimaryButtonStyle}"/>
+            <Button Content="Clear" Command="{Binding ClearCommand}" Margin="5" Width="80" Height="30" Style="{StaticResource PrimaryButtonStyle}"/>
+            <Button Content="Save" Command="{Binding SaveCommand}" Margin="5" Width="80" Height="30" Style="{StaticResource PrimaryButtonStyle}"/>
         </StackPanel>
     </Grid>
 </UserControl>

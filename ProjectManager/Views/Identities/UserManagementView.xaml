@@ -1,25 +1,52 @@
-﻿<Window x:Class="ProjectManager.Views.Identities.UserManagementWindow"
-        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
-        xmlns:helpers="clr-namespace:ProjectManager.Helpers"
-        Title="User Management"  
-        WindowStartupLocation="CenterScreen"
-        ResizeMode="NoResize"
-        WindowStyle="None" 
-        Height="700" Width="900" WindowState="Maximized">
+﻿<UserControl x:Class="ProjectManager.Views.Identities.UserManagementView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
+             xmlns:helpers="clr-namespace:ProjectManager.Helpers"
+             xmlns:converters="clr-namespace:ProjectManager.Converters"
+             xmlns:viewModels="clr-namespace:ProjectManager.ViewModels.Identities"
+             Height="Auto" Width="Auto"
+             FlowDirection="LeftToRight"> 
+   
 
-    <Window.InputBindings>
+    <UserControl.InputBindings>
         <KeyBinding Gesture="Ctrl+N" Command="{Binding ShowAddUserFormCommand}" />
         <KeyBinding Gesture="Ctrl+R" Command="{Binding RefreshCommand}" />
-        <KeyBinding Gesture="ESC" Command="{Binding CloseCommand}" />
-    </Window.InputBindings>
+    </UserControl.InputBindings>
 
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="*"/>
         </Grid.RowDefinitions>
+
+        <!-- Status Bar -->
+        <StatusBar Grid.Row="0" Background="WhiteSmoke">
+            <StatusBarItem>
+                <TextBox Width="200"
+                         Style="{StaticResource MaterialDesignOutlinedTextBox}"
+                         materialDesign:HintAssist.Hint="Search users..."
+                         Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}" />
+            </StatusBarItem>
+            
+            <StatusBarItem>
+                <Button Content="Add New User"
+                        Command="{Binding ShowAddUserFormCommand}"
+                        ToolTip="Ctrl+N"
+                        Style="{StaticResource MaterialDesignOutlinedButton}" />
+            </StatusBarItem>
+
+            <StatusBarItem>
+                <Button Content="Refresh"
+                        Command="{Binding RefreshCommand}"
+                        ToolTip="Ctrl+R"
+                        Style="{StaticResource MaterialDesignOutlinedButton}" />
+            </StatusBarItem>
+
+            <StatusBarItem HorizontalAlignment="Right">
+                <TextBlock Text="{Binding StatusMessage}" Style="{StaticResource BodyTextStyle}"/>
+            </StatusBarItem>
+        </StatusBar>
 
         <!-- Main Content Area -->
         <Grid Grid.Row="1">
@@ -29,7 +56,7 @@
             </Grid.ColumnDefinitions>
 
             <!-- User List -->
-            <DataGrid ItemsSource="{Binding Users}" 
+            <DataGrid ItemsSource="{Binding Users}"
                       Grid.Column="0"
                       AutoGenerateColumns="False"
                       SelectedItem="{Binding SelectedUser}"
@@ -64,10 +91,10 @@
                 </DataGrid.Columns>
             </DataGrid>
 
-            <!-- User Form (Collapsible) -->
+            <!-- User Form -->
             <GridSplitter Grid.Column="1" Width="3" HorizontalAlignment="Left" Background="Gray"/>
 
-            <Border Grid.Column="1" Width="350" Background="WhiteSmoke" 
+            <Border Grid.Column="1" Width="350" Background="WhiteSmoke"
                     Visibility="{Binding IsFormVisible, Converter={StaticResource BooleanToEyeIconConverter}}">
                 <Grid Margin="10">
                     <Grid.RowDefinitions>
@@ -76,12 +103,12 @@
                         <RowDefinition Height="Auto"/>
                     </Grid.RowDefinitions>
 
-                    <TextBlock Text="{Binding FormTitle}"
+                    <TextBlock Text="{Binding FormTitle}" 
                                FontSize="16"
                                FontWeight="Bold"
+                               Style="{StaticResource HeadingTextStyle}"
                                Margin="0,0,0,10"/>
 
-                    <!-- User Form -->
                     <StackPanel Grid.Row="1">
                         <TextBox materialDesign:HintAssist.Hint="Username"
                                  Text="{Binding CurrentUser.UserName, UpdateSourceTrigger=PropertyChanged}"
@@ -104,40 +131,35 @@
                                   Margin="0,5,0,5"/>
                         <TextBlock Text="{Binding RoleError}" Foreground="Red"/>
 
+                        <PasswordBox x:Name="PasswordBox"
+                                     materialDesign:HintAssist.Hint="Password"
+                                     Foreground="Black"
+                                     Background="Transparent"
+                                     BorderBrush="White"
+                                     Margin="0,5,0,5"
+                                     Padding="10"
+                                     helpers:PasswordBoxHelper.BoundPassword="{Binding CurrentUser.Password, Mode=TwoWay}" />
+                        <TextBlock Text="{Binding PasswordError}" Foreground="Red"
+                                   Visibility="{Binding PasswordError, Converter={StaticResource NullOrWhiteSpaceToVisibilityConverter}}" />
 
-                <PasswordBox x:Name="PasswordBox"
-                             materialDesign:HintAssist.Hint="Password"
-                             Foreground="Black"
-                             Background="Transparent"
-                             BorderBrush="White"
-                             Margin="0,0,0,5"
-                             Padding="10"
-                             helpers:PasswordBoxHelper.BoundPassword="{Binding CurrentUser.Password, Mode=TwoWay}" />
-
-                <TextBlock Text="{Binding PasswordError}" Foreground="Red" Visibility="{Binding PasswordError, Converter={StaticResource NullOrWhiteSpaceToVisibilityConverter}}" />
-
-                <PasswordBox x:Name="ConfirmPasswordPasswordBox"
-                             materialDesign:HintAssist.Hint="Confirm Password"
-                             Foreground="Black"
-                             Background="Transparent"
-                             BorderBrush="White"
-                             Margin="0,0,0,5"
-                             Padding="10"
-                             helpers:PasswordBoxHelper.BoundPassword="{Binding ConfirmPassword, Mode=TwoWay}" />
-
-                <TextBlock Text="{Binding ConfirmPasswordError}" Foreground="Red" Visibility="{Binding ConfirmPasswordError, Converter={StaticResource NullOrWhiteSpaceToVisibilityConverter}}" />
-
-
-
+                        <PasswordBox x:Name="ConfirmPasswordPasswordBox"
+                                     materialDesign:HintAssist.Hint="Confirm Password"
+                                     Foreground="Black"
+                                     Background="Transparent"
+                                     BorderBrush="White"
+                                     Margin="0,5,0,5"
+                                     Padding="10"
+                                     helpers:PasswordBoxHelper.BoundPassword="{Binding ConfirmPassword, Mode=TwoWay}" />
+                        <TextBlock Text="{Binding ConfirmPasswordError}" Foreground="Red"
+                                   Visibility="{Binding ConfirmPasswordError, Converter={StaticResource NullOrWhiteSpaceToVisibilityConverter}}" />
                     </StackPanel>
 
                     <!-- Action Buttons -->
                     <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Right">
                         <Button Content="Save"
                                 Command="{Binding SaveUserCommand}"
-                                Style="{StaticResource MaterialDesignRaisedButton}"
+                                Style="{StaticResource PrimaryButtonStyle}"
                                 Margin="0,0,10,0"/>
-
                         <Button Content="Cancel"
                                 Command="{Binding CancelFormCommand}"
                                 Style="{StaticResource MaterialDesignOutlinedButton}"/>
@@ -145,18 +167,5 @@
                 </Grid>
             </Border>
         </Grid>
-
-        <!-- Status Bar -->
-        <StatusBar Grid.Row="0" Background="WhiteSmoke">
-            <StatusBarItem>
-                <Button Content="Add New User" 
-                        Command="{Binding ShowAddUserFormCommand}"
-                        ToolTip="Ctrl+N"
-                        Style="{StaticResource MaterialDesignRaisedButton}"/>
-            </StatusBarItem>
-            <StatusBarItem HorizontalAlignment="Right">
-                <TextBlock Text="{Binding StatusMessage}"/>
-            </StatusBarItem>
-        </StatusBar>
     </Grid>
-</Window>
+</UserControl>

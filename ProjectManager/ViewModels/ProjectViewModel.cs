@@ -31,13 +31,15 @@ namespace ProjectManager.ViewModels
             get => _selectedProject;
             set
             {
-                _selectedProject = value;
+                _selectedProject = value ?? new Project();
                 OnPropertyChanged();
                 OnPropertyChanged(nameof(CanDelete));
             }
         }
 
-        public bool CanDelete => SelectedProject != null;
+        public bool CanDelete => _context.Projects.Any(a => a.Name == SelectedProject.Name) && SelectedProject is not null;
+
+
 
         public RelayCommand SaveCommand { get; }
         public RelayCommand DeleteCommand { get; }
@@ -48,7 +50,7 @@ namespace ProjectManager.ViewModels
         public ProjectViewModel()
         {
             SaveCommand = new RelayCommand(SaveProject, () => !HasErrors);
-            DeleteCommand = new RelayCommand(DeleteProject, () => CanDelete);
+            DeleteCommand = new RelayCommand(DeleteProject, () => !HasErrors && CanDelete);
             RefreshCommand = new RelayCommand(LoadData);
             SearchCommand = new RelayCommand(FilterProjects);
             AddNewCommand = new RelayCommand(AddNewProject);

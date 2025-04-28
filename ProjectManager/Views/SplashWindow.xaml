@@ -4,64 +4,57 @@
         Title="SplashScreen" 
         WindowStyle="None" 
         AllowsTransparency="True"
-        Background="Transparent"
+        Background="{StaticResource DarkBrush}"
         WindowStartupLocation="CenterScreen"
         Loaded="Window_Loaded"
         Height="300" 
         Width="500">
 
-
-    <!-- Animation code          -->
     <Window.Resources>
         <!-- 🎬 First Animation: Logo Fade-In & Move -->
         <Storyboard x:Key="LogoAnimation">
             <DoubleAnimation Storyboard.TargetName="LogoImage"
-                         Storyboard.TargetProperty="Opacity"
-                         From="0" To="1"
-                         Duration="0:0:1"/>
+                             Storyboard.TargetProperty="Opacity"
+                             From="0" To="1"
+                             Duration="0:0:1"/>
 
             <DoubleAnimation Storyboard.TargetName="LogoImage"
-                         Storyboard.TargetProperty="RenderTransform.(TranslateTransform.Y)"
-                         From="0" To="-30"
-                         Duration="0:0:0.5"/>
+                             Storyboard.TargetProperty="RenderTransform.(TranslateTransform.Y)"
+                             From="0" To="-30"
+                             Duration="0:0:0.5"/>
         </Storyboard>
 
-        <!-- 🎬 Second Animation: Loading Text & Progress Bar (Starts After LogoAnimation) -->
+        <!-- 🎬 Second Animation: Loading Text & Progress Bar -->
         <Storyboard x:Key="LoadingAnimation">
             <DoubleAnimation Storyboard.TargetName="LoadingText"
-                         Storyboard.TargetProperty="Opacity"
-                         From="0" To="1"
-                         Duration="0:0:1"/>
+                             Storyboard.TargetProperty="Opacity"
+                             From="0" To="1"
+                             Duration="0:0:1"/>
             <DoubleAnimation Storyboard.TargetName="LoadingText"
-                         Storyboard.TargetProperty="RenderTransform.(TranslateTransform.Y)"
-                         From="0" To="-10"
-                         Duration="0:0:0.5"/>
-
-
-            <DoubleAnimation Storyboard.TargetName="info"
-                         Storyboard.TargetProperty="Opacity"
-                         From="0" To="1"
-                         Duration="0:0:0.5"/>
+                             Storyboard.TargetProperty="RenderTransform.(TranslateTransform.Y)"
+                             From="0" To="-10"
+                             Duration="0:0:0.5"/>
 
             <DoubleAnimation Storyboard.TargetName="info"
-                         Storyboard.TargetProperty="RenderTransform.(TranslateTransform.Y)"
-                         From="0" To="-10"
-                         Duration="0:0:0.5"/>
+                             Storyboard.TargetProperty="Opacity"
+                             From="0" To="1"
+                             Duration="0:0:0.5"/>
+
+            <DoubleAnimation Storyboard.TargetName="info"
+                             Storyboard.TargetProperty="RenderTransform.(TranslateTransform.Y)"
+                             From="0" To="-10"
+                             Duration="0:0:0.5"/>
 
             <DoubleAnimation Storyboard.TargetName="LoadingBar"
-                         Storyboard.TargetProperty="Opacity"
-                         From="0" To="1"
-                         Duration="0:0:0.5"/>
-
-            
+                             Storyboard.TargetProperty="Opacity"
+                             From="0" To="1"
+                             Duration="0:0:0.5"/>
         </Storyboard>
     </Window.Resources>
 
-
-
     <Grid>
         <!-- Background -->
-        <Border Background="{StaticResource BackgroundBrush}">
+        <Border Background="{StaticResource DarkBrush}">
             <Grid>
                 <!-- Logo or Image -->
                 <Image Source="/Assets/icepharmacy-icon.png" 
@@ -71,9 +64,7 @@
                        HorizontalAlignment="Center"
                        VerticalAlignment="Center"
                        Opacity="0" 
-                       RenderTransformOrigin="0.5,0.5"
-                       >
-
+                       RenderTransformOrigin="0.5,0.5">
                     <Image.RenderTransform>
                         <TranslateTransform Y="0"/>
                     </Image.RenderTransform>
@@ -81,50 +72,44 @@
 
                 <!-- Loading Message -->
                 <TextBlock x:Name="LoadingText" Text="IcePharmacy"
-                   Foreground="{StaticResource PrimaryBrush}" 
-                   FontSize="13" 
-                   HorizontalAlignment="Left"
+                   Style="{StaticResource HeadingTextStyle}"
+                   HorizontalAlignment="Center"
                    VerticalAlignment="Top"
-                   Margin="79,262,0,0"
+                   Margin="0,230,0,0"
                    Opacity="0">
                     <TextBlock.RenderTransform>
                         <TranslateTransform Y="0"/>
                     </TextBlock.RenderTransform>
-
-
                 </TextBlock>
+
                 <!-- Loading Animation (Progress Bar) -->
                 <ProgressBar IsIndeterminate="True" 
-                     x:Name="LoadingBar"
-                     HorizontalAlignment="Center"
-                     VerticalAlignment="Top"
-                     Width="200"
-                     Height="10"
-                     Margin="0,230,0,0" 
-                     Background="{StaticResource ForegroundBrush }" 
-                     BorderBrush="{StaticResource DarkAccentBrush }" 
-                     Foreground="{StaticResource PrimaryBrush}"
-                     Opacity="0"
-                             >
+                             x:Name="LoadingBar"
+                             HorizontalAlignment="Center"
+                             VerticalAlignment="Top"
+                             Width="200"
+                             Height="10"
+                             Margin="0,260,0,0" 
+                             Background="{StaticResource WhiteBrush}" 
+                             BorderBrush="{StaticResource AccentBrush}" 
+                             Foreground="{StaticResource PrimaryBrush}"
+                             Opacity="0">
                     <ProgressBar.RenderTransform>
                         <TranslateTransform Y="0"/>
                     </ProgressBar.RenderTransform>
                 </ProgressBar>
+
+                <!-- Footer Info Text -->
                 <TextBlock x:Name="info" Text="By: Icecode"
-                   Foreground="{StaticResource PrimaryBrush}" 
-                   FontSize="13" 
-                   FontFamily="InterFont"
-                   HorizontalAlignment="Left"
+                   Style="{StaticResource BodyTextStyle}"
+                   HorizontalAlignment="Right"
                    VerticalAlignment="Top"
                    Margin="374,264,0,0"
                    Opacity="0" RenderTransformOrigin="0.495,-1.401">
                     <TextBlock.RenderTransform>
                         <TranslateTransform Y="0"/>
                     </TextBlock.RenderTransform>
-
-                    
                 </TextBlock>
-
             </Grid>
         </Border>
     </Grid>

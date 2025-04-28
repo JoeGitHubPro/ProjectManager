@@ -8,10 +8,10 @@
         mc:Ignorable="d"
         Title="Login" Height="450" Width="800"
         Language="en-US"
-        FlowDirection="RightToLeft"
+        FlowDirection="LeftToRight"
         WindowStartupLocation="CenterScreen"
         ResizeMode="NoResize"
-        Background="#E0F7FA" WindowStyle="None">
+        Background="{StaticResource WhiteBrush}" WindowStyle="None">
 
     <Window.InputBindings>
         <KeyBinding Gesture="ESC" Command="{Binding CloseCommand}" />
@@ -23,7 +23,8 @@
             <ColumnDefinition/>
         </Grid.ColumnDefinitions>
 
-        <Border Grid.Column="1" Background="#0288D1">
+        <!-- Left side: Logo and Slogan -->
+        <Border Grid.Column="0" Background="{StaticResource PrimaryBrush}">
             <Grid>
                 <Image Source="/Assets/icepharmacy-horizontal.png"
                        HorizontalAlignment="Center"
@@ -36,7 +37,7 @@
                        HorizontalAlignment="Center"
                        VerticalAlignment="Top"
                        Margin="0,378,0,0"
-                       Foreground="#FFFFFF"
+                       Foreground="{StaticResource WhiteBrush}"
                        Width="168"
                        Height="22"
                        FontSize="10"
@@ -45,17 +46,18 @@
                        HorizontalAlignment="Center"
                        VerticalAlignment="Top"
                        Margin="0,400,0,0"
-                       Foreground="#FFFFFF"
+                       Foreground="{StaticResource WhiteBrush}"
                        Width="122"
                        Height="22"
                        FontSize="10"/>
             </Grid>
         </Border>
 
-        <Border Grid.Column="0" Background="LightGray" Padding="40">
+        <!-- Right side: Login Form -->
+        <Border Grid.Column="1" Background="{StaticResource WhiteBrush}" Padding="40">
             <StackPanel VerticalAlignment="Center" FocusManager.FocusedElement="{Binding ElementName=UsernameOrEmailTextBox}">
                 <TextBlock Text="Welcome Back"
-                           Foreground="#0288D1"
+                           Foreground="{StaticResource PrimaryBrush}"
                            FontSize="28"
                            FontWeight="Bold"
                            HorizontalAlignment="Center"
@@ -64,9 +66,9 @@
                 <TextBox x:Name="UsernameOrEmailTextBox"
                          Text="{Binding UsernameOrEmail, UpdateSourceTrigger=PropertyChanged}"
                          materialDesign:HintAssist.Hint="Username or Email"
-                         Foreground="Black"
+                         Foreground="{StaticResource DarkBrush}"
                          Background="Transparent"
-                         BorderBrush="#0288D1"
+                         BorderBrush="{StaticResource PrimaryBrush}"
                          Margin="0,0,0,5"
                          Padding="10" KeyDown="UsernameOrEmailTextBox_KeyDown">
                 </TextBox>
@@ -80,30 +82,31 @@
                         <ColumnDefinition Width="*"/>
                         <ColumnDefinition Width="Auto"/>
                     </Grid.ColumnDefinitions>
+
                     <PasswordBox x:Name="PasswordBox"
-                         materialDesign:HintAssist.Hint="Password"
-                         Foreground="Black"
-                         Background="Transparent"
-                         BorderBrush="#0288D1"
-                         Margin="0,0,0,5"
-                         Padding="10"
-                         helpers:PasswordBoxHelper.BoundPassword="{Binding Password}"
-                         Visibility="{Binding IsPasswordVisible, Converter={StaticResource BooleanToEyeIconConverter}, ConverterParameter=False}">
+                                 materialDesign:HintAssist.Hint="Password"
+                                 Foreground="{StaticResource DarkBrush}"
+                                 Background="Transparent"
+                                 BorderBrush="{StaticResource PrimaryBrush}"
+                                 Margin="0,0,0,5"
+                                 Padding="10"
+                                 helpers:PasswordBoxHelper.BoundPassword="{Binding Password}"
+                                 Visibility="{Binding IsPasswordVisible, Converter={StaticResource BooleanToEyeIconConverter}, ConverterParameter=False}">
                         <PasswordBox.InputBindings>
                             <KeyBinding Command="{Binding LoginCommand}" Key="Enter"/>
                         </PasswordBox.InputBindings>
                     </PasswordBox>
 
                     <TextBox x:Name="VisiblePasswordBox"
-                         materialDesign:HintAssist.Hint="Password"
-                         Foreground="Black"
-                         Background="Transparent"
-                         BorderBrush="#0288D1"
-                         Margin="0,0,0,5"
-                         Padding="10"
-                         Text="{Binding Password, UpdateSourceTrigger=PropertyChanged}"
-                         Visibility="{Binding IsPasswordVisible, Converter={StaticResource BooleanToEyeIconConverter}, ConverterParameter=True}"
-                         Grid.Column="0">
+                             materialDesign:HintAssist.Hint="Password"
+                             Foreground="{StaticResource DarkBrush}"
+                             Background="Transparent"
+                             BorderBrush="{StaticResource PrimaryBrush}"
+                             Margin="0,0,0,5"
+                             Padding="10"
+                             Text="{Binding Password, UpdateSourceTrigger=PropertyChanged}"
+                             Visibility="{Binding IsPasswordVisible, Converter={StaticResource BooleanToEyeIconConverter}, ConverterParameter=True}"
+                             Grid.Column="0">
                         <TextBox.InputBindings>
                             <KeyBinding Command="{Binding LoginCommand}" Key="Enter"/>
                         </TextBox.InputBindings>
@@ -117,8 +120,8 @@
                             Command="{Binding TogglePasswordVisibilityCommand}" 
                             Grid.Column="1">
                         <materialDesign:PackIcon Kind="EyeOutline"
-                                             Width="20" Height="20"
-                                             Foreground="#0288D1"/>
+                                                 Width="20" Height="20"
+                                                 Foreground="{StaticResource PrimaryBrush}"/>
                     </Button>
                 </Grid>
 
@@ -128,8 +131,8 @@
                            Foreground="#b00404"/>
 
                 <Button Content="Log In"
-                        Background="#0288D1"
-                        Foreground="White"
+                        Background="{StaticResource PrimaryBrush}"
+                        Foreground="{StaticResource WhiteBrush}"
                         FontSize="16"
                         FontWeight="Bold"
                         Padding="15,10"
@@ -140,7 +143,7 @@
                         Command="{Binding LoginCommand}"/>
 
                 <TextBlock Text="Forgot Password?"
-                           Foreground="#0288D1"
+                           Foreground="{StaticResource PrimaryBrush}"
                            HorizontalAlignment="Center"
                            Margin="0,15,0,0"
                            Cursor="Hand"/>

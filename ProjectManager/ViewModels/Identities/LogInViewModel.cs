@@ -1,7 +1,6 @@
 ﻿using ProjectManager.Constants;
 using ProjectManager.Service;
 using ProjectManager.Views;
-using ProjectManager.Views.Identities;
 using System.Windows;
 using System.Windows.Input;
 
@@ -80,7 +79,7 @@ namespace ProjectManager.ViewModels.Identities
             if (!SetCurrentUser(result))
                 return;
 
-            NavigateToUserRoleWindow(result.Role);
+            new MainWindow().Show();
             _window.Close();
         }
 
@@ -127,19 +126,6 @@ namespace ProjectManager.ViewModels.Identities
             UserSession.Username = result.UserName;
             UserSession.Role = result.Role;
             return true;
-        }
-
-        private void NavigateToUserRoleWindow(string role)
-        {
-            Window roleWindow = role switch
-            {
-                var r when r == Roles.Admin => new UserManagementWindow(),
-                var r when r == Roles.Manager => new MainWindow(),
-                var r when r == Roles.User => new MainWindow(),
-                _ => null
-            };
-
-            roleWindow?.Show();
         }
     }
 }

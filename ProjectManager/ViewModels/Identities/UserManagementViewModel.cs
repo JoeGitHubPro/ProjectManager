@@ -53,6 +53,18 @@ namespace ProjectManager.ViewModels.Identities
             get => _confirmPassword;
             set { _confirmPassword = value; OnPropertyChanged(); }
         }
+        private string _searchText;
+        public string SearchText
+        {
+            get => _searchText;
+            set
+            {
+                _searchText = value;
+                OnPropertyChanged();
+                FilterUsers(); // Call a method to filter your Users list
+            }
+        }
+
 
         // Error properties
         public string UserNameError { get; private set; }
@@ -71,10 +83,8 @@ namespace ProjectManager.ViewModels.Identities
         public ICommand RefreshCommand { get; }
         public ICommand CloseCommand { get; }
 
-        public UserManagementViewModel(Window window)
+        public UserManagementViewModel()
         {
-            _window = window;
-
             // Initialize commands
             ShowAddUserFormCommand = new RelayCommand(ShowAddUserForm);
             EditUserCommand = new RelayCommand(EditUser);
@@ -85,6 +95,41 @@ namespace ProjectManager.ViewModels.Identities
             CloseCommand = new RelayCommand(CloseWindow);
 
             LoadUsers();
+        }
+
+        private void FilterUsers()
+        {
+            try
+            {
+                Users.Clear();
+                using var service = new AuthenticationService();
+
+                var users = Task.Run(() => service.GetAllUsersAsync()).Result;
+
+                IEnumerable<UserViewModel> filteredUsers = users;
+
+                if (!string.IsNullOrWhiteSpace(SearchText))
+                {
+                    filteredUsers = users.Where(u =>
+                        (u.UserName != null && u.UserName.Contains(SearchText, StringComparison.OrdinalIgnoreCase)) ||
+                        (u.Email != null && u.Email.Contains(SearchText, StringComparison.OrdinalIgnoreCase)) ||
+                        (u.PhoneNumber != null && u.PhoneNumber.Contains(SearchText, StringComparison.OrdinalIgnoreCase))
+                    );
+                }
+
+                foreach (var user in filteredUsers)
+                {
+                    Users.Add(user);
+                }
+
+                StatusMessage = $"Found {Users.Count} users";
+            }
+            catch (Exception ex)
+            {
+                StatusMessage = "Error filtering users";
+                MessageBox.Show($"Error filtering users: {ex.Message}", "Error",
+                    MessageBoxButton.OK, MessageBoxImage.Error);
+            }
         }
 
         private void LoadUsers()

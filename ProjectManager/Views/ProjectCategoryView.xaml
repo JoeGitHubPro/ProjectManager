@@ -102,7 +102,7 @@
                 <!-- Header -->
                 <TextBlock Grid.Row="0" 
                            Text="Category Details" 
-                           Style="{StaticResource MaterialDesignHeadline6TextBlock}"
+                           Style="{StaticResource HeadingTextStyle}"
                            Margin="0,0,0,15"/>
 
                 <!-- Category Name Field -->
@@ -110,7 +110,6 @@
                     <TextBox materialDesign:HintAssist.Hint="Category name *"
                              Text="{Binding CategoryName, UpdateSourceTrigger=PropertyChanged}"
                              Style="{StaticResource MaterialDesignOutlinedTextBox}"/>
-             
                 </StackPanel>
 
                 <!-- Action Buttons -->
@@ -119,7 +118,7 @@
                             HorizontalAlignment="Right"
                             Margin="0,15,0,0">
                     <Button Command="{Binding SaveCommand}"
-                            Style="{StaticResource MaterialDesignRaisedButton}"
+                            Style="{StaticResource PrimaryButtonStyle}"
                             Margin="0,0,10,0">
                         <StackPanel Orientation="Horizontal">
                             <materialDesign:PackIcon Kind="ContentSave" Width="20" Height="20" Margin="0,0,5,0"/>
