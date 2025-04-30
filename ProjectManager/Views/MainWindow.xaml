@@ -3,6 +3,7 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:views="clr-namespace:ProjectManager.Views"
         xmlns:Identity="clr-namespace:ProjectManager.Views.Identities"
+        xmlns:CapitalManagement="clr-namespace:ProjectManager.Views.CapitalManagement"
         Title="Project Manager" Height="600" Width="900" WindowState="Maximized" WindowStartupLocation="CenterScreen"
         Background="{StaticResource WhiteBrush}">
 
@@ -32,6 +33,9 @@
 
         <!-- Main Content (Tabs) -->
         <TabControl Grid.Row="1" Margin="10" Background="{StaticResource WhiteBrush}">
+            <TabItem Header="Business Balance " IsEnabled="{Binding IsBusinessBalanceEnabled}">
+                <CapitalManagement:BusinessBalanceView DataContext="{Binding BusinessBalanceVM}" />
+            </TabItem>       
             <TabItem Header="Project Order" IsEnabled="{Binding IsProjectOrderEnabled}">
                 <views:ProjectOrderView DataContext="{Binding ProjectOrderVM}" />
             </TabItem>

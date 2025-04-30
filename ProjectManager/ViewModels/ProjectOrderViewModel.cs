@@ -2,9 +2,11 @@
 using ProjectManager.Data;
 using ProjectManager.Helpers;
 using ProjectManager.Models;
+using ProjectManager.ViewModels.CapitalManagement;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Windows;
+
 
 namespace ProjectManager.ViewModels
 {
@@ -215,7 +217,7 @@ namespace ProjectManager.ViewModels
                         .ToList());
 
                 Consumers = new ObservableCollection<Consumer>(_context.Consumers.ToList());
-                Projects = new ObservableCollection<Project>(_context.Projects.ToList());
+                Projects = new ObservableCollection<Project>(_context.Projects.Include(a => a.ProjectCategory).ToList());
 
                 OnPropertyChanged(nameof(ProjectOrders));
                 OnPropertyChanged(nameof(Consumers));
@@ -284,6 +286,11 @@ namespace ProjectManager.ViewModels
                         ProjectId = SelectedProjectId,
                         TotalPrice = project.Price * (1 - Discount / 100)
                     };
+
+                    BusinessBalanceViewModel business = new BusinessBalanceViewModel();
+                    business.NewIncomeAmount = order.TotalPrice;
+                    business.NewIncomeDescription = $"Selling {project.ProjectCategory.Name} {project.Name}";
+                    business.SaveIncome();
 
                     _context.ProjectOrders.Add(order);
                 }

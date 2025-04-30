@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using ProjectManager.Config;
 using ProjectManager.Helpers;
 using ProjectManager.Models;
+using ProjectManager.Models.CapitalManagement;
 
 namespace ProjectManager.Data;
 
@@ -13,6 +14,11 @@ public partial class AppDbContext : IdentityDbContext<IdentityUser>
     public virtual DbSet<Project> Projects { get; set; }
     public virtual DbSet<ProjectCategory> ProjectCategories { get; set; }
     public virtual DbSet<Consumer> Consumers { get; set; }
+
+    //Capital Management
+    public DbSet<LoanModel> Loans { get; set; }
+    public DbSet<CashFlowModel> CashFlows { get; set; }
+    public DbSet<BusinessBalanceModel> BusinessBalances { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

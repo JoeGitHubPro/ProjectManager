@@ -9,10 +9,6 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <None Remove="Assets\Farahat-Pharmacy-logo.png" />
-    <None Remove="Assets\icepharmacy-horizontal.png" />
-    <None Remove="Assets\icepharmacy-icon.png" />
-    <None Remove="Assets\snowflakewhite.png" />
     <None Remove="jsconfig.json" />
   </ItemGroup>
 
@@ -37,21 +33,6 @@
     <EmbeddedResource Include="jsconfig.json">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </EmbeddedResource>
-  </ItemGroup>
-
-  <ItemGroup>
-    <Resource Include="Assets\Farahat-Pharmacy-logo.png">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Resource>
-    <Resource Include="Assets\icepharmacy-horizontal.png">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Resource>
-    <Resource Include="Assets\icepharmacy-icon.png">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Resource>
-    <Resource Include="Assets\snowflakewhite.png">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Resource>
   </ItemGroup>
 
   <ItemGroup>

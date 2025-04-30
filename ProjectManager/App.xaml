@@ -1,7 +1,7 @@
 ﻿<Application x:Class="ProjectManager.App" 
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             xmlns:local="clr-namespace:ProjectManager.Converters">
+             xmlns:converter="clr-namespace:ProjectManager.Converters">
     <!--StartupUri="Views/Identities/LogInWindow.xaml">-->
     <Application.Resources>
         <ResourceDictionary>
@@ -16,8 +16,11 @@
             </ResourceDictionary.MergedDictionaries>
 
             <!-- Declare the converters -->
-            <local:BooleanToEyeIconConverter x:Key="BooleanToEyeIconConverter" />
-            <local:NullOrWhiteSpaceToVisibilityConverter x:Key="NullOrWhiteSpaceToVisibilityConverter" />
+            <converter:BooleanToEyeIconConverter x:Key="BooleanToEyeIconConverter" />
+            <converter:NullOrWhiteSpaceToVisibilityConverter x:Key="NullOrWhiteSpaceToVisibilityConverter" />
+            <converter:BoolToVisibilityConverter x:Key="BoolToVis" />
+            <converter:NetBalanceToBrushConverter x:Key="NetBalanceToBrushConverter"/>
+
         </ResourceDictionary>
     </Application.Resources>
 </Application>

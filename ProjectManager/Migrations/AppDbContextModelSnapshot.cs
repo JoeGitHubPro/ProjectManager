@@ -220,6 +220,111 @@ namespace ProjectManager.Migrations
                     b.ToTable("UserTokens", (string)null);
                 });
 
+            modelBuilder.Entity("ProjectManager.Models.CapitalManagement.BusinessBalanceModel", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<decimal>("CashOnHand")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<decimal>("EmergencyReserve")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<decimal>("TotalExpenses")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<decimal>("TotalOutstandingLoans")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<decimal>("TotalSalesIncome")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("BusinessBalances");
+                });
+
+            modelBuilder.Entity("ProjectManager.Models.CapitalManagement.CashFlowModel", b =>
+                {
+                    b.Property<int>("TransactionId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("TransactionId"));
+
+                    b.Property<decimal>("Amount")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<int?>("BusinessBalanceModelId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Description")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime>("TransactionDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("Type")
+                        .HasColumnType("int");
+
+                    b.HasKey("TransactionId");
+
+                    b.HasIndex("BusinessBalanceModelId");
+
+                    b.ToTable("CashFlows");
+                });
+
+            modelBuilder.Entity("ProjectManager.Models.CapitalManagement.LoanModel", b =>
+                {
+                    b.Property<int>("LoanId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("LoanId"));
+
+                    b.Property<decimal>("AmountLoaned")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<int?>("BusinessBalanceModelId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("DueDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<decimal>("InterestRate")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<bool>("IsRepaid")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("LenderId")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<string>("LenderName")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime>("LoanDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<decimal>("OutstandingBalance")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.HasKey("LoanId");
+
+                    b.HasIndex("BusinessBalanceModelId");
+
+                    b.HasIndex("LenderId");
+
+                    b.ToTable("Loans");
+                });
+
             modelBuilder.Entity("ProjectManager.Models.Consumer", b =>
                 {
                     b.Property<int>("Id")
@@ -409,6 +514,28 @@ namespace ProjectManager.Migrations
                         .IsRequired();
                 });
 
+            modelBuilder.Entity("ProjectManager.Models.CapitalManagement.CashFlowModel", b =>
+                {
+                    b.HasOne("ProjectManager.Models.CapitalManagement.BusinessBalanceModel", null)
+                        .WithMany("CashFlows")
+                        .HasForeignKey("BusinessBalanceModelId");
+                });
+
+            modelBuilder.Entity("ProjectManager.Models.CapitalManagement.LoanModel", b =>
+                {
+                    b.HasOne("ProjectManager.Models.CapitalManagement.BusinessBalanceModel", null)
+                        .WithMany("Loans")
+                        .HasForeignKey("BusinessBalanceModelId");
+
+                    b.HasOne("Microsoft.AspNetCore.Identity.IdentityUser", "Lender")
+                        .WithMany()
+                        .HasForeignKey("LenderId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Lender");
+                });
+
             modelBuilder.Entity("ProjectManager.Models.Project", b =>
                 {
                     b.HasOne("ProjectManager.Models.ProjectCategory", "ProjectCategory")
@@ -437,6 +564,13 @@ namespace ProjectManager.Migrations
                     b.Navigation("Consumer");
 
                     b.Navigation("Project");
+                });
+
+            modelBuilder.Entity("ProjectManager.Models.CapitalManagement.BusinessBalanceModel", b =>
+                {
+                    b.Navigation("CashFlows");
+
+                    b.Navigation("Loans");
                 });
 
             modelBuilder.Entity("ProjectManager.Models.Consumer", b =>

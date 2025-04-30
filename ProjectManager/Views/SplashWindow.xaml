@@ -32,9 +32,10 @@
         <StackPanel Grid.Row="1" VerticalAlignment="Center" HorizontalAlignment="Center">
             <ProgressBar Width="300"
                          Height="10"
+                         BorderThickness="0"
                          IsIndeterminate="True"
-                         Foreground="{StaticResource PrimaryBrush}"
-                         Background="{StaticResource AccentBrush}" />
+                         Foreground="{StaticResource AccentBrush}"
+                         Background="{StaticResource PrimaryBrush}" />
         </StackPanel>
 
         <!-- Footer Text (Optional: Loading...) -->

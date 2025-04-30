@@ -1,4 +1,5 @@
 ﻿using ProjectManager.Constants;
+using ProjectManager.ViewModels.CapitalManagement;
 using ProjectManager.ViewModels.Identities;
 
 namespace ProjectManager.ViewModels
@@ -10,6 +11,7 @@ namespace ProjectManager.ViewModels
         public ProjectViewModel ProjectVM { get; set; }
         public ProjectOrderViewModel ProjectOrderVM { get; set; }
         public UserManagementViewModel UserManagementVM { get; set; }
+        public BusinessBalanceViewModel BusinessBalanceVM { get; set; }
 
         // Add properties to control tab enable state
         public bool IsProjectOrderEnabled { get; set; }
@@ -17,6 +19,7 @@ namespace ProjectManager.ViewModels
         public bool IsProjectsEnabled { get; set; }
         public bool IsConsumersEnabled { get; set; }
         public bool IsUsersManagementEnabled { get; set; }
+        public bool IsBusinessBalanceEnabled { get; set; }
 
         public MainViewModel()
         {
@@ -25,6 +28,7 @@ namespace ProjectManager.ViewModels
             ProjectVM = new ProjectViewModel();
             ProjectOrderVM = new ProjectOrderViewModel();
             UserManagementVM = new UserManagementViewModel();
+            BusinessBalanceVM = new BusinessBalanceViewModel();
 
 
             switch (UserSession.Role)
@@ -34,12 +38,14 @@ namespace ProjectManager.ViewModels
                     IsProjectOrderEnabled = true;
                     IsProjectCategoriesEnabled = true;
                     IsProjectsEnabled = true;
+                    IsBusinessBalanceEnabled = true;
                     break;
 
                 case Roles.Manager:
                     IsProjectOrderEnabled = true;
                     IsProjectCategoriesEnabled = true;
                     IsProjectsEnabled = true;
+                    IsBusinessBalanceEnabled = true;
                     break;
             }
 
