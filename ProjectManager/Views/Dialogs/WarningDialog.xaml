@@ -8,7 +8,7 @@
         MinHeight="220"
         WindowStartupLocation="CenterScreen"
         ResizeMode="NoResize"
-        Background="{DynamicResource MaterialDesignPaper}"
+        Background="{StaticResource BackgroundBrush}"
         BorderThickness="0"
         WindowStyle="None"
         SizeToContent="Height"
@@ -49,13 +49,6 @@
                     Content="OK"
                     Style="{StaticResource MaterialDesignFlatButton}"
                     Command="{Binding ConfirmCommand}"
-                    MinWidth="100"
-                    Padding="12,6" />
-
-            <Button x:Name="CancelButton"
-                    Content="Cancel"
-                    Style="{StaticResource MaterialDesignOutlinedButton}"
-                    Command="{Binding CancelCommand}"
                     MinWidth="100"
                     Padding="12,6" />
         </StackPanel>

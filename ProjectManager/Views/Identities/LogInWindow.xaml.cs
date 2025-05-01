@@ -14,6 +14,7 @@ namespace ProjectManager.Views.Identities
         {
             InitializeComponent();
             DataContext = new LogInViewModel(this);
+            UsernameOrEmailTextBox.Focus();
         }
 
         private void UsernameOrEmailTextBox_KeyDown(object sender, System.Windows.Input.KeyEventArgs e)
@@ -24,5 +25,6 @@ namespace ProjectManager.Views.Identities
                 PasswordBox.SelectAll();
             }
         }
+
     }
 }

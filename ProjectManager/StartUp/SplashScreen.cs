@@ -11,24 +11,20 @@ namespace ProjectManager.StartUp
             // Show the splash screen
             SplashWindow splashScreen = new SplashWindow();
             splashScreen.Show();
+            LogInWindow mainWindow = new LogInWindow();
 
             // Simulate loading process
             await Task.Run(() =>
             {
                 // Simulate a delay (e.g., loading data or initializing the application)
-                System.Threading.Thread.Sleep(5000); // 3 seconds delay
+                System.Threading.Thread.Sleep(5500); // Delay
             }).ContinueWith(t =>
             {
                 // Close the splash screen and open the main window
                 splashScreen.Dispatcher.Invoke(() =>
                 {
-
-
-                    LogInWindow mainWindow = new LogInWindow();
                     splashScreen.Close();
                     mainWindow.Show();
-
-
                 });
             }, TaskScheduler.FromCurrentSynchronizationContext());
 
