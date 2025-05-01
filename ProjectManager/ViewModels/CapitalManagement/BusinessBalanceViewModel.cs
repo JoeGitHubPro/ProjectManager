@@ -13,69 +13,30 @@ namespace ProjectManager.ViewModels.CapitalManagement
     {
         private readonly AppDbContext _context;
 
-        private BusinessBalanceModel _businessBalance;
-        public BusinessBalanceModel BusinessBalance
-        {
-            get => _businessBalance;
-            set { _businessBalance = value; OnPropertyChanged(); }
-        }
-
+        public BusinessBalanceModel BusinessBalance { get; set; } = new();
         public ObservableCollection<CashFlowModel> CashFlows { get; set; } = new();
         public ObservableCollection<LoanModel> Loans { get; set; } = new();
         public ObservableCollection<IdentityUser> Users { get; set; } = new();
 
-        public IdentityUser SelectedUser { get; set; }
-
-        private LoanModel _selectedLoan;
-        public LoanModel SelectedLoan
-        {
-            get => _selectedLoan;
-            set { _selectedLoan = value; OnPropertyChanged(); }
-        }
-        private double _netBalance;
-        public double NetBalance
-        {
-            get { return _netBalance; }
-            set { _netBalance = value; OnPropertyChanged(); }
-        }
-        private double _emergencyReserveAdjustment;
-        public double EmergencyReserveAdjustment
-        {
-            get { return _emergencyReserveAdjustment; }
-            set { _emergencyReserveAdjustment = value; OnPropertyChanged(); }
-        }
-
-        private bool _isIncomeFormVisible;
-        public bool IsIncomeFormVisible
-        {
-            get => _isIncomeFormVisible;
-            set { _isIncomeFormVisible = value; OnPropertyChanged(); }
-        }
-
-        private bool _isExpenseFormVisible;
-        public bool IsExpenseFormVisible
-        {
-            get => _isExpenseFormVisible;
-            set { _isExpenseFormVisible = value; OnPropertyChanged(); }
-        }
-
-        private bool _isLoanFormVisible;
-        public bool IsLoanFormVisible
-        {
-            get => _isLoanFormVisible;
-            set { _isLoanFormVisible = value; OnPropertyChanged(); }
-        }
+        public IdentityUser? SelectedUser { get; set; }
+        public LoanModel? SelectedLoan { get; set; }
 
         public decimal NewIncomeAmount { get; set; }
-        public string NewIncomeDescription { get; set; }
+        public string NewIncomeDescription { get; set; } = string.Empty;
+
         public decimal NewExpenseAmount { get; set; }
-        public string NewExpenseDescription { get; set; }
+        public string NewExpenseDescription { get; set; } = string.Empty;
+
         public decimal NewLoanAmount { get; set; }
         public DateTime? NewLoanPaybackDate { get; set; }
 
         public decimal EmergencyReserveAmount { get; set; }
 
-        public ICommand RefreshBalanceCommand { get; }
+        public bool IsIncomeFormVisible { get; set; }
+        public bool IsExpenseFormVisible { get; set; }
+        public bool IsLoanFormVisible { get; set; }
+
+        public ICommand RefreshCommand { get; }
         public ICommand ShowIncomeFormCommand { get; }
         public ICommand ShowExpenseFormCommand { get; }
         public ICommand ShowLoanFormCommand { get; }
@@ -87,15 +48,11 @@ namespace ProjectManager.ViewModels.CapitalManagement
         public ICommand AddReserveCommand { get; }
         public ICommand ReleaseReserveCommand { get; }
 
-
         public BusinessBalanceViewModel()
         {
             _context = new AppDbContext();
 
-            LoadBusinessBalance();
-            LoadUsers();
-
-            RefreshBalanceCommand = new RelayCommand(LoadBusinessBalance);
+            RefreshCommand = new RelayCommand(LoadBusinessBalance);
             ShowIncomeFormCommand = new RelayCommand(ShowIncomeForm);
             ShowExpenseFormCommand = new RelayCommand(ShowExpenseForm);
             ShowLoanFormCommand = new RelayCommand(ShowLoanForm);
@@ -106,10 +63,13 @@ namespace ProjectManager.ViewModels.CapitalManagement
             MarkAsRepaidCommand = new RelayCommand(MarkLoanAsRepaid);
             AddReserveCommand = new RelayCommand(AddEmergencyReserve);
             ReleaseReserveCommand = new RelayCommand(ReleaseEmergencyReserve);
+
+            LoadInitialData();
         }
 
-        private void LoadUsers()
+        private void LoadInitialData()
         {
+            LoadBusinessBalance();
             Users = new ObservableCollection<IdentityUser>(_context.Users.ToList());
             OnPropertyChanged(nameof(Users));
         }
@@ -119,26 +79,19 @@ namespace ProjectManager.ViewModels.CapitalManagement
             BusinessBalance = _context.BusinessBalances
                 .Include(bb => bb.CashFlows)
                 .Include(bb => bb.Loans)
-                .FirstOrDefault();
+                .FirstOrDefault() ?? new BusinessBalanceModel();
 
-            if (BusinessBalance == null)
+            if (BusinessBalance.Id == 0)
             {
-                BusinessBalance = new BusinessBalanceModel
-                {
-                    CashOnHand = 0,
-                    TotalSalesIncome = 0,
-                    TotalExpenses = 0,
-                    TotalOutstandingLoans = 0,
-                    EmergencyReserve = 0,
-                    CashFlows = new List<CashFlowModel>(),
-                    Loans = new List<LoanModel>()
-                };
                 _context.BusinessBalances.Add(BusinessBalance);
                 _context.SaveChanges();
             }
 
-            CashFlows = new ObservableCollection<CashFlowModel>(BusinessBalance.CashFlows.OrderByDescending(x => x.TransactionDate));
-            Loans = new ObservableCollection<LoanModel>(BusinessBalance.Loans.Where(x => !x.IsRepaid).OrderByDescending(x => x.LoanDate));
+            CashFlows = new ObservableCollection<CashFlowModel>(
+                BusinessBalance.CashFlows.OrderByDescending(x => x.TransactionDate));
+
+            Loans = new ObservableCollection<LoanModel>(
+                BusinessBalance.Loans.Where(x => !x.IsRepaid).OrderByDescending(x => x.LoanDate));
 
             OnPropertyChanged(nameof(BusinessBalance));
             OnPropertyChanged(nameof(CashFlows));
@@ -157,7 +110,7 @@ namespace ProjectManager.ViewModels.CapitalManagement
             if (NewIncomeAmount <= 0 || string.IsNullOrWhiteSpace(NewIncomeDescription))
                 return;
 
-            var cashFlow = new CashFlowModel
+            var income = new CashFlowModel
             {
                 Amount = NewIncomeAmount,
                 Description = NewIncomeDescription,
@@ -165,11 +118,11 @@ namespace ProjectManager.ViewModels.CapitalManagement
                 Type = TransactionType.Income
             };
 
-            BusinessBalance.CashFlows.Add(cashFlow);
+            BusinessBalance.CashFlows.Add(income);
             BusinessBalance.TotalSalesIncome += NewIncomeAmount;
             BusinessBalance.CashOnHand += NewIncomeAmount;
 
-            _context.CashFlows.Add(cashFlow);
+            _context.CashFlows.Add(income);
             SaveBusinessBalance();
 
             NewIncomeAmount = 0;
@@ -182,13 +135,13 @@ namespace ProjectManager.ViewModels.CapitalManagement
             if (NewExpenseAmount <= 0 || string.IsNullOrWhiteSpace(NewExpenseDescription))
                 return;
 
-            if (NewExpenseAmount >= BusinessBalance.CashOnHand)
+            if (NewExpenseAmount > BusinessBalance.CashOnHand)
             {
-                MessageBox.Show("There is no enough available cash", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                MessageBox.Show("Not enough available cash.", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
                 return;
             }
 
-            var cashFlow = new CashFlowModel
+            var expense = new CashFlowModel
             {
                 Amount = NewExpenseAmount,
                 Description = NewExpenseDescription,
@@ -196,11 +149,11 @@ namespace ProjectManager.ViewModels.CapitalManagement
                 Type = TransactionType.Expense
             };
 
-            BusinessBalance.CashFlows.Add(cashFlow);
+            BusinessBalance.CashFlows.Add(expense);
             BusinessBalance.TotalExpenses += NewExpenseAmount;
             BusinessBalance.CashOnHand -= NewExpenseAmount;
 
-            _context.CashFlows.Add(cashFlow);
+            _context.CashFlows.Add(expense);
             SaveBusinessBalance();
 
             NewExpenseAmount = 0;
@@ -237,14 +190,14 @@ namespace ProjectManager.ViewModels.CapitalManagement
             HideAllForms();
         }
 
-        public void MarkLoanAsRepaid()
+        private void MarkLoanAsRepaid()
         {
             if (SelectedLoan == null || SelectedLoan.IsRepaid)
                 return;
 
-            if (SelectedLoan.AmountLoaned >= BusinessBalance.CashOnHand)
+            if (SelectedLoan.AmountLoaned > BusinessBalance.CashOnHand)
             {
-                MessageBox.Show("There is no enough available cash", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                MessageBox.Show("Not enough available cash.", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
                 return;
             }
 
@@ -252,14 +205,11 @@ namespace ProjectManager.ViewModels.CapitalManagement
             SelectedLoan.OutstandingBalance = 0;
             BusinessBalance.TotalOutstandingLoans -= SelectedLoan.AmountLoaned;
 
-            decimal repaidAmountLoaned = SelectedLoan.AmountLoaned;
-            string repaidLenderName = SelectedLoan.LenderName;
-
             _context.Loans.Update(SelectedLoan);
             SaveBusinessBalance();
 
-            NewExpenseAmount = repaidAmountLoaned;
-            NewExpenseDescription = $"Repaid loan to {repaidLenderName}";
+            NewExpenseAmount = SelectedLoan.AmountLoaned;
+            NewExpenseDescription = $"Repaid loan to {SelectedLoan.LenderName}";
             SaveExpense();
         }
 
@@ -270,9 +220,9 @@ namespace ProjectManager.ViewModels.CapitalManagement
 
             BusinessBalance.EmergencyReserve += EmergencyReserveAmount;
             BusinessBalance.CashOnHand -= EmergencyReserveAmount;
+
             SaveBusinessBalance();
             EmergencyReserveAmount = 0;
-            OnPropertyChanged(nameof(EmergencyReserveAmount));
         }
 
         private void ReleaseEmergencyReserve()
@@ -282,34 +232,38 @@ namespace ProjectManager.ViewModels.CapitalManagement
 
             BusinessBalance.EmergencyReserve -= EmergencyReserveAmount;
             BusinessBalance.CashOnHand += EmergencyReserveAmount;
+
             SaveBusinessBalance();
             EmergencyReserveAmount = 0;
-            OnPropertyChanged(nameof(EmergencyReserveAmount));
         }
 
         private void HideAllForms()
         {
-            IsIncomeFormVisible = false;
-            IsExpenseFormVisible = false;
-            IsLoanFormVisible = false;
+            IsIncomeFormVisible = IsExpenseFormVisible = IsLoanFormVisible = false;
+            OnPropertyChanged(nameof(IsIncomeFormVisible));
+            OnPropertyChanged(nameof(IsExpenseFormVisible));
+            OnPropertyChanged(nameof(IsLoanFormVisible));
         }
 
         private void ShowIncomeForm()
         {
             HideAllForms();
             IsIncomeFormVisible = true;
+            OnPropertyChanged(nameof(IsIncomeFormVisible));
         }
 
         private void ShowExpenseForm()
         {
             HideAllForms();
             IsExpenseFormVisible = true;
+            OnPropertyChanged(nameof(IsExpenseFormVisible));
         }
 
         private void ShowLoanForm()
         {
             HideAllForms();
             IsLoanFormVisible = true;
+            OnPropertyChanged(nameof(IsLoanFormVisible));
         }
     }
 }

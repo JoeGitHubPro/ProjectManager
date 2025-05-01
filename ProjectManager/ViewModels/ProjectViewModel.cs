@@ -2,6 +2,7 @@
 using ProjectManager.Data;
 using ProjectManager.Models;
 using System.Collections.ObjectModel;
+using System.Windows;
 
 namespace ProjectManager.ViewModels
 {
@@ -19,13 +20,13 @@ namespace ProjectManager.ViewModels
             get => _searchText;
             set
             {
-                _searchText = value;
+                _searchText = value ?? string.Empty;
                 OnPropertyChanged();
                 FilterProjects();
             }
         }
 
-        private Project _selectedProject;
+        private Project _selectedProject = new();
         public Project SelectedProject
         {
             get => _selectedProject;
@@ -36,6 +37,7 @@ namespace ProjectManager.ViewModels
                 OnPropertyChanged(nameof(CanDelete));
             }
         }
+
         private bool _isFormVisible;
         public bool IsFormVisible
         {
@@ -47,17 +49,18 @@ namespace ProjectManager.ViewModels
             }
         }
 
-        public bool CanDelete => _context.Projects.Any(a => a.Name == SelectedProject.Name) && SelectedProject is not null;
+        public bool CanDelete =>
+            SelectedProject != null &&
+            !string.IsNullOrWhiteSpace(SelectedProject.Name) &&
+            _context.Projects.Any(a => a.Name == SelectedProject.Name);
 
-
-
+        // Commands
         public RelayCommand SaveCommand { get; }
         public RelayCommand DeleteCommand { get; }
         public RelayCommand RefreshCommand { get; }
         public RelayCommand SearchCommand { get; }
         public RelayCommand AddNewCommand { get; }
-        public RelayCommand EditCommand { get; private set; }
-
+        public RelayCommand EditCommand { get; }
 
         public ProjectViewModel()
         {
@@ -70,36 +73,38 @@ namespace ProjectManager.ViewModels
 
             LoadData();
         }
+
         private void EditCategory()
         {
             IsFormVisible = true;
         }
+
         private void LoadData()
         {
-
             Projects.Clear();
             FilteredProjects.Clear();
             ProjectCategories.Clear();
 
             var projects = _context.Projects.Include(p => p.ProjectCategory).ToList();
             foreach (var p in projects)
+            {
                 Projects.Add(p);
-
-            foreach (var p in projects)
                 FilteredProjects.Add(p);
+            }
 
             foreach (var c in _context.ProjectCategories.ToList())
                 ProjectCategories.Add(c);
 
-            SelectedProject = null;
+            SelectedProject = new Project();
             IsFormVisible = false;
         }
 
         private void FilterProjects()
         {
+            FilteredProjects.Clear();
+
             if (string.IsNullOrWhiteSpace(SearchText))
             {
-                FilteredProjects.Clear();
                 foreach (var p in Projects)
                     FilteredProjects.Add(p);
             }
@@ -107,10 +112,9 @@ namespace ProjectManager.ViewModels
             {
                 var lowerSearch = SearchText.ToLower();
                 var filtered = Projects.Where(p =>
-                    (!string.IsNullOrWhiteSpace(p.Name) && p.Name.ToLower().Contains(lowerSearch)) ||
-                    (!string.IsNullOrWhiteSpace(p.Details) && p.Details.ToLower().Contains(lowerSearch)));
+                    (!string.IsNullOrWhiteSpace(p?.Name) && p.Name.ToLower().Contains(lowerSearch)) ||
+                    (!string.IsNullOrWhiteSpace(p?.Details) && p.Details.ToLower().Contains(lowerSearch)));
 
-                FilteredProjects.Clear();
                 foreach (var p in filtered)
                     FilteredProjects.Add(p);
             }
@@ -118,7 +122,19 @@ namespace ProjectManager.ViewModels
 
         private void SaveProject()
         {
-            if (SelectedProject == null) return;
+            if (SelectedProject == null)
+                return;
+
+            if (HasErrors)
+            {
+                MessageBox.Show(
+                    $"{this[nameof(SelectedProject.Name)] ?? ""}\n" +
+                    $"{this[nameof(SelectedProject.Details)] ?? ""}\n" +
+                    $"{this[nameof(SelectedProject.Price)] ?? ""}\n" +
+                    $"{this[nameof(SelectedProject.ProjectCategoryId)] ?? ""}",
+                    "Validation Error", MessageBoxButton.OK, MessageBoxImage.Warning);
+                return;
+            }
 
             if (SelectedProject.Id == 0)
                 _context.Projects.Add(SelectedProject);
@@ -131,11 +147,19 @@ namespace ProjectManager.ViewModels
 
         private void DeleteProject()
         {
-            if (SelectedProject == null) return;
+            if (SelectedProject == null || string.IsNullOrWhiteSpace(SelectedProject.Name))
+                return;
 
-            _context.Projects.Remove(SelectedProject);
-            _context.SaveChanges();
-            LoadData();
+            var result = MessageBox.Show(
+                $"Are you sure you want to delete the project: {SelectedProject.Name}?",
+                "Confirm Deletion", MessageBoxButton.YesNo, MessageBoxImage.Warning);
+
+            if (result == MessageBoxResult.Yes)
+            {
+                _context.Projects.Remove(SelectedProject);
+                _context.SaveChanges();
+                LoadData();
+            }
         }
 
         private void AddNewProject()
@@ -148,28 +172,30 @@ namespace ProjectManager.ViewModels
         {
             get
             {
-                if (SelectedProject == null) return string.Empty;
+                if (SelectedProject == null)
+                    return string.Empty;
 
                 return columnName switch
                 {
                     nameof(SelectedProject.Name) =>
-                        string.IsNullOrWhiteSpace(SelectedProject.Name) ? "Project name is required." : null,
+                        string.IsNullOrWhiteSpace(SelectedProject.Name) ? "Project name is required." : null!,
 
                     nameof(SelectedProject.Details) =>
-                        string.IsNullOrWhiteSpace(SelectedProject.Details) ? "Project details are required." : null,
+                        string.IsNullOrWhiteSpace(SelectedProject.Details) ? "Project details are required." : null!,
 
                     nameof(SelectedProject.Price) =>
-                        SelectedProject.Price <= 0 ? "Price must be greater than zero." : null,
+                        SelectedProject.Price <= 0 ? "Price must be greater than zero." : null!,
 
                     nameof(SelectedProject.ProjectCategoryId) =>
-                        SelectedProject.ProjectCategoryId == 0 ? "Project category is required." : null,
+                        SelectedProject.ProjectCategoryId == 0 ? "Project category is required." : null!,
 
-                    _ => null
+                    _ => null!
                 };
             }
         }
 
         public bool HasErrors =>
+            SelectedProject == null ||
             this[nameof(SelectedProject.Name)] != null ||
             this[nameof(SelectedProject.Price)] != null ||
             this[nameof(SelectedProject.ProjectCategoryId)] != null;

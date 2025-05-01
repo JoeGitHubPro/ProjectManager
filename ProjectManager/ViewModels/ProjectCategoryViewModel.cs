@@ -13,6 +13,7 @@ namespace ProjectManager.ViewModels
         private ProjectCategory _selectedCategory;
         private string _categoryName = string.Empty;
         private bool _isNewRecord = true;
+        private Dictionary<string, string> _errorCollection = new();
 
         public ProjectCategoryViewModel()
         {
@@ -30,7 +31,7 @@ namespace ProjectManager.ViewModels
             get => _categoryName;
             set
             {
-                _categoryName = value;
+                _categoryName = value ?? string.Empty;
                 OnPropertyChanged();
                 ValidateProperty(nameof(CategoryName));
             }
@@ -48,14 +49,13 @@ namespace ProjectManager.ViewModels
                 if (value != null)
                 {
                     _isNewRecord = false;
-                    CategoryName = value.Name;
+                    CategoryName = value.Name ?? string.Empty;
                 }
                 else
                 {
                     CategoryName = string.Empty;
                     _isNewRecord = true;
                 }
-
             }
         }
 
@@ -64,11 +64,12 @@ namespace ProjectManager.ViewModels
             get => _searchText;
             set
             {
-                _searchText = value;
+                _searchText = value ?? string.Empty;
                 OnPropertyChanged();
                 FilterCategories();
             }
         }
+
         private bool _isFormVisible;
         public bool IsFormVisible
         {
@@ -96,28 +97,13 @@ namespace ProjectManager.ViewModels
 
         private void InitializeCommands()
         {
-            SaveCommand = new RelayCommand(
-               SaveCategory,
-                () => !HasErrors);
-
-            DeleteCommand = new RelayCommand(
-                 DeleteCategory,
-                () => CanDelete);
-
-            RefreshCommand = new RelayCommand(
-                LoadData);
-
-            SearchCommand = new RelayCommand(
-                FilterCategories);
-
-            AddNewCommand = new RelayCommand(
-                AddNewCategory);
-
-            EditCommand = new RelayCommand(
-                EditCategory);
-
-            ClearCommand = new RelayCommand(
-                ClearFields);
+            SaveCommand = new RelayCommand(SaveCategory, () => !HasErrors);
+            DeleteCommand = new RelayCommand(DeleteCategory, () => CanDelete);
+            RefreshCommand = new RelayCommand(LoadData);
+            SearchCommand = new RelayCommand(FilterCategories);
+            AddNewCommand = new RelayCommand(AddNewCategory);
+            EditCommand = new RelayCommand(EditCategory);
+            ClearCommand = new RelayCommand(ClearFields);
         }
 
         private void EditCategory()
@@ -160,9 +146,10 @@ namespace ProjectManager.ViewModels
             {
                 var searchLower = SearchText.ToLower();
                 FilteredCategories = new ObservableCollection<ProjectCategory>(
-                    ProjectCategories.Where(c => c.Name.ToLower().Contains(searchLower))
+                    ProjectCategories.Where(c => (c.Name ?? string.Empty).ToLower().Contains(searchLower))
                 );
             }
+
             OnPropertyChanged(nameof(FilteredCategories));
         }
 
@@ -183,7 +170,6 @@ namespace ProjectManager.ViewModels
 
             try
             {
-
                 if (_isNewRecord)
                 {
                     SaveNewCategory();
@@ -194,7 +180,9 @@ namespace ProjectManager.ViewModels
                 }
 
                 _context.SaveChanges();
+                LoadData();
                 FilterCategories();
+
                 ShowInfo("Category saved successfully.");
                 IsFormVisible = false;
             }
@@ -202,7 +190,6 @@ namespace ProjectManager.ViewModels
             {
                 ShowError($"Error saving category: {ex.Message}");
             }
-
         }
 
         private void SaveNewCategory()
@@ -220,7 +207,8 @@ namespace ProjectManager.ViewModels
 
         private void UpdateExistingCategory()
         {
-            if (SelectedCategory == null) return;
+            if (SelectedCategory == null)
+                return;
 
             SelectedCategory.Name = CategoryName;
             _context.Entry(SelectedCategory).State = EntityState.Modified;
@@ -228,7 +216,8 @@ namespace ProjectManager.ViewModels
 
         private void DeleteCategory()
         {
-            if (SelectedCategory == null) return;
+            if (SelectedCategory == null)
+                return;
 
             var result = MessageBox.Show(
                 "Are you sure you want to delete this category? This action cannot be undone.",
@@ -236,12 +225,14 @@ namespace ProjectManager.ViewModels
                 MessageBoxButton.YesNo,
                 MessageBoxImage.Warning);
 
-            if (result != MessageBoxResult.Yes) return;
+            if (result != MessageBoxResult.Yes)
+                return;
 
             try
             {
                 _context.ProjectCategories.Remove(SelectedCategory);
                 _context.SaveChanges();
+
                 ProjectCategories.Remove(SelectedCategory);
                 FilteredCategories.Remove(SelectedCategory);
                 ClearFields();
@@ -252,7 +243,6 @@ namespace ProjectManager.ViewModels
             {
                 ShowError($"Error deleting category: {ex.Message}");
             }
-
         }
 
         private void ClearFields()
@@ -261,6 +251,10 @@ namespace ProjectManager.ViewModels
             CategoryName = string.Empty;
             _isNewRecord = true;
             IsFormVisible = false;
+
+            _errorCollection.Clear();
+            OnPropertyChanged(nameof(ErrorCollection));
+            OnPropertyChanged(nameof(HasErrors));
         }
 
         #endregion
@@ -286,21 +280,26 @@ namespace ProjectManager.ViewModels
                 return error;
             }
         }
-        public Dictionary<string, string> ErrorCollection =>
-       new Dictionary<string, string>
-       {
-           [nameof(CategoryName)] = this[nameof(CategoryName)]
-       };
+
+        public Dictionary<string, string> ErrorCollection
+        {
+            get => _errorCollection;
+        }
 
         private void ValidateProperty(string propertyName)
         {
-            string error = this[propertyName];
-            ErrorCollection[propertyName] = error;
+            string error = this[propertyName] ?? string.Empty;
+
+            if (_errorCollection.ContainsKey(propertyName))
+                _errorCollection[propertyName] = error;
+            else
+                _errorCollection.Add(propertyName, error);
+
             OnPropertyChanged(nameof(ErrorCollection));
             OnPropertyChanged(nameof(HasErrors));
         }
 
-        public bool HasErrors => ErrorCollection.Values.Any(error => !string.IsNullOrEmpty(error));
+        public bool HasErrors => _errorCollection.Values.Any(error => !string.IsNullOrEmpty(error));
 
         #endregion
 

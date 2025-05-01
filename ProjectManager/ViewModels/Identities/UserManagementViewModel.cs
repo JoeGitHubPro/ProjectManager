@@ -8,12 +8,12 @@ namespace ProjectManager.ViewModels.Identities
 {
     public class UserManagementViewModel : BaseViewModel
     {
-        private readonly Window _window;
+        private string _statusMessage;
+        private string _searchText;
+        private string _confirmPassword;
         private bool _isFormVisible;
         private string _formTitle;
-        private string _statusMessage;
         private UserViewModel _currentUser;
-        private string _confirmPassword;
 
         public ObservableCollection<UserViewModel> Users { get; } = new();
         public ObservableCollection<string> Roles { get; } = new()
@@ -24,6 +24,7 @@ namespace ProjectManager.ViewModels.Identities
         };
 
         public UserViewModel SelectedUser { get; set; }
+
         public UserViewModel CurrentUser
         {
             get => _currentUser;
@@ -53,20 +54,14 @@ namespace ProjectManager.ViewModels.Identities
             get => _confirmPassword;
             set { _confirmPassword = value; OnPropertyChanged(); }
         }
-        private string _searchText;
+
         public string SearchText
         {
             get => _searchText;
-            set
-            {
-                _searchText = value;
-                OnPropertyChanged();
-                FilterUsers(); // Call a method to filter your Users list
-            }
+            set { _searchText = value; OnPropertyChanged(); FilterUsers(); }
         }
 
-
-        // Error properties
+        // Validation Errors
         public string UserNameError { get; private set; }
         public string EmailError { get; private set; }
         public string PhoneError { get; private set; }
@@ -81,55 +76,18 @@ namespace ProjectManager.ViewModels.Identities
         public ICommand SaveUserCommand { get; }
         public ICommand CancelFormCommand { get; }
         public ICommand RefreshCommand { get; }
-        public ICommand CloseCommand { get; }
 
         public UserManagementViewModel()
         {
-            // Initialize commands
+
             ShowAddUserFormCommand = new RelayCommand(ShowAddUserForm);
             EditUserCommand = new RelayCommand(EditUser);
             DeleteUserCommand = new RelayCommand(DeleteUser);
             SaveUserCommand = new RelayCommand(SaveUser);
             CancelFormCommand = new RelayCommand(CancelForm);
             RefreshCommand = new RelayCommand(LoadUsers);
-            CloseCommand = new RelayCommand(CloseWindow);
 
             LoadUsers();
-        }
-
-        private void FilterUsers()
-        {
-            try
-            {
-                Users.Clear();
-                using var service = new AuthenticationService();
-
-                var users = Task.Run(() => service.GetAllUsersAsync()).Result;
-
-                IEnumerable<UserViewModel> filteredUsers = users;
-
-                if (!string.IsNullOrWhiteSpace(SearchText))
-                {
-                    filteredUsers = users.Where(u =>
-                        (u.UserName != null && u.UserName.Contains(SearchText, StringComparison.OrdinalIgnoreCase)) ||
-                        (u.Email != null && u.Email.Contains(SearchText, StringComparison.OrdinalIgnoreCase)) ||
-                        (u.PhoneNumber != null && u.PhoneNumber.Contains(SearchText, StringComparison.OrdinalIgnoreCase))
-                    );
-                }
-
-                foreach (var user in filteredUsers)
-                {
-                    Users.Add(user);
-                }
-
-                StatusMessage = $"Found {Users.Count} users";
-            }
-            catch (Exception ex)
-            {
-                StatusMessage = "Error filtering users";
-                MessageBox.Show($"Error filtering users: {ex.Message}", "Error",
-                    MessageBoxButton.OK, MessageBoxImage.Error);
-            }
         }
 
         private void LoadUsers()
@@ -138,19 +96,45 @@ namespace ProjectManager.ViewModels.Identities
             {
                 Users.Clear();
                 IsFormVisible = false;
+
                 using var service = new AuthenticationService();
                 var users = Task.Run(() => service.GetAllUsersAsync()).Result;
+
                 foreach (var user in users)
-                {
                     Users.Add(user);
-                }
+
                 StatusMessage = $"Loaded {Users.Count} users";
             }
             catch (Exception ex)
             {
-                StatusMessage = "Error loading users";
-                MessageBox.Show($"Error loading users: {ex.Message}", "Error",
-                    MessageBoxButton.OK, MessageBoxImage.Error);
+                ShowError("loading users", ex);
+            }
+        }
+
+        private void FilterUsers()
+        {
+            try
+            {
+                Users.Clear();
+
+                using var service = new AuthenticationService();
+                var allUsers = Task.Run(() => service.GetAllUsersAsync()).Result;
+
+                var filtered = string.IsNullOrWhiteSpace(SearchText)
+                    ? allUsers
+                    : allUsers.Where(u =>
+                        (u.UserName?.Contains(SearchText, StringComparison.OrdinalIgnoreCase) ?? false) ||
+                        (u.Email?.Contains(SearchText, StringComparison.OrdinalIgnoreCase) ?? false) ||
+                        (u.PhoneNumber?.Contains(SearchText, StringComparison.OrdinalIgnoreCase) ?? false));
+
+                foreach (var user in filtered)
+                    Users.Add(user);
+
+                StatusMessage = $"Found {Users.Count} users";
+            }
+            catch (Exception ex)
+            {
+                ShowError("filtering users", ex);
             }
         }
 
@@ -165,33 +149,36 @@ namespace ProjectManager.ViewModels.Identities
         {
             if (SelectedUser == null) return;
 
-            string? UserId = string.Empty;
-            using (AuthenticationService service = new AuthenticationService())
+            try
             {
-                UserId = service.GetUser(SelectedUser.UserName).Id;
-            }
-            CurrentUser = new UserViewModel
-            {
-                UserId = UserId,
-                UserName = SelectedUser.UserName,
-                Email = SelectedUser.Email,
-                PhoneNumber = SelectedUser.PhoneNumber,
-                Roles = SelectedUser.Roles
-            };
+                using var service = new AuthenticationService();
+                var user = service.GetUser(SelectedUser.UserName);
 
-            FormTitle = "Edit User";
-            IsFormVisible = true;
+                CurrentUser = new UserViewModel
+                {
+                    UserId = user.Id,
+                    UserName = SelectedUser.UserName,
+                    Email = SelectedUser.Email,
+                    PhoneNumber = SelectedUser.PhoneNumber,
+                    Roles = SelectedUser.Roles
+                };
+
+                FormTitle = "Edit User";
+                IsFormVisible = true;
+            }
+            catch (Exception ex)
+            {
+                ShowError("loading user for edit", ex);
+            }
         }
 
         private void DeleteUser()
         {
             if (SelectedUser == null) return;
 
-            if (MessageBox.Show($"Are you sure you want to delete user '{SelectedUser.UserName}'?",
+            if (MessageBox.Show($"Are you sure you want to delete '{SelectedUser.UserName}'?",
                 "Confirm Delete", MessageBoxButton.YesNo, MessageBoxImage.Warning) != MessageBoxResult.Yes)
-            {
                 return;
-            }
 
             try
             {
@@ -205,14 +192,12 @@ namespace ProjectManager.ViewModels.Identities
                 }
                 else
                 {
-                    MessageBox.Show($"Failed to delete user: {result.Errors.Description}",
-                        "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                    MessageBox.Show($"Delete failed: {result.Errors.Description}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
                 }
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Error deleting user: {ex.Message}",
-                    "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                ShowError("deleting user", ex);
             }
         }
 
@@ -220,7 +205,7 @@ namespace ProjectManager.ViewModels.Identities
         {
             ClearErrors();
 
-            // Validate inputs
+            // Validation
             if (string.IsNullOrWhiteSpace(CurrentUser.UserName))
                 UserNameError = "Username is required";
 
@@ -236,16 +221,9 @@ namespace ProjectManager.ViewModels.Identities
             if (!string.IsNullOrWhiteSpace(CurrentUser.Password) && CurrentUser.Password != ConfirmPassword)
                 ConfirmPasswordError = "Passwords must match";
 
-            // If any errors, return
-            if (!string.IsNullOrWhiteSpace(UserNameError) || !string.IsNullOrWhiteSpace(EmailError) ||
-                !string.IsNullOrWhiteSpace(PhoneError) || !string.IsNullOrWhiteSpace(RoleError) ||
-                !string.IsNullOrWhiteSpace(ConfirmPasswordError))
+            if (HasErrors())
             {
-                OnPropertyChanged(nameof(UserNameError));
-                OnPropertyChanged(nameof(EmailError));
-                OnPropertyChanged(nameof(PhoneError));
-                OnPropertyChanged(nameof(RoleError));
-                OnPropertyChanged(nameof(ConfirmPasswordError));
+                NotifyErrorsChanged();
                 return;
             }
 
@@ -256,7 +234,6 @@ namespace ProjectManager.ViewModels.Identities
 
                 if (string.IsNullOrEmpty(CurrentUser.UserId))
                 {
-                    // Add new user
                     var result = Task.Run(() => service.RegisterAsync(
                         CurrentUser.UserName,
                         CurrentUser.Email,
@@ -269,7 +246,6 @@ namespace ProjectManager.ViewModels.Identities
                 }
                 else
                 {
-                    // Update existing user
                     success = Task.Run(() => service.EditUserAsync(CurrentUser)).Result;
                     StatusMessage = success ? "User updated successfully" : "Failed to update user";
                 }
@@ -281,14 +257,12 @@ namespace ProjectManager.ViewModels.Identities
                 }
                 else
                 {
-                    MessageBox.Show("Operation failed. Please check the details and try again.",
-                        "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                    MessageBox.Show("Operation failed. Check the input data.", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
                 }
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Error saving user: {ex.Message}",
-                    "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                ShowError("saving user", ex);
             }
         }
 
@@ -298,20 +272,34 @@ namespace ProjectManager.ViewModels.Identities
             ClearErrors();
         }
 
-        private void CloseWindow()
-        {
-            _window.Close();
-        }
 
         private void ClearErrors()
         {
             UserNameError = EmailError = PhoneError = RoleError = PasswordError = ConfirmPasswordError = string.Empty;
+            NotifyErrorsChanged();
+        }
+
+        private void NotifyErrorsChanged()
+        {
             OnPropertyChanged(nameof(UserNameError));
             OnPropertyChanged(nameof(EmailError));
             OnPropertyChanged(nameof(PhoneError));
             OnPropertyChanged(nameof(RoleError));
             OnPropertyChanged(nameof(PasswordError));
             OnPropertyChanged(nameof(ConfirmPasswordError));
+        }
+
+        private bool HasErrors() =>
+            !string.IsNullOrWhiteSpace(UserNameError) ||
+            !string.IsNullOrWhiteSpace(EmailError) ||
+            !string.IsNullOrWhiteSpace(PhoneError) ||
+            !string.IsNullOrWhiteSpace(RoleError) ||
+            !string.IsNullOrWhiteSpace(ConfirmPasswordError);
+
+        private void ShowError(string context, Exception ex)
+        {
+            StatusMessage = $"Error {context}";
+            MessageBox.Show($"Error {context}: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
         }
     }
 }

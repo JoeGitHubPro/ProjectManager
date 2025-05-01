@@ -47,6 +47,7 @@ namespace ProjectManager.ViewModels
                 {
                     _isNewRecord = false;
                     IsFormVisible = true;
+
                     Phone = value.Phone;
                     CommercialRegisterNo = value.CommercialRegisterNo;
                     Name = value.Name;
@@ -59,9 +60,9 @@ namespace ProjectManager.ViewModels
                     Site = value.Site;
                     Notes = value.Notes;
                 }
-
             }
         }
+
         private bool _isFormVisible = false;
         public bool IsFormVisible
         {
@@ -72,124 +73,71 @@ namespace ProjectManager.ViewModels
                 OnPropertyChanged();
             }
         }
+
         public string Name
         {
             get => _name;
-            set
-            {
-                _name = value;
-                OnPropertyChanged();
-            }
+            set => SetField(ref _name, value);
         }
 
         public string Description
         {
             get => _description;
-            set
-            {
-                _description = value;
-                OnPropertyChanged();
-            }
+            set => SetField(ref _description, value);
         }
 
         public string Whatsapp
         {
-            get
-            {
-                if (string.IsNullOrEmpty(_whatsapp))
-                {
-                    return Phone;
-                }
-                return _whatsapp;
-            }
-            set
-            {
-                _whatsapp = value;
-                OnPropertyChanged();
-            }
+            get => string.IsNullOrEmpty(_whatsapp) ? Phone : _whatsapp;
+            set => SetField(ref _whatsapp, value);
         }
 
         public string Facebook
         {
             get => _facebook;
-            set
-            {
-                _facebook = value;
-                OnPropertyChanged();
-            }
+            set => SetField(ref _facebook, value);
         }
 
         public string TikTok
         {
             get => _tikTok;
-            set
-            {
-                _tikTok = value;
-                OnPropertyChanged();
-            }
+            set => SetField(ref _tikTok, value);
         }
 
         public string X
         {
             get => _x;
-            set
-            {
-                _x = value;
-                OnPropertyChanged();
-            }
+            set => SetField(ref _x, value);
         }
 
         public string Instagram
         {
             get => _instagram;
-            set
-            {
-                _instagram = value;
-                OnPropertyChanged();
-            }
+            set => SetField(ref _instagram, value);
         }
 
         public string Site
         {
             get => _site;
-            set
-            {
-                _site = value;
-                OnPropertyChanged();
-            }
+            set => SetField(ref _site, value);
         }
 
         public string Notes
         {
             get => _notes;
-            set
-            {
-                _notes = value;
-                OnPropertyChanged();
-            }
+            set => SetField(ref _notes, value);
         }
 
         public string Phone
         {
             get => _phone;
-            set
-            {
-                _phone = value;
-                OnPropertyChanged();
-                ValidateProperty(nameof(Phone));
-            }
+            set => ValidateAndNotify(ref _phone, value, nameof(Phone));
         }
 
         public string CommercialRegisterNo
         {
             get => _commercialRegisterNo;
-            set
-            {
-                _commercialRegisterNo = value;
-                OnPropertyChanged();
-                ValidateProperty(nameof(CommercialRegisterNo));
-
-            }
+            set => ValidateAndNotify(ref _commercialRegisterNo, value, nameof(CommercialRegisterNo));
         }
 
         public string SearchText
@@ -202,7 +150,6 @@ namespace ProjectManager.ViewModels
                 FilterConsumers();
             }
         }
-
 
         public bool CanDelete => SelectedConsumer != null;
 
@@ -220,27 +167,13 @@ namespace ProjectManager.ViewModels
 
         private void InitializeCommands()
         {
-            SaveCommand = new RelayCommand(
-                 SaveConsumer,
-                () => !HasErrors);
-
-            DeleteCommand = new RelayCommand(
-              DeleteConsumer);
-
-            RefreshCommand = new RelayCommand(
-                LoadData);
-
-            SearchCommand = new RelayCommand(
-               FilterConsumers);
-
-            AddNewCommand = new RelayCommand(
-                AddNewConsumer);
-
-            EditCommand = new RelayCommand(
-                SaveConsumer);
-
-            ClearCommand = new RelayCommand(
-                ClearFields);
+            SaveCommand = new RelayCommand(SaveConsumer, () => !HasErrors);
+            DeleteCommand = new RelayCommand(DeleteConsumer);
+            RefreshCommand = new RelayCommand(LoadData);
+            SearchCommand = new RelayCommand(FilterConsumers);
+            AddNewCommand = new RelayCommand(AddNewConsumer);
+            EditCommand = new RelayCommand(SaveConsumer);
+            ClearCommand = new RelayCommand(ClearFields);
         }
 
         #endregion
@@ -266,7 +199,6 @@ namespace ProjectManager.ViewModels
             {
                 ShowError($"Error loading data: {ex.Message}");
             }
-
         }
 
         private void FilterConsumers()
@@ -277,26 +209,25 @@ namespace ProjectManager.ViewModels
             }
             else
             {
-                var searchLower = SearchText.ToLower();
+                var search = SearchText.ToLower();
                 FilteredConsumers = new ObservableCollection<Consumer>(
                     Consumers.Where(c =>
-                        (!string.IsNullOrEmpty(c.Name) && c.Name.ToLower().Contains(searchLower)) ||
-                        (!string.IsNullOrEmpty(c.Description) && c.Description.ToLower().Contains(searchLower)) ||
-                        (!string.IsNullOrEmpty(c.Phone) && c.Phone.ToLower().Contains(searchLower)) ||
-                        (!string.IsNullOrEmpty(c.Whatsapp) && c.Whatsapp.ToLower().Contains(searchLower)) ||
-                        (!string.IsNullOrEmpty(c.Facebook) && c.Facebook.ToLower().Contains(searchLower)) ||
-                        (!string.IsNullOrEmpty(c.TikTok) && c.TikTok.ToLower().Contains(searchLower)) ||
-                        (!string.IsNullOrEmpty(c.X) && c.X.ToLower().Contains(searchLower)) ||
-                        (!string.IsNullOrEmpty(c.Instagram) && c.Instagram.ToLower().Contains(searchLower)) ||
-                        (!string.IsNullOrEmpty(c.Site) && c.Site.ToLower().Contains(searchLower)) ||
-                        (!string.IsNullOrEmpty(c.Notes) && c.Notes.ToLower().Contains(searchLower)) ||
-                        (!string.IsNullOrEmpty(c.CommercialRegisterNo) && c.CommercialRegisterNo.ToLower().Contains(searchLower))
-                    )
-                );
+                        (!string.IsNullOrEmpty(c.Name) && c.Name.ToLower().Contains(search)) ||
+                        (!string.IsNullOrEmpty(c.Description) && c.Description.ToLower().Contains(search)) ||
+                        (!string.IsNullOrEmpty(c.Phone) && c.Phone.ToLower().Contains(search)) ||
+                        (!string.IsNullOrEmpty(c.Whatsapp) && c.Whatsapp.ToLower().Contains(search)) ||
+                        (!string.IsNullOrEmpty(c.Facebook) && c.Facebook.ToLower().Contains(search)) ||
+                        (!string.IsNullOrEmpty(c.TikTok) && c.TikTok.ToLower().Contains(search)) ||
+                        (!string.IsNullOrEmpty(c.X) && c.X.ToLower().Contains(search)) ||
+                        (!string.IsNullOrEmpty(c.Instagram) && c.Instagram.ToLower().Contains(search)) ||
+                        (!string.IsNullOrEmpty(c.Site) && c.Site.ToLower().Contains(search)) ||
+                        (!string.IsNullOrEmpty(c.Notes) && c.Notes.ToLower().Contains(search)) ||
+                        (!string.IsNullOrEmpty(c.CommercialRegisterNo) && c.CommercialRegisterNo.ToLower().Contains(search))
+                    ));
             }
+
             OnPropertyChanged(nameof(FilteredConsumers));
         }
-
 
         private void AddNewConsumer()
         {
@@ -315,15 +246,12 @@ namespace ProjectManager.ViewModels
 
             try
             {
+                if (_context == null) _context = new AppDbContext();
 
                 if (_isNewRecord)
-                {
                     SaveNewConsumer();
-                }
                 else
-                {
                     UpdateExistingConsumer();
-                }
 
                 _context.SaveChanges();
                 FilterConsumers();
@@ -337,12 +265,8 @@ namespace ProjectManager.ViewModels
 
         private void SaveNewConsumer()
         {
-            // Check if a consumer with the same phone already exists
-            var existing = _context.Consumers.FirstOrDefault(c => c.Phone == Phone);
-            if (existing != null)
-            {
+            if (_context.Consumers.Any(c => c.Phone == Phone))
                 throw new InvalidOperationException("A consumer with this phone number already exists.");
-            }
 
             var consumer = new Consumer
             {
@@ -359,9 +283,8 @@ namespace ProjectManager.ViewModels
                 Notes = Notes
             };
 
-
             _context.Consumers.Add(consumer);
-            _context.SaveChanges(); // Save immediately to get the auto-generated Id
+            _context.SaveChanges();
 
             Consumers.Add(consumer);
             FilteredConsumers.Add(consumer);
@@ -369,9 +292,8 @@ namespace ProjectManager.ViewModels
 
         private void UpdateExistingConsumer()
         {
-            if (SelectedConsumer == null) return;
+            if (SelectedConsumer == null || _context == null) return;
 
-            // Update the SelectedConsumer properties
             SelectedConsumer.Phone = Phone;
             SelectedConsumer.CommercialRegisterNo = CommercialRegisterNo;
             SelectedConsumer.Name = Name;
@@ -384,15 +306,13 @@ namespace ProjectManager.ViewModels
             SelectedConsumer.Site = Site;
             SelectedConsumer.Notes = Notes;
 
-
             _context.Consumers.Update(SelectedConsumer);
             _context.SaveChanges();
         }
 
-
         private void DeleteConsumer()
         {
-            if (SelectedConsumer == null) return;
+            if (SelectedConsumer == null || _context == null) return;
 
             var result = MessageBox.Show(
                 "Are you sure you want to delete this consumer? This action cannot be undone.",
@@ -406,36 +326,27 @@ namespace ProjectManager.ViewModels
             {
                 _context.Consumers.Remove(SelectedConsumer);
                 _context.SaveChanges();
+
                 Consumers.Remove(SelectedConsumer);
                 FilteredConsumers.Remove(SelectedConsumer);
-                ClearFields();
 
+                ClearFields();
                 ShowInfo("Consumer deleted successfully.");
             }
             catch (Exception ex)
             {
                 ShowError($"Error deleting consumer: {ex.Message}");
             }
-
         }
 
         private void ClearFields()
         {
             SelectedConsumer = null;
-            Phone = string.Empty;
-            CommercialRegisterNo = string.Empty;
-            Name = string.Empty;
-            Description = string.Empty;
-            Whatsapp = string.Empty;
-            Facebook = string.Empty;
-            TikTok = string.Empty;
-            X = string.Empty;
-            Instagram = string.Empty;
-            Site = string.Empty;
-            Notes = string.Empty;
+            Phone = CommercialRegisterNo = Name = Description = Whatsapp =
+                Facebook = TikTok = X = Instagram = Site = Notes = string.Empty;
+
             _isNewRecord = true;
             IsFormVisible = false;
-
         }
 
         #endregion
@@ -446,61 +357,61 @@ namespace ProjectManager.ViewModels
         {
             get
             {
-                string error = string.Empty;
-
-                switch (propertyName)
+                return propertyName switch
                 {
-                    case nameof(Phone):
-                        if (string.IsNullOrWhiteSpace(Phone))
-                            error = "Phone number is required";
-                        else if (Phone.Length > 20)
-                            error = "Phone number cannot exceed 20 characters";
-                        break;
+                    nameof(Phone) => string.IsNullOrWhiteSpace(Phone)
+                        ? "Phone number is required"
+                        : Phone.Length > 20
+                            ? "Phone number cannot exceed 20 characters"
+                            : string.Empty,
 
-                    case nameof(CommercialRegisterNo):
-                        if (!string.IsNullOrWhiteSpace(CommercialRegisterNo) && CommercialRegisterNo.Length > 50)
-                            error = "Commercial register number cannot exceed 50 characters";
-                        break;
-                }
+                    nameof(CommercialRegisterNo) => !string.IsNullOrWhiteSpace(CommercialRegisterNo) && CommercialRegisterNo.Length > 50
+                        ? "Commercial register number cannot exceed 50 characters"
+                        : string.Empty,
 
-                return error;
+                    _ => string.Empty
+                };
             }
         }
+
+        private readonly Dictionary<string, string> _errorCollection = new();
+        public Dictionary<string, string> ErrorCollection => _errorCollection;
 
         private void ValidateProperty(string propertyName)
         {
             string error = this[propertyName];
-            ErrorCollection[propertyName] = error;
+            _errorCollection[propertyName] = error;
             OnPropertyChanged(nameof(ErrorCollection));
             OnPropertyChanged(nameof(HasErrors));
         }
-        public Dictionary<string, string> ErrorCollection =>
-           new Dictionary<string, string>
-           {
-               [nameof(Phone)] = this[nameof(Phone)],
-               [nameof(CommercialRegisterNo)] = this[nameof(CommercialRegisterNo)]
-           };
 
-        public bool HasErrors => ErrorCollection.Values.Any(error => !string.IsNullOrEmpty(error));
+        private void ValidateAndNotify(ref string backingField, string value, string propertyName)
+        {
+            backingField = value;
+            OnPropertyChanged(propertyName);
+            ValidateProperty(propertyName);
+        }
+
+        public bool HasErrors => _errorCollection.Values.Any(error => !string.IsNullOrWhiteSpace(error));
 
         #endregion
 
         #region Helper Methods
 
-        private void ShowError(string message)
+        private void SetField(ref string field, string value, [System.Runtime.CompilerServices.CallerMemberName] string propertyName = null)
         {
+            field = value;
+            OnPropertyChanged(propertyName);
+        }
+
+        private void ShowError(string message) =>
             MessageBox.Show(message, "Error", MessageBoxButton.OK, MessageBoxImage.Error);
-        }
 
-        private void ShowWarning(string message)
-        {
+        private void ShowWarning(string message) =>
             MessageBox.Show(message, "Warning", MessageBoxButton.OK, MessageBoxImage.Warning);
-        }
 
-        private void ShowInfo(string message)
-        {
+        private void ShowInfo(string message) =>
             MessageBox.Show(message, "Information", MessageBoxButton.OK, MessageBoxImage.Information);
-        }
 
         #endregion
     }

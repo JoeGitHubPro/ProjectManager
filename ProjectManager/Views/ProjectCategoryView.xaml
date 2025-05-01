@@ -4,6 +4,10 @@
              xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
              xmlns:helpers="clr-namespace:ProjectManager.Helpers">
 
+    <UserControl.InputBindings>
+        <KeyBinding Gesture="Ctrl+R" Command="{Binding RefreshCommand}" />
+    </UserControl.InputBindings>
+
     <Grid Margin="10">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>

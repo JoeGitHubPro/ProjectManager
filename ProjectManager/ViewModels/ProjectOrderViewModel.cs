@@ -1,65 +1,59 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿// Improved ProjectOrderViewModel with Dependency Injection, INotifyDataErrorInfo, and Async Support
+using Microsoft.EntityFrameworkCore;
 using ProjectManager.Data;
 using ProjectManager.Helpers;
 using ProjectManager.Models;
 using ProjectManager.ViewModels.CapitalManagement;
+using System.Collections;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
+using System.Runtime.CompilerServices;
 using System.Windows;
-
 
 namespace ProjectManager.ViewModels
 {
-    public class ProjectOrderViewModel : BaseViewModel, IDataErrorInfo
+    public class ProjectOrderViewModel : BaseViewModel, INotifyDataErrorInfo
     {
-        private AppDbContext _context;
+        private readonly AppDbContext _context;
+        private readonly Dictionary<string, List<string>> _errors = new();
 
-        public ObservableCollection<ProjectOrder> ProjectOrders { get; set; } = new();
-        public ObservableCollection<Consumer> Consumers { get; set; } = new();
-        public ObservableCollection<Project> Projects { get; set; } = new();
+        public ObservableCollection<ProjectOrder> ProjectOrders { get; } = new();
+        public ObservableCollection<Consumer> Consumers { get; } = new();
+        public ObservableCollection<Project> Projects { get; } = new();
+
+        public ProjectOrderViewModel()
+        {
+            _context = new AppDbContext();
+            InitializeCommands();
+            _ = LoadDataAsync();
+        }
 
         #region Properties
+
         private decimal _discount;
         public decimal Discount
         {
             get => _discount;
             set
             {
-                if (_discount != value)
-                {
-                    _discount = value;
-                    OnPropertyChanged();
-                    UpdateTotalPrice();
-                }
+                SetProperty(ref _discount, value);
+                ValidateProperty(value);
+                UpdateTotalPrice();
             }
         }
+
         private bool _isFormVisible;
         public bool IsFormVisible
         {
             get => _isFormVisible;
-            set
-            {
-                if (_isFormVisible != value)
-                {
-                    _isFormVisible = value;
-                    OnPropertyChanged();
-                }
-            }
+            set => SetProperty(ref _isFormVisible, value);
         }
-
 
         private string _installationSystemInfo = string.Empty;
         public string InstallationSystemInfo
         {
             get => _installationSystemInfo;
-            set
-            {
-                if (_installationSystemInfo != value)
-                {
-                    _installationSystemInfo = value;
-                    OnPropertyChanged();
-                }
-            }
+            set => SetProperty(ref _installationSystemInfo, value);
         }
 
         private DateTime _soldDate = DateTime.Today;
@@ -68,11 +62,8 @@ namespace ProjectManager.ViewModels
             get => _soldDate;
             set
             {
-                if (_soldDate != value)
-                {
-                    _soldDate = value;
-                    OnPropertyChanged();
-                }
+                SetProperty(ref _soldDate, value);
+                ValidateProperty(value);
             }
         }
 
@@ -80,14 +71,7 @@ namespace ProjectManager.ViewModels
         public string Notes
         {
             get => _notes;
-            set
-            {
-                if (_notes != value)
-                {
-                    _notes = value;
-                    OnPropertyChanged();
-                }
-            }
+            set => SetProperty(ref _notes, value);
         }
 
         private int _selectedConsumerId;
@@ -96,14 +80,10 @@ namespace ProjectManager.ViewModels
             get => _selectedConsumerId;
             set
             {
-                if (_selectedConsumerId != value)
-                {
-                    _selectedConsumerId = value;
-                    OnPropertyChanged();
-                }
+                SetProperty(ref _selectedConsumerId, value);
+                ValidateProperty(value);
             }
         }
-
 
         private int _selectedProjectId;
         public int SelectedProjectId
@@ -111,12 +91,9 @@ namespace ProjectManager.ViewModels
             get => _selectedProjectId;
             set
             {
-                if (_selectedProjectId != value)
-                {
-                    _selectedProjectId = value;
-                    OnPropertyChanged();
-                    UpdateTotalPrice();
-                }
+                SetProperty(ref _selectedProjectId, value);
+                ValidateProperty(value);
+                UpdateTotalPrice();
             }
         }
 
@@ -124,14 +101,7 @@ namespace ProjectManager.ViewModels
         public decimal TotalPrice
         {
             get => _totalPrice;
-            set
-            {
-                if (_totalPrice != value)
-                {
-                    _totalPrice = value;
-                    OnPropertyChanged();
-                }
-            }
+            set => SetProperty(ref _totalPrice, value);
         }
 
         private string _searchText = string.Empty;
@@ -140,12 +110,8 @@ namespace ProjectManager.ViewModels
             get => _searchText;
             set
             {
-                if (_searchText != value)
-                {
-                    _searchText = value;
-                    OnPropertyChanged();
-                    FilterData();
-                }
+                SetProperty(ref _searchText, value);
+                _ = FilterDataAsync();
             }
         }
 
@@ -155,25 +121,25 @@ namespace ProjectManager.ViewModels
             get => _selectedOrder;
             set
             {
-                if (_selectedOrder != value)
+                if (SetProperty(ref _selectedOrder, value))
                 {
-                    _selectedOrder = value;
-                    OnPropertyChanged();
                     OnPropertyChanged(nameof(CanDelete));
-                    if (_selectedOrder != null)
+
+                    if (value != null)
                     {
-                        Discount = _selectedOrder.Discount;
-                        InstallationSystemInfo = _selectedOrder.InstallationSystemInfo;
-                        SoldDate = _selectedOrder.SoldDate;
-                        Notes = _selectedOrder.Notes;
-                        SelectedConsumerId = _selectedOrder.ConsumerId;
-                        SelectedProjectId = _selectedOrder.ProjectId;
+                        Discount = value.Discount;
+                        InstallationSystemInfo = value.InstallationSystemInfo;
+                        SoldDate = value.SoldDate;
+                        Notes = value.Notes;
+                        SelectedConsumerId = value.ConsumerId;
+                        SelectedProjectId = value.ProjectId;
                     }
                 }
             }
         }
 
         public bool CanDelete => SelectedOrder != null;
+
         #endregion
 
         #region Commands
@@ -187,56 +153,36 @@ namespace ProjectManager.ViewModels
         public RelayCommand UpdateCommand { get; private set; }
         #endregion
 
-        public ProjectOrderViewModel()
-        {
-            _context = new AppDbContext();
-            InitializeCommands();
-            LoadData();
-        }
-
         private void InitializeCommands()
         {
-            SaveCommand = new RelayCommand(Save, () => !HasErrors);
-            DeleteCommand = new RelayCommand(Delete, () => CanDelete);
-            RefreshCommand = new RelayCommand(LoadData);
-            ReloadPageCommand = new RelayCommand(() => { LoadData(); Clear(); });
+            SaveCommand = new RelayCommand(async () => await SaveAsync(), () => !HasErrors);
+            DeleteCommand = new RelayCommand(async () => await DeleteAsync(), () => CanDelete);
+            RefreshCommand = new RelayCommand(async () => await LoadDataAsync());
+            ReloadPageCommand = new RelayCommand(async () => { await LoadDataAsync(); Clear(); });
             ClearCommand = new RelayCommand(Clear);
             LocateCommand = new RelayCommand(Locate);
             AddCommand = new RelayCommand(AddNewOrder);
             UpdateCommand = new RelayCommand(UpdateOrder);
         }
 
-        private void AddNewOrder()
-        {
-            SelectedOrder = null;
-            Clear();
-            IsFormVisible = true;
-        }
+        private void AddNewOrder() { SelectedOrder = null; Clear(); IsFormVisible = true; }
+        private void UpdateOrder() => IsFormVisible = true;
 
-        private void UpdateOrder()
-        {
-            IsFormVisible = true;
-        }
-
-        private void LoadData()
+        private async Task LoadDataAsync()
         {
             try
             {
-                _context?.Dispose();
-                _context = new AppDbContext();
+                ProjectOrders.Clear();
+                Consumers.Clear();
+                Projects.Clear();
 
-                ProjectOrders = new ObservableCollection<ProjectOrder>(
-                    _context.ProjectOrders
-                        .Include(p => p.Project)
-                        .Include(p => p.Consumer)
-                        .ToList());
+                var orders = await _context.ProjectOrders.Include(p => p.Project).Include(p => p.Consumer).ToListAsync();
+                var consumers = await _context.Consumers.ToListAsync();
+                var projects = await _context.Projects.Include(p => p.ProjectCategory).ToListAsync();
 
-                Consumers = new ObservableCollection<Consumer>(_context.Consumers.ToList());
-                Projects = new ObservableCollection<Project>(_context.Projects.Include(a => a.ProjectCategory).ToList());
-
-                OnPropertyChanged(nameof(ProjectOrders));
-                OnPropertyChanged(nameof(Consumers));
-                OnPropertyChanged(nameof(Projects));
+                foreach (var o in orders) ProjectOrders.Add(o);
+                foreach (var c in consumers) Consumers.Add(c);
+                foreach (var p in projects) Projects.Add(p);
             }
             catch (Exception ex)
             {
@@ -244,39 +190,36 @@ namespace ProjectManager.ViewModels
             }
         }
 
-
-        private void FilterData()
+        private async Task FilterDataAsync()
         {
             if (string.IsNullOrWhiteSpace(SearchText))
             {
-                OnPropertyChanged(nameof(ProjectOrders));
+                await LoadDataAsync();
                 return;
             }
 
             var searchLower = SearchText.ToLower();
-            var filtered = new ObservableCollection<ProjectOrder>(
-                _context.ProjectOrders
-                    .Include(p => p.Project)
-                    .Include(p => p.Consumer)
-                    .Where(o =>
-                        o.Project.Name.ToLower().Contains(searchLower) ||
-                        o.Consumer.Phone.Contains(searchLower) ||
-                        (o.Notes != null && o.Notes.ToLower().Contains(searchLower)) ||
-                        o.FolderSerial.Contains(searchLower))
-                    .ToList());
+            var filtered = await _context.ProjectOrders
+                .Include(p => p.Project)
+                .Include(p => p.Consumer)
+                .Where(o =>
+                    o.Project.Name.ToLower().Contains(searchLower) ||
+                    o.Consumer.Phone.Contains(searchLower) ||
+                    (o.Notes != null && o.Notes.ToLower().Contains(searchLower)) ||
+                    o.FolderSerial.Contains(searchLower))
+                .ToListAsync();
 
-            ProjectOrders = filtered;
-            OnPropertyChanged(nameof(ProjectOrders));
+            ProjectOrders.Clear();
+            foreach (var o in filtered) ProjectOrders.Add(o);
         }
 
-        private void Save()
+        private async Task SaveAsync()
         {
             try
             {
-
                 if (HasErrors)
                 {
-                    MessageBox.Show("Please fix validation errors before saving.", "Validation Error", MessageBoxButton.OK, MessageBoxImage.Warning);
+                    MessageBox.Show("Please fix validation errors.", "Validation Error", MessageBoxButton.OK, MessageBoxImage.Warning);
                     return;
                 }
 
@@ -289,7 +232,6 @@ namespace ProjectManager.ViewModels
 
                 if (SelectedOrder == null)
                 {
-                    // Add new order
                     var order = new ProjectOrder
                     {
                         FolderSerial = FolderHelper.CreateUniqueFolder(),
@@ -302,16 +244,15 @@ namespace ProjectManager.ViewModels
                         TotalPrice = project.Price * (1 - Discount / 100)
                     };
 
-                    BusinessBalanceViewModel business = new BusinessBalanceViewModel();
-                    business.NewIncomeAmount = order.TotalPrice;
-                    business.NewIncomeDescription = $"Selling {project.ProjectCategory.Name} {project.Name}";
-                    business.SaveIncome();
+                    var balanceVm = new BusinessBalanceViewModel();
+                    balanceVm.NewIncomeAmount = order.TotalPrice;
+                    balanceVm.NewIncomeDescription = $"Selling {project.ProjectCategory.Name} {project.Name}";
+                    balanceVm.SaveIncome();
 
-                    _context.ProjectOrders.Add(order);
+                    await _context.ProjectOrders.AddAsync(order);
                 }
                 else
                 {
-                    // Update existing order
                     SelectedOrder.Discount = Discount;
                     SelectedOrder.InstallationSystemInfo = InstallationSystemInfo;
                     SelectedOrder.SoldDate = SoldDate;
@@ -321,35 +262,30 @@ namespace ProjectManager.ViewModels
                     SelectedOrder.TotalPrice = project.Price * (1 - Discount / 100);
                 }
 
-                _context.SaveChanges();
-                LoadData();
+                await _context.SaveChangesAsync();
+                await LoadDataAsync();
                 MessageBox.Show("Order saved successfully.", "Success", MessageBoxButton.OK, MessageBoxImage.Information);
             }
             catch (Exception ex)
             {
                 MessageBox.Show($"Error saving order: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
             }
-
         }
 
-        private void Delete()
+        private async Task DeleteAsync()
         {
             try
             {
                 if (SelectedOrder == null) return;
 
-                var result = MessageBox.Show(
-                    "Are you sure you want to delete this order? This action cannot be undone.",
-                    "Confirm Delete",
-                    MessageBoxButton.YesNo,
-                    MessageBoxImage.Warning);
-
+                var result = MessageBox.Show("Are you sure you want to delete this order?", "Confirm Delete", MessageBoxButton.YesNo, MessageBoxImage.Warning);
                 if (result != MessageBoxResult.Yes) return;
 
                 FolderHelper.DeleteFolder(SelectedOrder.FolderSerial);
                 _context.ProjectOrders.Remove(SelectedOrder);
-                _context.SaveChanges();
-                LoadData();
+                await _context.SaveChangesAsync();
+
+                await LoadDataAsync();
                 Clear();
                 MessageBox.Show("Order deleted successfully.", "Success", MessageBoxButton.OK, MessageBoxImage.Information);
             }
@@ -375,10 +311,8 @@ namespace ProjectManager.ViewModels
         {
             try
             {
-                if (SelectedOrder != null && !string.IsNullOrEmpty(SelectedOrder.FolderSerial))
-                {
+                if (!string.IsNullOrEmpty(SelectedOrder?.FolderSerial))
                     FolderHelper.OpenFolderByName(SelectedOrder.FolderSerial);
-                }
             }
             catch (Exception ex)
             {
@@ -392,50 +326,53 @@ namespace ProjectManager.ViewModels
             TotalPrice = project != null ? project.Price * (1 - Discount / 100) : 0;
         }
 
-        #region Validation
-        public string Error => string.Empty;
+        #region Validation (INotifyDataErrorInfo)
 
-        public string this[string columnName]
+        public bool HasErrors => _errors.Any();
+
+        public event EventHandler<DataErrorsChangedEventArgs> ErrorsChanged;
+
+        public IEnumerable GetErrors(string propertyName)
         {
-            get
-            {
-                switch (columnName)
-                {
-                    case nameof(SelectedProjectId):
-                        if (SelectedProjectId <= 0)
-                            return "Please select a project";
-                        break;
-
-                    case nameof(Discount):
-                        if (Discount < 0 || Discount > 100)
-                            return "Discount must be between 0 and 100";
-                        break;
-
-
-                    case nameof(SoldDate):
-                        if (SoldDate > DateTime.Today)
-                            return "Sold date cannot be in the future";
-                        break;
-
-                    case nameof(SelectedConsumerId):
-                        if (SelectedConsumerId <= 0)
-                            return "Consumer is required";
-                        break;
-                }
-                return string.Empty;
-            }
+            return _errors.TryGetValue(propertyName, out var errors) ? errors : null;
         }
 
-        private bool HasErrors
+        private void ValidateProperty(object value, [CallerMemberName] string propertyName = null)
         {
-            get
+            List<string> errors = new();
+
+            switch (propertyName)
             {
-                return !string.IsNullOrEmpty(this[nameof(SelectedProjectId)]) ||
-                       !string.IsNullOrEmpty(this[nameof(Discount)]) ||
-                       !string.IsNullOrEmpty(this[nameof(SoldDate)]) ||
-                       !string.IsNullOrEmpty(this[nameof(SelectedConsumerId)]);
+                case nameof(Discount):
+                    if ((decimal)value < 0 || (decimal)value > 100)
+                        errors.Add("Discount must be between 0 and 100.");
+                    break;
+
+                case nameof(SoldDate):
+                    if ((DateTime)value > DateTime.Today)
+                        errors.Add("Sold date cannot be in the future.");
+                    break;
+
+                case nameof(SelectedProjectId):
+                    if ((int)value <= 0)
+                        errors.Add("Please select a project.");
+                    break;
+
+                case nameof(SelectedConsumerId):
+                    if ((int)value <= 0)
+                        errors.Add("Consumer is required.");
+                    break;
             }
+
+            if (errors.Any())
+                _errors[propertyName] = errors;
+            else
+                _errors.Remove(propertyName);
+
+            ErrorsChanged?.Invoke(this, new DataErrorsChangedEventArgs(propertyName));
+            SaveCommand.RaiseCanExecuteChanged();
         }
+
         #endregion
     }
 }

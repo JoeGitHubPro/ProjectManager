@@ -9,6 +9,10 @@
              mc:Ignorable="d"
              d:DesignHeight="800" d:DesignWidth="1200">
 
+    <UserControl.InputBindings>
+        <KeyBinding Gesture="Ctrl+R" Command="{Binding RefreshCommand}" />
+    </UserControl.InputBindings>
+
     <UserControl.Resources>
         <Style TargetType="DataGridRow" x:Key="CashFlowRowStyle">
             <Style.Triggers>
@@ -100,7 +104,7 @@
 
                 <!-- Refresh Button -->
                 <Button Grid.Column="1"
-                        Command="{Binding RefreshBalanceCommand}"
+                        Command="{Binding RefreshCommand}"
                         Style="{StaticResource OutlinedButtonStyle}"
                         VerticalAlignment="Top"
                         HorizontalAlignment="Right"
