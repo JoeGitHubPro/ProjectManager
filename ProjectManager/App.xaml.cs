@@ -1,4 +1,5 @@
-﻿using ProjectManager.StartUp;
+﻿using ProjectManager.Services;
+using ProjectManager.StartUp;
 using System.Windows;
 
 namespace ProjectManager
@@ -12,6 +13,8 @@ namespace ProjectManager
         {
             base.OnStartup(e);
 
+            ExceptionHandle();
+
             await StartUp.SplashScreen.Start();
 
             await AutoMigration.MigrateAsync();
@@ -20,6 +23,17 @@ namespace ProjectManager
 
             await Seed.SeedAdminAsync();
 
+        }
+        private void ExceptionHandle()
+        {
+            // Handle UI Thread Exceptions
+            this.DispatcherUnhandledException += ExceptionHandler.App_DispatcherUnhandledException;
+
+            // Handle Non-UI Thread Exceptions
+            AppDomain.CurrentDomain.UnhandledException += ExceptionHandler.CurrentDomain_UnhandledException;
+
+            // Handle Task Thread Exceptions
+            TaskScheduler.UnobservedTaskException += ExceptionHandler.TaskScheduler_UnobservedTaskException;
         }
     }
 
