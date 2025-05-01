@@ -7,7 +7,6 @@
              mc:Ignorable="d"
              d:DesignHeight="600" d:DesignWidth="800">
 
-
     <Grid Margin="10">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
@@ -15,7 +14,7 @@
         </Grid.RowDefinitions>
 
         <!-- Toolbar -->
-        <DockPanel Grid.Row="0" Margin="0 0 0 10" LastChildFill="False">
+        <DockPanel Grid.Row="0" Margin="0,0,0,10" LastChildFill="False">
             <TextBox Width="250"
                      Margin="0 0 10 0"
                      Style="{StaticResource MaterialDesignOutlinedTextBox}"
@@ -27,11 +26,11 @@
             </TextBox>
 
             <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
-                <Button Command="{Binding RefreshCommand}" Style="{StaticResource MaterialDesignOutlinedButton}" Margin="0 0 10 0">
-                    <materialDesign:PackIcon Kind="Refresh"/>
+                <Button Command="{Binding RefreshCommand}" Style="{StaticResource OutlinedButtonStyle}" Margin="0,0,10,0">
+                    <materialDesign:PackIcon Kind="Refresh" Width="20" Height="20"/>
                 </Button>
-                <Button Command="{Binding AddNewCommand}" Style="{StaticResource MaterialDesignOutlinedButton}">
-                    <materialDesign:PackIcon Kind="Plus"/>
+                <Button Command="{Binding AddNewCommand}" Style="{StaticResource PrimaryButtonStyle}">
+                    <materialDesign:PackIcon Kind="Plus" Width="20" Height="20"/>
                 </Button>
             </StackPanel>
         </DockPanel>
@@ -41,7 +40,7 @@
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="*"/>
                 <ColumnDefinition Width="10"/>
-                <ColumnDefinition Width="350"/>
+                <ColumnDefinition Width="Auto"/>
             </Grid.ColumnDefinitions>
 
             <!-- Project List -->
@@ -52,39 +51,50 @@
                     <DataGridTextColumn Header="Details" Binding="{Binding Details}" Width="2*"/>
                     <DataGridTextColumn Header="Price" Binding="{Binding Price, StringFormat=C}" Width="Auto"/>
                     <DataGridTextColumn Header="Category" Binding="{Binding ProjectCategory.Name}" Width="*"/>
+                    <DataGridTemplateColumn Header="Actions" Width="Auto">
+                        <DataGridTemplateColumn.CellTemplate>
+                            <DataTemplate>
+                                <Button Command="{Binding DataContext.EditCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                    CommandParameter="{Binding}"
+                                    Style="{StaticResource OutlinedButtonStyle}">
+                                    <materialDesign:PackIcon Kind="Pencil" Width="20" Height="20"/>
+                                </Button>
+                            </DataTemplate>
+                        </DataGridTemplateColumn.CellTemplate>
+                    </DataGridTemplateColumn>
                 </DataGrid.Columns>
             </DataGrid>
 
             <!-- Project Form -->
-            <Border Grid.Column="2" Padding="15" BorderThickness="1" CornerRadius="4">
+            <Border Grid.Column="2" Width="300" Padding="15" BorderThickness="1" CornerRadius="4" Background="White"  Visibility="{Binding IsFormVisible, Converter={StaticResource BoolToVis}}">
                 <StackPanel>
-                    <TextBlock Text="Project Details" Style="{StaticResource MaterialDesignHeadline6TextBlock}" Margin="0 0 0 15"/>
+                    <TextBlock Text="Project Details" Style="{StaticResource HeadingTextStyle}" Margin="0,0,0,15"/>
 
+                    <Label Content="Project Name" />
                     <TextBox Text="{Binding SelectedProject.Name, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True}"
-                             Style="{StaticResource MaterialDesignOutlinedTextBox}"
-                             materialDesign:HintAssist.Hint="Project name" Margin="0 0 0 10"/>
+                             Style="{StaticResource MaterialDesignOutlinedTextBox}" Margin="0,0,0,10"/>
 
+                    <Label Content="Details" />
                     <TextBox Text="{Binding SelectedProject.Details, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True}"
                              AcceptsReturn="True" TextWrapping="Wrap" Height="80"
-                             Style="{StaticResource MaterialDesignOutlinedTextBox}"
-                             materialDesign:HintAssist.Hint="Details" Margin="0 0 0 10"/>
+                             Style="{StaticResource MaterialDesignOutlinedTextBox}" Margin="0,0,0,10"/>
 
+                    <Label Content="Price" />
                     <TextBox Text="{Binding SelectedProject.Price, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True}"
-                             Style="{StaticResource MaterialDesignOutlinedTextBox}"
-                             materialDesign:HintAssist.Hint="Price" Margin="0 0 0 10"/>
+                             Style="{StaticResource MaterialDesignOutlinedTextBox}" Margin="0,0,0,10"/>
 
+                    <Label Content="Category" />
                     <ComboBox ItemsSource="{Binding ProjectCategories}" 
                               SelectedValue="{Binding SelectedProject.ProjectCategoryId, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True}"
                               SelectedValuePath="Id" DisplayMemberPath="Name"
-                              Style="{StaticResource MaterialDesignOutlinedComboBox}"
-                              materialDesign:HintAssist.Hint="Category" Margin="0 0 0 15"/>
+                              Style="{StaticResource MaterialDesignComboBox}" Margin="0,0,0,15"/>
 
                     <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
-                        <Button Command="{Binding SaveCommand}" Style="{StaticResource MaterialDesignRaisedButton}" Margin="0 0 10 0">
-                            <materialDesign:PackIcon Kind="ContentSave"/>
+                        <Button Command="{Binding SaveCommand}" Style="{StaticResource PrimaryButtonStyle}" Margin="0,0,10,0">
+                            <materialDesign:PackIcon Kind="ContentSave" Width="20" Height="20"/>
                         </Button>
-                        <Button Command="{Binding DeleteCommand}" IsEnabled="{Binding CanDelete}" Style="{StaticResource MaterialDesignOutlinedButton}">
-                            <materialDesign:PackIcon Kind="Delete"/>
+                        <Button Command="{Binding DeleteCommand}" IsEnabled="{Binding CanDelete}" Style="{StaticResource OutlinedButtonStyle}">
+                            <materialDesign:PackIcon Kind="Delete" Width="20" Height="20"/>
                         </Button>
                     </StackPanel>
                 </StackPanel>

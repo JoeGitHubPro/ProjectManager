@@ -36,6 +36,16 @@ namespace ProjectManager.ViewModels
                 OnPropertyChanged(nameof(CanDelete));
             }
         }
+        private bool _isFormVisible;
+        public bool IsFormVisible
+        {
+            get => _isFormVisible;
+            set
+            {
+                _isFormVisible = value;
+                OnPropertyChanged();
+            }
+        }
 
         public bool CanDelete => _context.Projects.Any(a => a.Name == SelectedProject.Name) && SelectedProject is not null;
 
@@ -46,6 +56,8 @@ namespace ProjectManager.ViewModels
         public RelayCommand RefreshCommand { get; }
         public RelayCommand SearchCommand { get; }
         public RelayCommand AddNewCommand { get; }
+        public RelayCommand EditCommand { get; private set; }
+
 
         public ProjectViewModel()
         {
@@ -54,10 +66,14 @@ namespace ProjectManager.ViewModels
             RefreshCommand = new RelayCommand(LoadData);
             SearchCommand = new RelayCommand(FilterProjects);
             AddNewCommand = new RelayCommand(AddNewProject);
+            EditCommand = new RelayCommand(EditCategory);
 
             LoadData();
         }
-
+        private void EditCategory()
+        {
+            IsFormVisible = true;
+        }
         private void LoadData()
         {
 
@@ -76,6 +92,7 @@ namespace ProjectManager.ViewModels
                 ProjectCategories.Add(c);
 
             SelectedProject = null;
+            IsFormVisible = false;
         }
 
         private void FilterProjects()
@@ -124,6 +141,7 @@ namespace ProjectManager.ViewModels
         private void AddNewProject()
         {
             SelectedProject = new Project();
+            IsFormVisible = true;
         }
 
         public string this[string columnName]

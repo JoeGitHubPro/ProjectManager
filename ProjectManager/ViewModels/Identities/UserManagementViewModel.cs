@@ -137,6 +137,7 @@ namespace ProjectManager.ViewModels.Identities
             try
             {
                 Users.Clear();
+                IsFormVisible = false;
                 using var service = new AuthenticationService();
                 var users = Task.Run(() => service.GetAllUsersAsync()).Result;
                 foreach (var user in users)

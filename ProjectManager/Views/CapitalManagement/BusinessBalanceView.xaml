@@ -37,31 +37,29 @@
             </Grid.ColumnDefinitions>
 
             <StackPanel Orientation="Vertical" Grid.Column="0">
-                <TextBlock Text="Business Summary" FontSize="20" FontWeight="Bold" Margin="0 0 0 10"/>
+                <TextBlock Text="Business Summary" FontSize="22" FontWeight="Bold" Margin="0 0 0 10"/>
 
                 <StackPanel Orientation="Horizontal">
                     <!-- Cash on Hand -->
-                    <Border BorderBrush="LightGray" BorderThickness="0 0 1 0" Padding="10 5">
+                    <Border BorderBrush="LightGray" BorderThickness="0 0 1 0" Padding="12 8">
                         <StackPanel>
                             <TextBlock Text="Cash on Hand:" FontWeight="Bold" Foreground="DarkSlateGray"/>
-                            <TextBlock Text="{Binding BusinessBalance.CashOnHand}" FontSize="14" Foreground="Blue" FontWeight="SemiBold"/>
+                            <TextBlock Text="{Binding BusinessBalance.CashOnHand}" FontSize="14" Foreground="DodgerBlue" FontWeight="SemiBold"/>
                         </StackPanel>
                     </Border>
 
                     <!-- Net Balance -->
-                    <Border BorderBrush="LightGray" BorderThickness="0 0 1 0" Padding="10 5">
+                    <Border BorderBrush="LightGray" BorderThickness="0 0 1 0" Padding="12 8">
                         <StackPanel>
                             <TextBlock Text="Net Balance:" FontWeight="Bold" Foreground="DarkSlateGray"/>
-                            <TextBlock Text="{Binding BusinessBalance.NetBusinessBalance, StringFormat=C}"
-           FontSize="14"
-           FontWeight="SemiBold"
-           Foreground="{Binding BusinessBalance.NetBusinessBalance, Converter={StaticResource NetBalanceToBrushConverter}}"/>
-
+                            <TextBlock Text="{Binding BusinessBalance.NetBusinessBalance, StringFormat=C}" 
+                                       FontSize="14" FontWeight="SemiBold"
+                                       Foreground="{Binding BusinessBalance.NetBusinessBalance, Converter={StaticResource NetBalanceToBrushConverter}}"/>
                         </StackPanel>
                     </Border>
 
                     <!-- Emergency Reserve -->
-                    <Border Padding="10 5">
+                    <Border Padding="12 8">
                         <StackPanel>
                             <TextBlock Text="Emergency Reserve:" FontWeight="Bold" Foreground="DarkSlateGray"/>
                             <TextBlock Text="{Binding BusinessBalance.EmergencyReserve}" FontSize="14" FontWeight="SemiBold"/>
@@ -75,71 +73,85 @@
                     Content="Refresh"
                     Command="{Binding RefreshBalanceCommand}"
                     Width="100"
-                    Height="30"
+                    Height="35"
                     Margin="0 0 10 0"
                     VerticalAlignment="Top"
-                    HorizontalAlignment="Right"/>
+                    HorizontalAlignment="Right"
+                    Style="{StaticResource MaterialDesignFlatButton}"/>
         </Grid>
 
         <!-- MAIN CONTENT -->
-        <TabControl Grid.Row="1">
+        <TabControl Grid.Row="1" Margin="10">
             <!-- Cash Flows Tab -->
             <TabItem Header="Cash Flows">
                 <Grid>
                     <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <!-- For buttons -->
+                        <RowDefinition Height="Auto"/>
+                        <!-- For Income Form -->
+                        <RowDefinition Height="Auto"/>
+                        <!-- For Expense Form -->
                         <RowDefinition Height="*"/>
-                        <RowDefinition Height="Auto"/>
-                        <RowDefinition Height="Auto"/>
-                        <RowDefinition Height="Auto"/>
+                        <!-- For DataGrid -->
                     </Grid.RowDefinitions>
 
-                    <DataGrid Grid.Row="0"
-                              ItemsSource="{Binding CashFlows}"
-                              AutoGenerateColumns="False"
-                              RowStyle="{StaticResource CashFlowRowStyle}"
-                              CanUserAddRows="False"
-                              IsReadOnly="True"
-                              Margin="0 10">
-                        <DataGrid.Columns>
-                            <DataGridTextColumn Header="Date" Binding="{Binding TransactionDate, StringFormat=d}"/>
-                            <DataGridTextColumn Header="Description" Binding="{Binding Description}"/>
-                            <DataGridTextColumn Header="Amount" Binding="{Binding Amount}"/>
-                            <DataGridTextColumn Header="Type" Binding="{Binding Type}"/>
-                        </DataGrid.Columns>
-                    </DataGrid>
-
-                    <StackPanel Grid.Row="1" Orientation="Horizontal" HorizontalAlignment="Center" Margin="0 10">
-                        <Button Content="Add Income" Command="{Binding ShowIncomeFormCommand}" Margin="5"/>
-                        <Button Content="Add Expense" Command="{Binding ShowExpenseFormCommand}" Margin="5"/>
+                    <!-- Buttons Row -->
+                    <StackPanel Grid.Row="0" Orientation="Horizontal" HorizontalAlignment="Left" Margin="0 10">
+                        <Button Content="Add Income" Command="{Binding ShowIncomeFormCommand}" 
+                    Style="{StaticResource MaterialDesignFlatButton}" Margin="5"/>
+                        <Button Content="Add Expense" Command="{Binding ShowExpenseFormCommand}" 
+                    Style="{StaticResource MaterialDesignFlatButton}" Margin="5"/>
                     </StackPanel>
 
                     <!-- Income Form -->
-                    <StackPanel Grid.Row="2"
-                                Visibility="{Binding IsIncomeFormVisible, Converter={StaticResource BoolToVis}}"
-                                Margin="10">
-                        <TextBlock Text="Income Amount"/>
-                        <TextBox Text="{Binding NewIncomeAmount}"/>
-                        <TextBlock Text="Description"/>
-                        <TextBox Text="{Binding NewIncomeDescription}"/>
+                    <StackPanel Grid.Row="1"
+                   Visibility="{Binding IsIncomeFormVisible, Converter={StaticResource BoolToVis}}"
+                   Margin="10">
+                        <TextBlock Text="Income Amount" />
+                        <TextBox Text="{Binding NewIncomeAmount}" Style="{StaticResource MaterialDesignOutlinedTextBox}" />
+                        <TextBlock Text="Description" />
+                        <TextBox Text="{Binding NewIncomeDescription}" Style="{StaticResource MaterialDesignOutlinedTextBox}" />
                         <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0 10 0 0">
-                            <Button Content="Save" Command="{Binding SaveIncomeCommand}" Margin="5"/>
-                            <Button Content="Cancel" Command="{Binding CancelFormCommand}" Margin="5"/>
+                            <Button Content="Save" Command="{Binding SaveIncomeCommand}" 
+                        Style="{StaticResource MaterialDesignFlatButton}" Margin="5"/>
+                            <Button Content="Cancel" Command="{Binding CancelFormCommand}" 
+                        Style="{StaticResource MaterialDesignFlatButton}" Margin="5"/>
                         </StackPanel>
                     </StackPanel>
 
                     <!-- Expense Form -->
-                    <StackPanel Grid.Row="3"
-                                Visibility="{Binding IsExpenseFormVisible, Converter={StaticResource BoolToVis}}"
-                                Margin="10">
-                        <TextBlock Text="Expense Amount"/>
-                        <TextBox Text="{Binding NewExpenseAmount}"/>
-                        <TextBlock Text="Description"/>
-                        <TextBox Text="{Binding NewExpenseDescription}"/>
+                    <StackPanel Grid.Row="2"
+                   Visibility="{Binding IsExpenseFormVisible, Converter={StaticResource BoolToVis}}"
+                   Margin="10">
+                        <TextBlock Text="Expense Amount" />
+                        <TextBox Text="{Binding NewExpenseAmount}" Style="{StaticResource MaterialDesignOutlinedTextBox}" />
+                        <TextBlock Text="Description" />
+                        <TextBox Text="{Binding NewExpenseDescription}" Style="{StaticResource MaterialDesignOutlinedTextBox}" />
                         <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0 10 0 0">
-                            <Button Content="Save" Command="{Binding SaveExpenseCommand}" Margin="5"/>
-                            <Button Content="Cancel" Command="{Binding CancelFormCommand}" Margin="5"/>
+                            <Button Content="Save" Command="{Binding SaveExpenseCommand}" 
+                        Style="{StaticResource MaterialDesignFlatButton}" Margin="5"/>
+                            <Button Content="Cancel" Command="{Binding CancelFormCommand}" 
+                        Style="{StaticResource MaterialDesignFlatButton}" Margin="5"/>
                         </StackPanel>
                     </StackPanel>
+
+                    <!-- DataGrid Row -->
+                    <DataGrid Grid.Row="3"
+                 ItemsSource="{Binding CashFlows}"
+                 AutoGenerateColumns="False"
+                 RowStyle="{StaticResource CashFlowRowStyle}"
+                 CanUserAddRows="False"
+                 IsReadOnly="True"
+                 Margin="0 10"
+                 Style="{StaticResource MaterialDesignDataGrid}">
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Header="Date" Binding="{Binding TransactionDate, StringFormat=d}" />
+                            <DataGridTextColumn Header="Description" Binding="{Binding Description}" />
+                            <DataGridTextColumn Header="Amount" Binding="{Binding Amount}" />
+                            <DataGridTextColumn Header="Type" Binding="{Binding Type}" />
+                        </DataGrid.Columns>
+                    </DataGrid>
                 </Grid>
             </TabItem>
 
@@ -147,18 +159,53 @@
             <TabItem Header="Loans">
                 <Grid>
                     <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <!-- For buttons -->
+                        <RowDefinition Height="Auto"/>
+                        <!-- For Loan Form -->
                         <RowDefinition Height="*"/>
-                        <RowDefinition Height="Auto"/>
-                        <RowDefinition Height="Auto"/>
+                        <!-- For DataGrid -->
                     </Grid.RowDefinitions>
 
-                    <DataGrid Grid.Row="0"
-                              ItemsSource="{Binding Loans}"
-                              SelectedItem="{Binding SelectedLoan}"
-                              AutoGenerateColumns="False"
-                              CanUserAddRows="False"
-                              IsReadOnly="True"
-                              Margin="10">
+                    <!-- Buttons Row -->
+                    <StackPanel Grid.Row="0" Orientation="Horizontal" HorizontalAlignment="Left" Margin="0 10">
+                        <Button Content="Add Loan" Command="{Binding ShowLoanFormCommand}" 
+                    Style="{StaticResource MaterialDesignFlatButton}" Margin="5"/>
+                        <Button Content="Mark as Repaid" Command="{Binding MarkAsRepaidCommand}" 
+                    Style="{StaticResource MaterialDesignFlatButton}" Margin="5"/>
+                    </StackPanel>
+
+                    <!-- Loan Form -->
+                    <StackPanel Grid.Row="1"
+                    Visibility="{Binding IsLoanFormVisible, Converter={StaticResource BoolToVis}}"
+                    Margin="10">
+                        <TextBlock Text="Loan Amount" />
+                        <TextBox Text="{Binding NewLoanAmount}" Style="{StaticResource MaterialDesignOutlinedTextBox}" />
+                        <TextBlock Text="Lender" />
+                        <ComboBox ItemsSource="{Binding Users}" 
+                      DisplayMemberPath="UserName" 
+                      SelectedItem="{Binding SelectedUser}" 
+                      Style="{StaticResource MaterialDesignComboBox}" />
+                        <TextBlock Text="Payback Date" />
+                        <DatePicker SelectedDate="{Binding NewLoanPaybackDate}" 
+                        Style="{StaticResource MaterialDesignDatePicker}" />
+                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0 10 0 0">
+                            <Button Content="Save" Command="{Binding SaveLoanCommand}" 
+                        Style="{StaticResource MaterialDesignFlatButton}" Margin="5"/>
+                            <Button Content="Cancel" Command="{Binding CancelFormCommand}" 
+                        Style="{StaticResource MaterialDesignFlatButton}" Margin="5"/>
+                        </StackPanel>
+                    </StackPanel>
+
+                    <!-- DataGrid Row -->
+                    <DataGrid Grid.Row="2"
+                  ItemsSource="{Binding Loans}"
+                  SelectedItem="{Binding SelectedLoan}"
+                  AutoGenerateColumns="False"
+                  CanUserAddRows="False"
+                  IsReadOnly="True"
+                  Margin="10"
+                  Style="{StaticResource MaterialDesignDataGrid}">
                         <DataGrid.Columns>
                             <DataGridTemplateColumn Header="Select">
                                 <DataGridTemplateColumn.CellTemplate>
@@ -167,35 +214,13 @@
                                     </DataTemplate>
                                 </DataGridTemplateColumn.CellTemplate>
                             </DataGridTemplateColumn>
-                            <DataGridTextColumn Header="Lender" Binding="{Binding LenderName}"/>
-                            <DataGridTextColumn Header="Amount Loaned" Binding="{Binding AmountLoaned}"/>
-                            <DataGridTextColumn Header="Outstanding" Binding="{Binding OutstandingBalance}"/>
-                            <DataGridTextColumn Header="Loan Date" Binding="{Binding LoanDate, StringFormat=d}"/>
-                            <DataGridTextColumn Header="Due Date" Binding="{Binding DueDate, StringFormat=d}"/>
+                            <DataGridTextColumn Header="Lender" Binding="{Binding LenderName}" />
+                            <DataGridTextColumn Header="Amount Loaned" Binding="{Binding AmountLoaned}" />
+                            <DataGridTextColumn Header="Outstanding" Binding="{Binding OutstandingBalance}" />
+                            <DataGridTextColumn Header="Loan Date" Binding="{Binding LoanDate, StringFormat=d}" />
+                            <DataGridTextColumn Header="Due Date" Binding="{Binding DueDate, StringFormat=d}" />
                         </DataGrid.Columns>
                     </DataGrid>
-
-                    <StackPanel Grid.Row="1" Orientation="Horizontal" HorizontalAlignment="Center" Margin="0 10">
-                        <Button Content="Add Loan" Command="{Binding ShowLoanFormCommand}" Margin="5"/>
-                        <Button Content="Mark as Repaid" Command="{Binding MarkAsRepaidCommand}" Margin="5"/>
-                    </StackPanel>
-
-                    <StackPanel Grid.Row="2"
-                                Visibility="{Binding IsLoanFormVisible, Converter={StaticResource BoolToVis}}"
-                                Margin="10">
-                        <TextBlock Text="Loan Amount"/>
-                        <TextBox Text="{Binding NewLoanAmount}"/>
-                        <TextBlock Text="Lender"/>
-                        <ComboBox ItemsSource="{Binding Users}"
-                                  DisplayMemberPath="UserName"
-                                  SelectedItem="{Binding SelectedUser}"/>
-                        <TextBlock Text="Payback Date"/>
-                        <DatePicker SelectedDate="{Binding NewLoanPaybackDate}"/>
-                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0 10 0 0">
-                            <Button Content="Save" Command="{Binding SaveLoanCommand}" Margin="5"/>
-                            <Button Content="Cancel" Command="{Binding CancelFormCommand}" Margin="5"/>
-                        </StackPanel>
-                    </StackPanel>
                 </Grid>
             </TabItem>
 
@@ -204,10 +229,10 @@
                 <StackPanel Margin="20">
                     <TextBlock Text="Adjust Emergency Reserve" FontWeight="Bold"/>
                     <TextBlock Text="Amount:"/>
-                    <TextBox Text="{Binding EmergencyReserveAmount}"/>
+                    <TextBox Text="{Binding EmergencyReserveAmount}" Style="{StaticResource MaterialDesignOutlinedTextBox}" />
                     <StackPanel Orientation="Horizontal" Margin="10 0">
-                        <Button Content="Add Reserve" Command="{Binding AddReserveCommand}" Margin="5"/>
-                        <Button Content="Release Reserve" Command="{Binding ReleaseReserveCommand}" Margin="5"/>
+                        <Button Content="Add Reserve" Command="{Binding AddReserveCommand}" Style="{StaticResource MaterialDesignFlatButton}" Margin="5"/>
+                        <Button Content="Release Reserve" Command="{Binding ReleaseReserveCommand}" Style="{StaticResource MaterialDesignFlatButton}" Margin="5"/>
                     </StackPanel>
                 </StackPanel>
             </TabItem>

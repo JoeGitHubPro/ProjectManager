@@ -33,6 +33,20 @@ namespace ProjectManager.ViewModels
                 }
             }
         }
+        private bool _isFormVisible;
+        public bool IsFormVisible
+        {
+            get => _isFormVisible;
+            set
+            {
+                if (_isFormVisible != value)
+                {
+                    _isFormVisible = value;
+                    OnPropertyChanged();
+                }
+            }
+        }
+
 
         private string _installationSystemInfo = string.Empty;
         public string InstallationSystemInfo
@@ -189,18 +203,19 @@ namespace ProjectManager.ViewModels
             ClearCommand = new RelayCommand(Clear);
             LocateCommand = new RelayCommand(Locate);
             AddCommand = new RelayCommand(AddNewOrder);
-            UpdateCommand = new RelayCommand(UpdateOrder, () => SelectedOrder != null && !HasErrors);
+            UpdateCommand = new RelayCommand(UpdateOrder);
         }
 
         private void AddNewOrder()
         {
             SelectedOrder = null;
             Clear();
+            IsFormVisible = true;
         }
 
         private void UpdateOrder()
         {
-            Save();
+            IsFormVisible = true;
         }
 
         private void LoadData()
@@ -353,6 +368,7 @@ namespace ProjectManager.ViewModels
             SelectedConsumerId = 0;
             SelectedProjectId = 0;
             SelectedOrder = null;
+            IsFormVisible = false;
         }
 
         private void Locate()

@@ -46,6 +46,7 @@ namespace ProjectManager.ViewModels
                 if (value != null)
                 {
                     _isNewRecord = false;
+                    IsFormVisible = true;
                     Phone = value.Phone;
                     CommercialRegisterNo = value.CommercialRegisterNo;
                     Name = value.Name;
@@ -59,6 +60,16 @@ namespace ProjectManager.ViewModels
                     Notes = value.Notes;
                 }
 
+            }
+        }
+        private bool _isFormVisible = false;
+        public bool IsFormVisible
+        {
+            get => _isFormVisible;
+            set
+            {
+                _isFormVisible = value;
+                OnPropertyChanged();
             }
         }
         public string Name
@@ -237,6 +248,8 @@ namespace ProjectManager.ViewModels
 
         private void LoadData()
         {
+            ClearFields();
+
             try
             {
                 _context = new AppDbContext();
@@ -288,6 +301,7 @@ namespace ProjectManager.ViewModels
         {
             ClearFields();
             _isNewRecord = true;
+            IsFormVisible = true;
         }
 
         private void SaveConsumer()
@@ -419,6 +433,7 @@ namespace ProjectManager.ViewModels
             Site = string.Empty;
             Notes = string.Empty;
             _isNewRecord = true;
+            IsFormVisible = false;
 
         }
 

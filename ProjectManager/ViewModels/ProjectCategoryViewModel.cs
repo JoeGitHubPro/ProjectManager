@@ -69,6 +69,16 @@ namespace ProjectManager.ViewModels
                 FilterCategories();
             }
         }
+        private bool _isFormVisible;
+        public bool IsFormVisible
+        {
+            get => _isFormVisible;
+            set
+            {
+                _isFormVisible = value;
+                OnPropertyChanged();
+            }
+        }
 
         public bool CanDelete => SelectedCategory != null;
 
@@ -104,10 +114,15 @@ namespace ProjectManager.ViewModels
                 AddNewCategory);
 
             EditCommand = new RelayCommand(
-                SaveCategory);
+                EditCategory);
 
             ClearCommand = new RelayCommand(
                 ClearFields);
+        }
+
+        private void EditCategory()
+        {
+            IsFormVisible = true;
         }
 
         #endregion
@@ -116,6 +131,8 @@ namespace ProjectManager.ViewModels
 
         private void LoadData()
         {
+            ClearFields();
+
             try
             {
                 _context = new AppDbContext();
@@ -153,6 +170,7 @@ namespace ProjectManager.ViewModels
         {
             ClearFields();
             _isNewRecord = true;
+            IsFormVisible = true;
         }
 
         private void SaveCategory()
@@ -178,6 +196,7 @@ namespace ProjectManager.ViewModels
                 _context.SaveChanges();
                 FilterCategories();
                 ShowInfo("Category saved successfully.");
+                IsFormVisible = false;
             }
             catch (Exception ex)
             {
@@ -241,6 +260,7 @@ namespace ProjectManager.ViewModels
             SelectedCategory = null;
             CategoryName = string.Empty;
             _isNewRecord = true;
+            IsFormVisible = false;
         }
 
         #endregion

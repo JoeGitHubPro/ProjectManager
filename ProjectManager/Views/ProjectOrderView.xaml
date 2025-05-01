@@ -3,119 +3,143 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-             mc:Ignorable="d">
-
-   
+             xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
+             mc:Ignorable="d"
+             d:DesignHeight="600" d:DesignWidth="1000">
 
     <Grid Margin="10">
         <Grid.RowDefinitions>
-            <!-- Search Panel -->
             <RowDefinition Height="Auto"/>
-            <RowDefinition Height="5"/>
-            <!-- DataGrid -->
             <RowDefinition Height="*"/>
-            <RowDefinition Height="10"/>
-            <!-- Input Form -->
-            <RowDefinition Height="Auto"/>
-            <RowDefinition Height="10"/>
-            <!-- Action Buttons -->
-            <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
 
-        <!-- Search Panel -->
-        <Border Grid.Row="0" BorderThickness="1" CornerRadius="5" Padding="10" Background="#FFF5F5F5">
-            <DockPanel LastChildFill="True">
-                <StackPanel Orientation="Horizontal" DockPanel.Dock="Left" VerticalAlignment="Center">
-                    <TextBlock Text="Search Orders" Margin="0,0,10,0" FontWeight="SemiBold" VerticalAlignment="Center" Style="{StaticResource HeadingTextStyle}"/>
-                    <TextBox Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}" Padding="5" MinWidth="200" VerticalAlignment="Center"/>
-                </StackPanel>
+        <!-- Toolbar -->
+        <DockPanel Grid.Row="0" Margin="0,0,0,10" LastChildFill="False">
+            <TextBox Width="250"
+                     Margin="0 0 10 0"
+                     Style="{StaticResource MaterialDesignOutlinedTextBox}"
+                     Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}"
+                     materialDesign:HintAssist.Hint="Search orders...">
+            </TextBox>
 
-                <StackPanel Orientation="Horizontal" DockPanel.Dock="Right" HorizontalAlignment="Right">
-                    <Button Content="Refresh" Width="80" Height="30"
-                            Command="{Binding RefreshCommand}" Margin="5,0,0,0" Style="{StaticResource PrimaryButtonStyle}"/>
-                    <Button Content="Reload" Width="80" Height="30"
-                            Command="{Binding ReloadPageCommand}" Margin="10,0,0,0" Style="{StaticResource PrimaryButtonStyle}"/>
-                </StackPanel>
-            </DockPanel>
-        </Border>
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                <Button Command="{Binding ReloadPageCommand}" Style="{StaticResource OutlinedButtonStyle}" Margin="0,0,10,0">
+                    <materialDesign:PackIcon Kind="Reload" Width="20" Height="20"/>
+                </Button>
+                <Button Command="{Binding AddCommand}" Style="{StaticResource PrimaryButtonStyle}">
+                    <materialDesign:PackIcon Kind="Plus" Width="20" Height="20"/>
+                </Button>
+            </StackPanel>
+        </DockPanel>
 
-        <!-- DataGrid -->
-        <Border Grid.Row="2" BorderThickness="1" CornerRadius="5">
-            <DataGrid ItemsSource="{Binding ProjectOrders}" SelectedItem="{Binding SelectedOrder}"
-                      AutoGenerateColumns="False" IsReadOnly="True" GridLinesVisibility="None"
-                      HeadersVisibility="Column" ColumnHeaderHeight="35" RowHeight="30"
-                      ScrollViewer.CanContentScroll="True" ScrollViewer.VerticalScrollBarVisibility="Auto"
-                      ScrollViewer.HorizontalScrollBarVisibility="Auto">
+        <!-- Main Content -->
+        <Grid Grid.Row="1">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="10"/>
+                <ColumnDefinition Width="Auto"/>
+            </Grid.ColumnDefinitions>
+
+            <!-- DataGrid -->
+            <DataGrid Grid.Column="0"
+                      ItemsSource="{Binding ProjectOrders}"
+                      SelectedItem="{Binding SelectedOrder}"
+                      AutoGenerateColumns="False"
+                      IsReadOnly="True"
+                      Style="{StaticResource MaterialDesignDataGrid}">
                 <DataGrid.Columns>
-                    <DataGridTextColumn Header="Project" Binding="{Binding Project.Name}" Width="*" MinWidth="120"/>
-                    <DataGridTextColumn Header="Discount" Binding="{Binding Discount, StringFormat={}{0}%}" Width="Auto" MinWidth="80"/>
-                    <DataGridTextColumn Header="Installation Info" Binding="{Binding InstallationSystemInfo}" Width="*" MinWidth="150"/>
-                    <DataGridTextColumn Header="Sold Date" Binding="{Binding SoldDate, StringFormat=d}" Width="Auto" MinWidth="100"/>
-                    <DataGridTextColumn Header="Notes" Binding="{Binding Notes}" Width="*" MinWidth="150"/>
-                    <DataGridTextColumn Header="Consumer Phone" Binding="{Binding Consumer.Phone}" Width="Auto" MinWidth="120"/>
-                    <DataGridTextColumn Header="Total Price" Binding="{Binding TotalPrice, StringFormat=C}" Width="Auto" MinWidth="100"/>
-                    <DataGridTextColumn Header="Folder Serial" Binding="{Binding FolderSerial}" Width="Auto" MinWidth="100"/>
-                    <DataGridTemplateColumn Header="Locate" Width="Auto" MinWidth="80">
+                    <DataGridTextColumn Header="Project" Binding="{Binding Project.Name}" Width="*" />
+                    <DataGridTextColumn Header="Discount" Binding="{Binding Discount, StringFormat={}{0}%}" Width="Auto"/>
+                    <DataGridTextColumn Header="Installation Info" Binding="{Binding InstallationSystemInfo}" Width="*" />
+                    <DataGridTextColumn Header="Sold Date" Binding="{Binding SoldDate, StringFormat=d}" Width="Auto"/>
+                    <DataGridTextColumn Header="Notes" Binding="{Binding Notes}" Width="*" />
+                    <DataGridTextColumn Header="Consumer Phone" Binding="{Binding Consumer.Phone}" Width="Auto"/>
+                    <DataGridTextColumn Header="Total Price" Binding="{Binding TotalPrice, StringFormat=C}" Width="Auto"/>
+                    <DataGridTextColumn Header="Folder Serial" Binding="{Binding FolderSerial}" Width="*"/>
+
+                    <!-- Locate and Update buttons -->
+                    <DataGridTemplateColumn Header="Actions" Width="Auto">
                         <DataGridTemplateColumn.CellTemplate>
                             <DataTemplate>
-                                <Button Content="📂" ToolTip="Locate"
-                                        Command="{Binding DataContext.LocateCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
-                                        CommandParameter="{Binding}" Width="30" Height="30" Padding="5" Background="Transparent" BorderThickness="0" Cursor="Hand"/>
+                                <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                                    <!-- Locate Button -->
+                                    <Button Command="{Binding DataContext.LocateCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                            CommandParameter="{Binding}"
+                            Style="{StaticResource OutlinedButtonStyle}"
+                            Margin="0,5,5,0">
+                                        <materialDesign:PackIcon Kind="FolderSearchOutline" Width="20" Height="20"/>
+                                    </Button>
+
+                                    <!-- Update Button -->
+                                <Button Command="{Binding DataContext.UpdateCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}"
+                                            CommandParameter="{Binding}"
+                            Style="{StaticResource OutlinedButtonStyle}"
+                            Margin="0,0,0,0">
+                                        <materialDesign:PackIcon Kind="Pencil" Width="20" Height="20"/>
+                                    </Button>
+                                </StackPanel>
                             </DataTemplate>
                         </DataGridTemplateColumn.CellTemplate>
                     </DataGridTemplateColumn>
                 </DataGrid.Columns>
+
             </DataGrid>
-        </Border>
 
-        <!-- Input Form -->
-        <Border Grid.Row="4" BorderThickness="1" CornerRadius="5" Padding="10" Background="#FFF5F5F5">
-            <Grid>
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="*"/>
-                    <ColumnDefinition Width="10"/>
-                    <ColumnDefinition Width="*"/>
-                </Grid.ColumnDefinitions>
+            <!-- Form Panel -->
+            <Border Grid.Column="2" Width="320" Padding="15" Background="White" CornerRadius="5"
+                    BorderBrush="#DDD" BorderThickness="1"
+                    Visibility="{Binding IsFormVisible, Converter={StaticResource BoolToVis}}">
+                <ScrollViewer>
+                    <StackPanel>
 
-                <StackPanel Orientation="Vertical" Grid.Column="0">
-                    <TextBlock Text="Project" Margin="0,0,0,2" FontWeight="SemiBold" Style="{StaticResource BodyTextStyle}"/>
-                    <ComboBox ItemsSource="{Binding Projects}" DisplayMemberPath="Name"
-                              SelectedValuePath="Id" SelectedValue="{Binding SelectedProjectId, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,10"/>
+                        <TextBlock Text="Order Details" Style="{StaticResource HeadingTextStyle}" Margin="0,0,0,15"/>
 
-                    <TextBlock Text="Discount (%)" Margin="0,0,0,2" FontWeight="SemiBold" Style="{StaticResource BodyTextStyle}"/>
-                    <TextBox Text="{Binding Discount, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True}" Margin="0,0,0,10"/>
+                        <Label Content="Project"/>
+                        <ComboBox ItemsSource="{Binding Projects}" 
+                                  DisplayMemberPath="Name" 
+                                  SelectedValuePath="Id" 
+                                  SelectedValue="{Binding SelectedProjectId, UpdateSourceTrigger=PropertyChanged}"
+                                  Style="{StaticResource MaterialDesignComboBox}" Margin="0,0,0,10"/>
 
-                    <TextBlock Text="Installation System Info" Margin="0,0,0,2" FontWeight="SemiBold" Style="{StaticResource BodyTextStyle}"/>
-                    <TextBox Text="{Binding InstallationSystemInfo, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True}" Margin="0,0,0,10"/>
-                </StackPanel>
+                        <Label Content="Discount (%)"/>
+                        <TextBox Text="{Binding Discount, UpdateSourceTrigger=PropertyChanged}" 
+                                 Style="{StaticResource MaterialDesignOutlinedTextBox}" Margin="0,0,0,10"/>
 
-                <StackPanel Orientation="Vertical" Grid.Column="2">
-                    <TextBlock Text="Sold Date" Margin="0,0,0,2" FontWeight="SemiBold" Style="{StaticResource BodyTextStyle}"/>
-                    <DatePicker SelectedDate="{Binding SoldDate, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True}" Margin="0,0,0,10"/>
+                        <Label Content="Installation Info"/>
+                        <TextBox Text="{Binding InstallationSystemInfo, UpdateSourceTrigger=PropertyChanged}" 
+                                 Style="{StaticResource MaterialDesignOutlinedTextBox}" Margin="0,0,0,10"/>
 
-                    <TextBlock Text="Notes" Margin="0,0,0,2" FontWeight="SemiBold" Style="{StaticResource BodyTextStyle}"/>
-                    <TextBox Text="{Binding Notes, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,10" AcceptsReturn="True"/>
+                        <Label Content="Sold Date"/>
+                        <DatePicker SelectedDate="{Binding SoldDate, UpdateSourceTrigger=PropertyChanged}" 
+                                    Style="{StaticResource MaterialDesignDatePicker}" Margin="0,0,0,10"/>
 
-                    <TextBlock Text="Consumer Phone" Margin="0,0,0,2" FontWeight="SemiBold" Style="{StaticResource BodyTextStyle}"/>
-                    <ComboBox ItemsSource="{Binding Consumers}" DisplayMemberPath="Phone"
-                              SelectedValuePath="Id" SelectedValue="{Binding SelectedConsumerId, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,10"/>
+                        <Label Content="Notes"/>
+                        <TextBox Text="{Binding Notes, UpdateSourceTrigger=PropertyChanged}" 
+                                 AcceptsReturn="True" TextWrapping="Wrap" Height="80"
+                                 Style="{StaticResource MaterialDesignOutlinedTextBox}" Margin="0,0,0,10"/>
 
-                    <!-- Total Price Display -->
-                    <StackPanel Orientation="Horizontal" Margin="0,10,0,0">
-                        <TextBlock Text="Total Price:" FontWeight="Bold" FontSize="18" Margin="0,0,5,0"/>
-                        <TextBlock Text="{Binding TotalPrice, StringFormat=C}" FontSize="18" Foreground="Green"/>
+                        <Label Content="Consumer Phone"/>
+                        <ComboBox ItemsSource="{Binding Consumers}" DisplayMemberPath="Phone" 
+                                  SelectedValuePath="Id" 
+                                  SelectedValue="{Binding SelectedConsumerId, UpdateSourceTrigger=PropertyChanged}"
+                                  Style="{StaticResource MaterialDesignComboBox}" Margin="0,0,0,15"/>
+
+                        <TextBlock Text="Total Price:" FontWeight="Bold" FontSize="16"/>
+                        <TextBlock Text="{Binding TotalPrice, StringFormat=C}" FontSize="16" Foreground="Green" Margin="0,0,0,15"/>
+
+                        <!-- Action Buttons -->
+                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,10,0,0">
+                            <Button Command="{Binding SaveCommand}" Style="{StaticResource PrimaryButtonStyle}" Margin="0,0,10,0">
+                                <materialDesign:PackIcon Kind="ContentSave" Width="20" Height="20"/>
+                            </Button>
+
+                            <Button Command="{Binding DeleteCommand}" Style="{StaticResource OutlinedButtonStyle}">
+                                <materialDesign:PackIcon Kind="Delete" Width="20" Height="20"/>
+                            </Button>
+                        </StackPanel>
                     </StackPanel>
-                </StackPanel>
-            </Grid>
-        </Border>
-
-        <!-- Action Buttons -->
-        <StackPanel Grid.Row="6" Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,10,0,0">
-            <Button Content="Add" Command="{Binding AddCommand}" Margin="5" Width="80" Height="30" Style="{StaticResource PrimaryButtonStyle}"/>
-            <Button Content="Update" Command="{Binding UpdateCommand}" Margin="5" Width="80" Height="30" Style="{StaticResource PrimaryButtonStyle}"/>
-            <Button Content="Delete" Command="{Binding DeleteCommand}" Margin="5" Width="80" Height="30" Style="{StaticResource PrimaryButtonStyle}"/>
-            <Button Content="Clear" Command="{Binding ClearCommand}" Margin="5" Width="80" Height="30" Style="{StaticResource PrimaryButtonStyle}"/>
-            <Button Content="Save" Command="{Binding SaveCommand}" Margin="5" Width="80" Height="30" Style="{StaticResource PrimaryButtonStyle}"/>
-        </StackPanel>
+                </ScrollViewer>
+            </Border>
+        </Grid>
     </Grid>
 </UserControl>

@@ -5,84 +5,87 @@
              xmlns:helpers="clr-namespace:ProjectManager.Helpers"
              xmlns:converters="clr-namespace:ProjectManager.Converters"
              xmlns:viewModels="clr-namespace:ProjectManager.ViewModels.Identities"
-             Height="Auto" Width="Auto"
-             FlowDirection="LeftToRight"> 
-   
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d"
+             d:DesignWidth="1000" d:DesignHeight="700"
+             FlowDirection="LeftToRight">
 
     <UserControl.InputBindings>
         <KeyBinding Gesture="Ctrl+N" Command="{Binding ShowAddUserFormCommand}" />
         <KeyBinding Gesture="Ctrl+R" Command="{Binding RefreshCommand}" />
     </UserControl.InputBindings>
 
-    <Grid>
+    <Grid Margin="10">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="*"/>
         </Grid.RowDefinitions>
 
-        <!-- Status Bar -->
-        <StatusBar Grid.Row="0" Background="WhiteSmoke">
-            <StatusBarItem>
-                <TextBox Width="200"
-                         Style="{StaticResource MaterialDesignOutlinedTextBox}"
-                         materialDesign:HintAssist.Hint="Search users..."
-                         Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}" />
-            </StatusBarItem>
-            
-            <StatusBarItem>
-                <Button Content="Add New User"
-                        Command="{Binding ShowAddUserFormCommand}"
-                        ToolTip="Ctrl+N"
-                        Style="{StaticResource MaterialDesignOutlinedButton}" />
-            </StatusBarItem>
-
-            <StatusBarItem>
-                <Button Content="Refresh"
-                        Command="{Binding RefreshCommand}"
-                        ToolTip="Ctrl+R"
-                        Style="{StaticResource MaterialDesignOutlinedButton}" />
-            </StatusBarItem>
-
-            <StatusBarItem HorizontalAlignment="Right">
-                <TextBlock Text="{Binding StatusMessage}" Style="{StaticResource BodyTextStyle}"/>
-            </StatusBarItem>
-        </StatusBar>
-
-        <!-- Main Content Area -->
-        <Grid Grid.Row="1">
+        <!-- Top Toolbar -->
+        <Grid Grid.Row="0" Margin="0,0,0,10">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="*"/>
                 <ColumnDefinition Width="Auto"/>
             </Grid.ColumnDefinitions>
 
-            <!-- User List -->
-            <DataGrid ItemsSource="{Binding Users}"
-                      Grid.Column="0"
-                      AutoGenerateColumns="False"
-                      SelectedItem="{Binding SelectedUser}"
-                      IsReadOnly="True"
-                      Margin="10">
-                <DataGrid.Columns>
-                    <DataGridTextColumn Header="Username" Binding="{Binding UserName}" Width="*"/>
-                    <DataGridTextColumn Header="Email" Binding="{Binding Email}" Width="*"/>
-                    <DataGridTextColumn Header="Phone" Binding="{Binding PhoneNumber}" Width="*"/>
-                    <DataGridTextColumn Header="Role" Binding="{Binding Roles}" Width="*"/>
+            <!-- Toolbar -->
+            <DockPanel Grid.Row="0" Margin="0,0,0,10" LastChildFill="False">
+                <TextBox Width="250"
+                     Margin="0 0 10 0"
+                     Style="{StaticResource MaterialDesignOutlinedTextBox}"
+                     Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}"
+                     materialDesign:HintAssist.Hint="Search consumers...">
+                </TextBox>
 
-                    <DataGridTemplateColumn Width="Auto">
+                <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                    <Button Command="{Binding RefreshCommand}" Style="{StaticResource OutlinedButtonStyle}" Margin="0,0,10,0">
+                        <materialDesign:PackIcon Kind="Refresh" Width="20" Height="20"/>
+                    </Button>
+                    <Button Command="{Binding ShowAddUserFormCommand}" Style="{StaticResource PrimaryButtonStyle}">
+                        <materialDesign:PackIcon Kind="Plus" Width="20" Height="20"/>
+                    </Button>
+                </StackPanel>
+            </DockPanel>
+        </Grid>
+
+        <!-- Main Content -->
+        <Grid Grid.Row="1">
+            <Grid.ColumnDefinitions>
+                <!-- Main Content takes full space when form hidden -->
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="Auto"/>
+            </Grid.ColumnDefinitions>
+
+            <!-- DataGrid -->
+            <DataGrid Grid.Column="0"
+                      ItemsSource="{Binding Users}"
+                      SelectedItem="{Binding SelectedUser}"
+                      AutoGenerateColumns="False"
+                      IsReadOnly="True"
+                      Margin="0"
+                      Background="White"
+                      SelectionMode="Single">
+                <DataGrid.Columns>
+                    <DataGridTextColumn Header="Username" Binding="{Binding UserName}" Width="*" />
+                    <DataGridTextColumn Header="Email" Binding="{Binding Email}" Width="*" />
+                    <DataGridTextColumn Header="Phone" Binding="{Binding PhoneNumber}" Width="*" />
+                    <DataGridTextColumn Header="Role" Binding="{Binding Roles}" Width="*" />
+                    <DataGridTemplateColumn Header="Actions" Width="Auto">
                         <DataGridTemplateColumn.CellTemplate>
                             <DataTemplate>
-                                <StackPanel Orientation="Horizontal">
+                                <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
                                     <Button Command="{Binding DataContext.EditUserCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}"
                                             CommandParameter="{Binding}"
-                                            Style="{StaticResource MaterialDesignIconButton}"
-                                            ToolTip="Edit">
-                                        <materialDesign:PackIcon Kind="Pencil" Foreground="Blue"/>
+                                             Style="{StaticResource OutlinedButtonStyle}"
+                                            ToolTip="Edit">                                      
+                                        <materialDesign:PackIcon Kind="Pencil" Width="20" Height="20"/>
                                     </Button>
                                     <Button Command="{Binding DataContext.DeleteUserCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}"
                                             CommandParameter="{Binding}"
-                                            Style="{StaticResource MaterialDesignIconButton}"
+                                            Style="{StaticResource OutlinedButtonStyle}"
                                             ToolTip="Delete">
-                                        <materialDesign:PackIcon Kind="Delete" Foreground="Red"/>
+                                        <materialDesign:PackIcon Kind="Delete" Foreground="DarkRed"/>
                                     </Button>
                                 </StackPanel>
                             </DataTemplate>
@@ -91,80 +94,64 @@
                 </DataGrid.Columns>
             </DataGrid>
 
-            <!-- User Form -->
-            <GridSplitter Grid.Column="1" Width="3" HorizontalAlignment="Left" Background="Gray"/>
+            <!-- Side Form -->
+            <Border Grid.Column="1"
+                    Margin="10,0,0,0"
+                    Background="#FAFAFA"
+                    Padding="10"
+                    Width="350"
+                    Visibility="{Binding IsFormVisible, Converter={StaticResource BoolToVis}}"
+                    BorderBrush="#DDD" BorderThickness="1">
+                <ScrollViewer VerticalScrollBarVisibility="Auto">
+                    <StackPanel>
+                        <TextBlock Text="{Binding FormTitle}" FontSize="18" FontWeight="Bold" Margin="0,0,0,10"/>
 
-            <Border Grid.Column="1" Width="350" Background="WhiteSmoke"
-                    Visibility="{Binding IsFormVisible, Converter={StaticResource BooleanToEyeIconConverter}}">
-                <Grid Margin="10">
-                    <Grid.RowDefinitions>
-                        <RowDefinition Height="Auto"/>
-                        <RowDefinition Height="*"/>
-                        <RowDefinition Height="Auto"/>
-                    </Grid.RowDefinitions>
-
-                    <TextBlock Text="{Binding FormTitle}" 
-                               FontSize="16"
-                               FontWeight="Bold"
-                               Style="{StaticResource HeadingTextStyle}"
-                               Margin="0,0,0,10"/>
-
-                    <StackPanel Grid.Row="1">
-                        <TextBox materialDesign:HintAssist.Hint="Username"
-                                 Text="{Binding CurrentUser.UserName, UpdateSourceTrigger=PropertyChanged}"
-                                 Margin="0,0,0,5"/>
+                        <!-- Form Fields with Labels -->
+                        <TextBlock Text="Username" Margin="0,10,0,2"/>
+                        <TextBox Text="{Binding CurrentUser.UserName, UpdateSourceTrigger=PropertyChanged}"
+                                 Style="{StaticResource MaterialDesignOutlinedTextBox}"/>
                         <TextBlock Text="{Binding UserNameError}" Foreground="Red"/>
 
-                        <TextBox materialDesign:HintAssist.Hint="Email"
-                                 Text="{Binding CurrentUser.Email, UpdateSourceTrigger=PropertyChanged}"
-                                 Margin="0,5,0,5"/>
+                        <TextBlock Text="Email" Margin="0,10,0,2"/>
+                        <TextBox Text="{Binding CurrentUser.Email, UpdateSourceTrigger=PropertyChanged}"
+                                 Style="{StaticResource MaterialDesignOutlinedTextBox}"/>
                         <TextBlock Text="{Binding EmailError}" Foreground="Red"/>
 
-                        <TextBox materialDesign:HintAssist.Hint="Phone Number"
-                                 Text="{Binding CurrentUser.PhoneNumber, UpdateSourceTrigger=PropertyChanged}"
-                                 Margin="0,5,0,5"/>
+                        <TextBlock Text="Phone Number" Margin="0,10,0,2"/>
+                        <TextBox Text="{Binding CurrentUser.PhoneNumber, UpdateSourceTrigger=PropertyChanged}"
+                                 Style="{StaticResource MaterialDesignOutlinedTextBox}"/>
                         <TextBlock Text="{Binding PhoneError}" Foreground="Red"/>
 
-                        <ComboBox materialDesign:HintAssist.Hint="Role"
-                                  ItemsSource="{Binding Roles}"
+                        <TextBlock Text="Role" Margin="0,10,0,2"/>
+                        <ComboBox ItemsSource="{Binding Roles}"
                                   SelectedItem="{Binding CurrentUser.Roles}"
-                                  Margin="0,5,0,5"/>
+                                  Style="{StaticResource MaterialDesignComboBox}"/>
                         <TextBlock Text="{Binding RoleError}" Foreground="Red"/>
 
-                        <PasswordBox x:Name="PasswordBox"
-                                     materialDesign:HintAssist.Hint="Password"
-                                     Foreground="Black"
-                                     Background="Transparent"
-                                     BorderBrush="White"
-                                     Margin="0,5,0,5"
-                                     Padding="10"
-                                     helpers:PasswordBoxHelper.BoundPassword="{Binding CurrentUser.Password, Mode=TwoWay}" />
+                        <TextBlock Text="Password" Margin="0,10,0,2"/>
+                        <PasswordBox helpers:PasswordBoxHelper.BoundPassword="{Binding CurrentUser.Password, Mode=TwoWay}"
+                                     Style="{StaticResource MaterialDesignPasswordBox}"/>
                         <TextBlock Text="{Binding PasswordError}" Foreground="Red"
                                    Visibility="{Binding PasswordError, Converter={StaticResource NullOrWhiteSpaceToVisibilityConverter}}" />
 
-                        <PasswordBox x:Name="ConfirmPasswordPasswordBox"
-                                     materialDesign:HintAssist.Hint="Confirm Password"
-                                     Foreground="Black"
-                                     Background="Transparent"
-                                     BorderBrush="White"
-                                     Margin="0,5,0,5"
-                                     Padding="10"
-                                     helpers:PasswordBoxHelper.BoundPassword="{Binding ConfirmPassword, Mode=TwoWay}" />
+                        <TextBlock Text="Confirm Password" Margin="0,10,0,2"/>
+                        <PasswordBox helpers:PasswordBoxHelper.BoundPassword="{Binding ConfirmPassword, Mode=TwoWay}"
+                                     Style="{StaticResource MaterialDesignPasswordBox}"/>
                         <TextBlock Text="{Binding ConfirmPasswordError}" Foreground="Red"
                                    Visibility="{Binding ConfirmPasswordError, Converter={StaticResource NullOrWhiteSpaceToVisibilityConverter}}" />
-                    </StackPanel>
 
-                    <!-- Action Buttons -->
-                    <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Right">
-                        <Button Content="Save"
-                                Command="{Binding SaveUserCommand}"
-                                Style="{StaticResource PrimaryButtonStyle}"
-                                Margin="0,0,10,0"/>
-                        <Button Content="Cancel"
-                                Command="{Binding CancelFormCommand}"
-                                Style="{StaticResource MaterialDesignOutlinedButton}"/>
+                        <!-- Action Buttons -->
+                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,20,0,0">
+                            <Button Content="Save"
+                                    Command="{Binding SaveUserCommand}"
+                                    Style="{StaticResource PrimaryButtonStyle}"
+                                    Margin="0,0,10,0"/>
+                            <Button Content="Cancel"
+                                    Command="{Binding CancelFormCommand}"
+                                    Style="{StaticResource MaterialDesignOutlinedButton}"/>
+                        </StackPanel>
                     </StackPanel>
-                </Grid>
+                </ScrollViewer>
             </Border>
         </Grid>
     </Grid>
