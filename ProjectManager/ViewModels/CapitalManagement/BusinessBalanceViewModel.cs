@@ -3,8 +3,8 @@ using Microsoft.EntityFrameworkCore;
 using ProjectManager.Constants;
 using ProjectManager.Data;
 using ProjectManager.Models.CapitalManagement;
+using ProjectManager.Views.Dialogs;
 using System.Collections.ObjectModel;
-using System.Windows;
 using System.Windows.Input;
 
 namespace ProjectManager.ViewModels.CapitalManagement
@@ -137,7 +137,7 @@ namespace ProjectManager.ViewModels.CapitalManagement
 
             if (NewExpenseAmount > BusinessBalance.CashOnHand)
             {
-                MessageBox.Show("Not enough available cash.", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                new WarningDialog("Not enough available cash.");
                 return;
             }
 
@@ -197,7 +197,7 @@ namespace ProjectManager.ViewModels.CapitalManagement
 
             if (SelectedLoan.AmountLoaned > BusinessBalance.CashOnHand)
             {
-                MessageBox.Show("Not enough available cash.", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                new WarningDialog("Not enough available cash.");
                 return;
             }
 

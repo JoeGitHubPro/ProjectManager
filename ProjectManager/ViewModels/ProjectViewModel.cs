@@ -1,8 +1,8 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using ProjectManager.Data;
 using ProjectManager.Models;
+using ProjectManager.Views.Dialogs;
 using System.Collections.ObjectModel;
-using System.Windows;
 
 namespace ProjectManager.ViewModels
 {
@@ -127,12 +127,11 @@ namespace ProjectManager.ViewModels
 
             if (HasErrors)
             {
-                MessageBox.Show(
-                    $"{this[nameof(SelectedProject.Name)] ?? ""}\n" +
-                    $"{this[nameof(SelectedProject.Details)] ?? ""}\n" +
-                    $"{this[nameof(SelectedProject.Price)] ?? ""}\n" +
-                    $"{this[nameof(SelectedProject.ProjectCategoryId)] ?? ""}",
-                    "Validation Error", MessageBoxButton.OK, MessageBoxImage.Warning);
+                new ErrorDialog("Validation Error",
+                        $"{this[nameof(SelectedProject.Name)] ?? ""}\n" +
+                        $"{this[nameof(SelectedProject.Details)] ?? ""}\n" +
+                        $"{this[nameof(SelectedProject.Price)] ?? ""}\n" +
+                        $"{this[nameof(SelectedProject.ProjectCategoryId)] ?? ""}");
                 return;
             }
 
@@ -150,11 +149,11 @@ namespace ProjectManager.ViewModels
             if (SelectedProject == null || string.IsNullOrWhiteSpace(SelectedProject.Name))
                 return;
 
-            var result = MessageBox.Show(
-                $"Are you sure you want to delete the project: {SelectedProject.Name}?",
-                "Confirm Deletion", MessageBoxButton.YesNo, MessageBoxImage.Warning);
+            var result = new ConfirmationDialog(
+                $"Are you sure you want to delete the project: {SelectedProject.Name}?");
+            result.ShowDialog();
 
-            if (result == MessageBoxResult.Yes)
+            if (result.IsConfirmed)
             {
                 _context.Projects.Remove(SelectedProject);
                 _context.SaveChanges();

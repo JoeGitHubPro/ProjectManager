@@ -1,5 +1,6 @@
 ﻿using ProjectManager.Constants;
 using ProjectManager.ViewModels;
+using ProjectManager.Views.Dialogs;
 using ProjectManager.Views.Identities;
 using System.ComponentModel;
 using System.ComponentModel.DataAnnotations;
@@ -28,9 +29,10 @@ public class BaseViewModel : INotifyPropertyChanged//, IDataErrorInfo
     public void LogOut()
     {
         // Confirm log out
-        MessageBoxResult result = MessageBox.Show("Are you sure you want to log out?", "Confirmation", MessageBoxButton.YesNo, MessageBoxImage.Question);
+        var result = new ConfirmationDialog("Are you sure you want to log out?");
+        result.ShowDialog();
 
-        if (result != MessageBoxResult.Yes)
+        if (!result.IsConfirmed)
             return;
 
         LogInWindow logInWindow = new LogInWindow();
@@ -48,7 +50,7 @@ public class BaseViewModel : INotifyPropertyChanged//, IDataErrorInfo
         logInWindow.Show();
 
         // Inform user of successful log out
-        MessageBox.Show("Successfully logged out!", "Information", MessageBoxButton.OK, MessageBoxImage.Information);
+        new InformationDialog("Successfully logged out!");
     }
     protected bool SetProperty<T>(ref T field, T value, bool validate = false, [CallerMemberName] string propertyName = null)
     {

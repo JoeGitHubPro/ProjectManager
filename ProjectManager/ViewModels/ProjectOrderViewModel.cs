@@ -4,11 +4,11 @@ using ProjectManager.Data;
 using ProjectManager.Helpers;
 using ProjectManager.Models;
 using ProjectManager.ViewModels.CapitalManagement;
+using ProjectManager.Views.Dialogs;
 using System.Collections;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
-using System.Windows;
 
 namespace ProjectManager.ViewModels
 {
@@ -186,7 +186,7 @@ namespace ProjectManager.ViewModels
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Error loading data: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                new ErrorDialog("Error", $"Error loading data: {ex.Message}");
             }
         }
 
@@ -219,14 +219,14 @@ namespace ProjectManager.ViewModels
             {
                 if (HasErrors)
                 {
-                    MessageBox.Show("Please fix validation errors.", "Validation Error", MessageBoxButton.OK, MessageBoxImage.Warning);
+                    new WarningDialog("Please fix validation errors.");
                     return;
                 }
 
                 var project = Projects.FirstOrDefault(p => p.Id == SelectedProjectId);
                 if (project == null)
                 {
-                    MessageBox.Show("Please select a valid project.", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                    new ErrorDialog("Error", "Please select a valid project.");
                     return;
                 }
 
@@ -264,11 +264,11 @@ namespace ProjectManager.ViewModels
 
                 await _context.SaveChangesAsync();
                 await LoadDataAsync();
-                MessageBox.Show("Order saved successfully.", "Success", MessageBoxButton.OK, MessageBoxImage.Information);
+                new InformationDialog("Order saved successfully.");
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Error saving order: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                new ErrorDialog("Error", $"Error saving order: {ex.Message}");
             }
         }
 
@@ -278,8 +278,9 @@ namespace ProjectManager.ViewModels
             {
                 if (SelectedOrder == null) return;
 
-                var result = MessageBox.Show("Are you sure you want to delete this order?", "Confirm Delete", MessageBoxButton.YesNo, MessageBoxImage.Warning);
-                if (result != MessageBoxResult.Yes) return;
+                var result = new ConfirmationDialog("Are you sure you want to delete this order?");
+                result.ShowDialog();
+                if (!result.IsConfirmed) return;
 
                 FolderHelper.DeleteFolder(SelectedOrder.FolderSerial);
                 _context.ProjectOrders.Remove(SelectedOrder);
@@ -287,11 +288,11 @@ namespace ProjectManager.ViewModels
 
                 await LoadDataAsync();
                 Clear();
-                MessageBox.Show("Order deleted successfully.", "Success", MessageBoxButton.OK, MessageBoxImage.Information);
+                new InformationDialog("Order deleted successfully.");
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Error deleting order: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                new ErrorDialog("Error", $"Error deleting order: {ex.Message}");
             }
         }
 
@@ -316,7 +317,7 @@ namespace ProjectManager.ViewModels
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Error opening folder: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                new ErrorDialog("Error", $"Error opening folder: {ex.Message}");
             }
         }
 

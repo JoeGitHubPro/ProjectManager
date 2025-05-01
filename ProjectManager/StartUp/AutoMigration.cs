@@ -1,6 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using ProjectManager.Data;
-using System.Windows;
+using ProjectManager.Views.Dialogs;
 
 namespace ProjectManager.StartUp
 {
@@ -14,7 +14,7 @@ namespace ProjectManager.StartUp
                 if (pendingMigrations.Any())
                 {
                     await _context.Database.MigrateAsync();
-                    MessageBox.Show("Database migrated successfully.", "Information", MessageBoxButton.OK, MessageBoxImage.Information);
+                    new InformationDialog("Database migrated successfully.");
                 }
             }
         }

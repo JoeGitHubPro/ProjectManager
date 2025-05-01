@@ -1,7 +1,7 @@
 ﻿using ProjectManager.Data;
 using ProjectManager.Models;
+using ProjectManager.Views.Dialogs;
 using System.Collections.ObjectModel;
-using System.Windows;
 
 namespace ProjectManager.ViewModels
 {
@@ -314,13 +314,10 @@ namespace ProjectManager.ViewModels
         {
             if (SelectedConsumer == null || _context == null) return;
 
-            var result = MessageBox.Show(
-                "Are you sure you want to delete this consumer? This action cannot be undone.",
-                "Confirm Delete",
-                MessageBoxButton.YesNo,
-                MessageBoxImage.Warning);
+            var result = new ConfirmationDialog("Are you sure you want to delete this consumer? This action cannot be undone.");
+            result.ShowDialog();
 
-            if (result != MessageBoxResult.Yes) return;
+            if (!result.IsConfirmed) return;
 
             try
             {
@@ -405,13 +402,13 @@ namespace ProjectManager.ViewModels
         }
 
         private void ShowError(string message) =>
-            MessageBox.Show(message, "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+        new ErrorDialog("Error", message);
 
         private void ShowWarning(string message) =>
-            MessageBox.Show(message, "Warning", MessageBoxButton.OK, MessageBoxImage.Warning);
+        new WarningDialog(message);
 
         private void ShowInfo(string message) =>
-            MessageBox.Show(message, "Information", MessageBoxButton.OK, MessageBoxImage.Information);
+        new InformationDialog(message);
 
         #endregion
     }

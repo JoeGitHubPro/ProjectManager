@@ -1,7 +1,7 @@
 ﻿using ProjectManager.Service;
 using ProjectManager.Validators;
+using ProjectManager.Views.Dialogs;
 using System.Collections.ObjectModel;
-using System.Windows;
 using System.Windows.Input;
 
 namespace ProjectManager.ViewModels.Identities
@@ -175,9 +175,10 @@ namespace ProjectManager.ViewModels.Identities
         private void DeleteUser()
         {
             if (SelectedUser == null) return;
+            var resultDialog = new ConfirmationDialog($"Are you sure you want to delete '{SelectedUser.UserName}'?");
+            resultDialog.ShowDialog();
 
-            if (MessageBox.Show($"Are you sure you want to delete '{SelectedUser.UserName}'?",
-                "Confirm Delete", MessageBoxButton.YesNo, MessageBoxImage.Warning) != MessageBoxResult.Yes)
+            if (!resultDialog.IsConfirmed)
                 return;
 
             try
@@ -192,7 +193,7 @@ namespace ProjectManager.ViewModels.Identities
                 }
                 else
                 {
-                    MessageBox.Show($"Delete failed: {result.Errors.Description}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                    new ErrorDialog("Error", $"Delete failed: {result.Errors.Description}");
                 }
             }
             catch (Exception ex)
@@ -257,7 +258,7 @@ namespace ProjectManager.ViewModels.Identities
                 }
                 else
                 {
-                    MessageBox.Show("Operation failed. Check the input data.", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                    new ErrorDialog("Error", "Operation failed. Check the input data.");
                 }
             }
             catch (Exception ex)
@@ -299,7 +300,7 @@ namespace ProjectManager.ViewModels.Identities
         private void ShowError(string context, Exception ex)
         {
             StatusMessage = $"Error {context}";
-            MessageBox.Show($"Error {context}: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            new ErrorDialog("Error", $"Error {context}: {ex.Message}");
         }
     }
 }

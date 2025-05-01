@@ -1,4 +1,5 @@
 ﻿using ProjectManager.Config;
+using ProjectManager.Views.Dialogs;
 using System.Diagnostics;
 using System.IO;
 
@@ -45,7 +46,7 @@ namespace ProjectManager.Helpers
             }
             else
             {
-                System.Windows.MessageBox.Show("Folder not found!", "Error", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
+                new ErrorDialog("Error", "Folder not found!");
             }
         }
 

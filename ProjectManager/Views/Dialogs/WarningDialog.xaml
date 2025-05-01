@@ -1,0 +1,63 @@
+﻿<Window x:Class="ProjectManager.Views.Dialogs.WarningDialog"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
+        xmlns:materialDesignIcons="http://materialdesigninxaml.net/winfx/xaml/shared"
+        Title="Warning"
+        Width="420"
+        MinHeight="220"
+        WindowStartupLocation="CenterScreen"
+        ResizeMode="NoResize"
+        Background="{DynamicResource MaterialDesignPaper}"
+        BorderThickness="0"
+        WindowStyle="None"
+        SizeToContent="Height"
+        FlowDirection="LeftToRight"
+        FocusManager.FocusedElement="{Binding ElementName=OkButton}">
+
+    <Grid Margin="20">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <!-- Warning icon -->
+        <materialDesign:PackIcon Kind="AlertOutline"
+                                 Width="48"
+                                 Height="48"
+                                 Foreground="{DynamicResource SecondaryAccentBrush}"
+                                 HorizontalAlignment="Center"
+                                 Margin="0,10,0,10" />
+
+        <!-- Warning message -->
+        <TextBlock x:Name="WarningMessageTextBlock"
+                   Grid.Row="1"
+                   Text="{Binding Message}"
+                   Foreground="{DynamicResource MaterialDesignBody}"
+                   FontSize="16"
+                   TextAlignment="Center"
+                   TextWrapping="Wrap"
+                   Margin="10" />
+
+        <!-- Buttons -->
+        <StackPanel Grid.Row="2"
+                    Orientation="Horizontal"
+                    HorizontalAlignment="Center"
+                    Margin="0,20,0,10">
+            <Button x:Name="OkButton"
+                    Content="OK"
+                    Style="{StaticResource MaterialDesignFlatButton}"
+                    Command="{Binding ConfirmCommand}"
+                    MinWidth="100"
+                    Padding="12,6" />
+
+            <Button x:Name="CancelButton"
+                    Content="Cancel"
+                    Style="{StaticResource MaterialDesignOutlinedButton}"
+                    Command="{Binding CancelCommand}"
+                    MinWidth="100"
+                    Padding="12,6" />
+        </StackPanel>
+    </Grid>
+</Window>

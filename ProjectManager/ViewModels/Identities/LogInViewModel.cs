@@ -1,6 +1,7 @@
 ﻿using ProjectManager.Constants;
 using ProjectManager.Service;
 using ProjectManager.Views;
+using ProjectManager.Views.Dialogs;
 using System.Windows;
 using System.Windows.Input;
 
@@ -74,7 +75,7 @@ namespace ProjectManager.ViewModels.Identities
                 return;
             }
 
-            MessageBox.Show("Logged in successfully!", "Information", MessageBoxButton.OK, MessageBoxImage.Information);
+            new InformationDialog("Logged in successfully!");
 
             if (!SetCurrentUser(result))
                 return;
@@ -103,7 +104,7 @@ namespace ProjectManager.ViewModels.Identities
         {
             _errors[propertyName] = errorMessage;
             OnPropertyChanged(propertyName + "Error");
-            MessageBox.Show(errorMessage, "Warning", MessageBoxButton.OK, MessageBoxImage.Warning);
+            new WarningDialog(errorMessage);
         }
 
         private string GetError(string propertyName) =>
@@ -113,13 +114,13 @@ namespace ProjectManager.ViewModels.Identities
         {
             if (string.IsNullOrWhiteSpace(result.UserName))
             {
-                MessageBox.Show("Unable to set user!", "Warning", MessageBoxButton.OK, MessageBoxImage.Warning);
+                new WarningDialog("Unable to set user!");
                 return false;
             }
 
             if (string.IsNullOrWhiteSpace(result.Role))
             {
-                MessageBox.Show("Invalid user role!", "Warning", MessageBoxButton.OK, MessageBoxImage.Warning);
+                new WarningDialog("Invalid user role!");
                 return false;
             }
 

@@ -1,8 +1,8 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using ProjectManager.Data;
 using ProjectManager.Models;
+using ProjectManager.Views.Dialogs;
 using System.Collections.ObjectModel;
-using System.Windows;
 
 namespace ProjectManager.ViewModels
 {
@@ -219,13 +219,9 @@ namespace ProjectManager.ViewModels
             if (SelectedCategory == null)
                 return;
 
-            var result = MessageBox.Show(
-                "Are you sure you want to delete this category? This action cannot be undone.",
-                "Confirm Delete",
-                MessageBoxButton.YesNo,
-                MessageBoxImage.Warning);
-
-            if (result != MessageBoxResult.Yes)
+            var result = new ConfirmationDialog("Are you sure you want to delete this category? This action cannot be undone.");
+            result.ShowDialog();
+            if (!result.IsConfirmed)
                 return;
 
             try
@@ -307,17 +303,18 @@ namespace ProjectManager.ViewModels
 
         private void ShowError(string message)
         {
-            MessageBox.Show(message, "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            new ErrorDialog("Error", message);
         }
 
         private void ShowWarning(string message)
         {
-            MessageBox.Show(message, "Warning", MessageBoxButton.OK, MessageBoxImage.Warning);
+            new WarningDialog(message);
+
         }
 
         private void ShowInfo(string message)
         {
-            MessageBox.Show(message, "Information", MessageBoxButton.OK, MessageBoxImage.Information);
+            new InformationDialog(message);
         }
 
         #endregion
