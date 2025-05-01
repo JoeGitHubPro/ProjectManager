@@ -172,7 +172,7 @@ namespace ProjectManager.ViewModels
             RefreshCommand = new RelayCommand(LoadData);
             SearchCommand = new RelayCommand(FilterConsumers);
             AddNewCommand = new RelayCommand(AddNewConsumer);
-            EditCommand = new RelayCommand(SaveConsumer);
+            EditCommand = new RelayCommand(EditConsumer);
             ClearCommand = new RelayCommand(ClearFields);
         }
 
@@ -233,6 +233,10 @@ namespace ProjectManager.ViewModels
         {
             ClearFields();
             _isNewRecord = true;
+            IsFormVisible = true;
+        }
+        private void EditConsumer()
+        {
             IsFormVisible = true;
         }
 
