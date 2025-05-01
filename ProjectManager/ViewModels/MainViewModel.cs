@@ -12,6 +12,7 @@ namespace ProjectManager.ViewModels
         public ProjectOrderViewModel ProjectOrderVM { get; set; }
         public UserManagementViewModel UserManagementVM { get; set; }
         public BusinessBalanceViewModel BusinessBalanceVM { get; set; }
+        public WelcomeViewModel WelcomeVM { get; set; }
 
         // Add properties to control tab enable state
         public bool IsProjectOrderEnabled { get; set; }
@@ -29,6 +30,7 @@ namespace ProjectManager.ViewModels
             ProjectOrderVM = new ProjectOrderViewModel();
             UserManagementVM = new UserManagementViewModel();
             BusinessBalanceVM = new BusinessBalanceViewModel();
+            WelcomeVM = new WelcomeViewModel();
 
 
             switch (UserSession.Role)

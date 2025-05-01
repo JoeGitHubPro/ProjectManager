@@ -3,14 +3,13 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-             xmlns:local="clr-namespace:ProjectManager.Views.CapitalManagement"
-             xmlns:viewModels="clr-namespace:ProjectManager.ViewModels.CapitalManagement"
-             xmlns:sys="clr-namespace:System;assembly=mscorlib"
+             xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
+             xmlns:helpers="clr-namespace:ProjectManager.Helpers"
+             xmlns:converters="clr-namespace:ProjectManager.Converters"
              mc:Ignorable="d"
              d:DesignHeight="800" d:DesignWidth="1200">
 
     <UserControl.Resources>
-        <!-- DataGridRow Coloring -->
         <Style TargetType="DataGridRow" x:Key="CashFlowRowStyle">
             <Style.Triggers>
                 <DataTrigger Binding="{Binding Type}" Value="Income">
@@ -21,6 +20,22 @@
                 </DataTrigger>
             </Style.Triggers>
         </Style>
+
+        <Style x:Key="HeadingTextStyle" TargetType="TextBlock">
+            <Setter Property="FontSize" Value="18"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Margin" Value="0,0,0,10"/>
+        </Style>
+
+        <Style x:Key="PrimaryButtonStyle" TargetType="Button" BasedOn="{StaticResource MaterialDesignRaisedButton}">
+            <Setter Property="Margin" Value="0,5,0,0"/>
+            <Setter Property="Padding" Value="10,5"/>
+        </Style>
+
+        <Style x:Key="OutlinedButtonStyle" TargetType="Button" BasedOn="{StaticResource MaterialDesignOutlinedButton}">
+            <Setter Property="Margin" Value="0,5,0,0"/>
+            <Setter Property="Padding" Value="10,5"/>
+        </Style>
     </UserControl.Resources>
 
     <Grid Margin="10">
@@ -30,126 +45,179 @@
         </Grid.RowDefinitions>
 
         <!-- SUMMARY SECTION -->
-        <Grid Grid.Row="0" Margin="0 0 0 20">
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="*"/>
-                <ColumnDefinition Width="Auto"/>
-            </Grid.ColumnDefinitions>
+        <Border Grid.Row="0" 
+                Margin="0 0 0 20"
+                Padding="15"
+                BorderThickness="1"
+                BorderBrush="LightGray"
+                CornerRadius="4"
+                Background="White">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
 
-            <StackPanel Orientation="Vertical" Grid.Column="0">
-                <TextBlock Text="Business Summary" FontSize="22" FontWeight="Bold" Margin="0 0 0 10"/>
+                <StackPanel Grid.Column="0" Orientation="Vertical">
+                    <TextBlock Text="Business Summary" 
+                               Style="{StaticResource HeadingTextStyle}" 
+                               Margin="0 0 0 10"/>
 
-                <StackPanel Orientation="Horizontal">
-                    <!-- Cash on Hand -->
-                    <Border BorderBrush="LightGray" BorderThickness="0 0 1 0" Padding="12 8">
-                        <StackPanel>
-                            <TextBlock Text="Cash on Hand:" FontWeight="Bold" Foreground="DarkSlateGray"/>
-                            <TextBlock Text="{Binding BusinessBalance.CashOnHand}" FontSize="14" Foreground="DodgerBlue" FontWeight="SemiBold"/>
-                        </StackPanel>
-                    </Border>
+                    <StackPanel Orientation="Horizontal">
+                        <!-- Cash on Hand -->
+                        <Border BorderBrush="LightGray" BorderThickness="0 0 1 0" Padding="12 8">
+                            <StackPanel>
+                                <TextBlock Text="Cash on Hand:" FontWeight="Bold" Foreground="DarkSlateGray"/>
+                                <TextBlock Text="{Binding BusinessBalance.CashOnHand, StringFormat=C}" 
+                                           FontSize="14" 
+                                           Foreground="DodgerBlue" 
+                                           FontWeight="SemiBold"/>
+                            </StackPanel>
+                        </Border>
 
-                    <!-- Net Balance -->
-                    <Border BorderBrush="LightGray" BorderThickness="0 0 1 0" Padding="12 8">
-                        <StackPanel>
-                            <TextBlock Text="Net Balance:" FontWeight="Bold" Foreground="DarkSlateGray"/>
-                            <TextBlock Text="{Binding BusinessBalance.NetBusinessBalance, StringFormat=C}" 
-                                       FontSize="14" FontWeight="SemiBold"
-                                       Foreground="{Binding BusinessBalance.NetBusinessBalance, Converter={StaticResource NetBalanceToBrushConverter}}"/>
-                        </StackPanel>
-                    </Border>
+                        <!-- Net Balance -->
+                        <Border BorderBrush="LightGray" BorderThickness="0 0 1 0" Padding="12 8">
+                            <StackPanel>
+                                <TextBlock Text="Net Balance:" FontWeight="Bold" Foreground="DarkSlateGray"/>
+                                <TextBlock Text="{Binding BusinessBalance.NetBusinessBalance, StringFormat=C}" 
+                                           FontSize="14" 
+                                           FontWeight="SemiBold"
+                                           Foreground="{Binding BusinessBalance.NetBusinessBalance, Converter={StaticResource NetBalanceToBrushConverter}}"/>
+                            </StackPanel>
+                        </Border>
 
-                    <!-- Emergency Reserve -->
-                    <Border Padding="12 8">
-                        <StackPanel>
-                            <TextBlock Text="Emergency Reserve:" FontWeight="Bold" Foreground="DarkSlateGray"/>
-                            <TextBlock Text="{Binding BusinessBalance.EmergencyReserve}" FontSize="14" FontWeight="SemiBold"/>
-                        </StackPanel>
-                    </Border>
+                        <!-- Emergency Reserve -->
+                        <Border Padding="12 8">
+                            <StackPanel>
+                                <TextBlock Text="Emergency Reserve:" FontWeight="Bold" Foreground="DarkSlateGray"/>
+                                <TextBlock Text="{Binding BusinessBalance.EmergencyReserve, StringFormat=C}" 
+                                           FontSize="14" 
+                                           FontWeight="SemiBold"/>
+                            </StackPanel>
+                        </Border>
+                    </StackPanel>
                 </StackPanel>
-            </StackPanel>
 
-            <!-- Refresh Button -->
-            <Button Grid.Column="1"
-                    Content="Refresh"
-                    Command="{Binding RefreshBalanceCommand}"
-                    Width="100"
-                    Height="35"
-                    Margin="0 0 10 0"
-                    VerticalAlignment="Top"
-                    HorizontalAlignment="Right"
-                    Style="{StaticResource MaterialDesignFlatButton}"/>
-        </Grid>
+                <!-- Refresh Button -->
+                <Button Grid.Column="1"
+                        Command="{Binding RefreshBalanceCommand}"
+                        Style="{StaticResource OutlinedButtonStyle}"
+                        VerticalAlignment="Top"
+                        HorizontalAlignment="Right"
+                        ToolTip="Refresh data">
+                    <materialDesign:PackIcon Kind="Refresh" Width="20" Height="20"/>
+                </Button>
+            </Grid>
+        </Border>
 
         <!-- MAIN CONTENT -->
-        <TabControl Grid.Row="1" Margin="10">
+        <TabControl Grid.Row="1" Style="{StaticResource MaterialDesignTabControl}">
             <!-- Cash Flows Tab -->
             <TabItem Header="Cash Flows">
                 <Grid>
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto"/>
-                        <!-- For buttons -->
                         <RowDefinition Height="Auto"/>
-                        <!-- For Income Form -->
                         <RowDefinition Height="Auto"/>
-                        <!-- For Expense Form -->
                         <RowDefinition Height="*"/>
-                        <!-- For DataGrid -->
                     </Grid.RowDefinitions>
 
                     <!-- Buttons Row -->
-                    <StackPanel Grid.Row="0" Orientation="Horizontal" HorizontalAlignment="Left" Margin="0 10">
-                        <Button Content="Add Income" Command="{Binding ShowIncomeFormCommand}" 
-                    Style="{StaticResource MaterialDesignFlatButton}" Margin="5"/>
-                        <Button Content="Add Expense" Command="{Binding ShowExpenseFormCommand}" 
-                    Style="{StaticResource MaterialDesignFlatButton}" Margin="5"/>
+                    <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="0 10">
+                        <Button Command="{Binding ShowIncomeFormCommand}" 
+                                Style="{StaticResource PrimaryButtonStyle}" 
+                                Margin="0,0,10,0">
+                            <StackPanel Orientation="Horizontal">
+                                <materialDesign:PackIcon Kind="Plus" Width="20" Height="20"/>
+                                <TextBlock Text="Add Income" Margin="5,0,0,0"/>
+                            </StackPanel>
+                        </Button>
+                        <Button Command="{Binding ShowExpenseFormCommand}" 
+                                Style="{StaticResource OutlinedButtonStyle}">
+                            <StackPanel Orientation="Horizontal">
+                                <materialDesign:PackIcon Kind="Minus" Width="20" Height="20"/>
+                                <TextBlock Text="Add Expense" Margin="5,0,0,0"/>
+                            </StackPanel>
+                        </Button>
                     </StackPanel>
 
                     <!-- Income Form -->
-                    <StackPanel Grid.Row="1"
-                   Visibility="{Binding IsIncomeFormVisible, Converter={StaticResource BoolToVis}}"
-                   Margin="10">
-                        <TextBlock Text="Income Amount" />
-                        <TextBox Text="{Binding NewIncomeAmount}" Style="{StaticResource MaterialDesignOutlinedTextBox}" />
-                        <TextBlock Text="Description" />
-                        <TextBox Text="{Binding NewIncomeDescription}" Style="{StaticResource MaterialDesignOutlinedTextBox}" />
-                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0 10 0 0">
-                            <Button Content="Save" Command="{Binding SaveIncomeCommand}" 
-                        Style="{StaticResource MaterialDesignFlatButton}" Margin="5"/>
-                            <Button Content="Cancel" Command="{Binding CancelFormCommand}" 
-                        Style="{StaticResource MaterialDesignFlatButton}" Margin="5"/>
+                    <Border Grid.Row="1"
+                            Visibility="{Binding IsIncomeFormVisible, Converter={StaticResource BoolToVis}}"
+                            Margin="0,10,0,10"
+                            Padding="15"
+                            BorderThickness="1"
+                            BorderBrush="LightGray"
+                            CornerRadius="4"
+                            Background="White">
+                        <StackPanel>
+                            <Label Content="Amount"/>
+                            <TextBox Text="{Binding NewIncomeAmount}" 
+                                     Style="{StaticResource MaterialDesignOutlinedTextBox}"
+                                     helpers:EnterKeyTraversal.IsEnabled="True"/>
+                            <Label Content="Description"/>
+                            <TextBox Text="{Binding NewIncomeDescription}" 
+                                     Style="{StaticResource MaterialDesignOutlinedTextBox}"
+                                     helpers:EnterKeyTraversal.IsEnabled="True"/>
+                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,10,0,0">
+                                <Button Command="{Binding SaveIncomeCommand}" 
+                                        Style="{StaticResource PrimaryButtonStyle}" 
+                                        Margin="0,0,10,0">
+                                    <materialDesign:PackIcon Kind="ContentSave" Width="20" Height="20"/>
+                                </Button>
+                                <Button Command="{Binding CancelFormCommand}" 
+                                        Style="{StaticResource OutlinedButtonStyle}">
+                                    <materialDesign:PackIcon Kind="Close" Width="20" Height="20"/>
+                                </Button>
+                            </StackPanel>
                         </StackPanel>
-                    </StackPanel>
+                    </Border>
 
                     <!-- Expense Form -->
-                    <StackPanel Grid.Row="2"
-                   Visibility="{Binding IsExpenseFormVisible, Converter={StaticResource BoolToVis}}"
-                   Margin="10">
-                        <TextBlock Text="Expense Amount" />
-                        <TextBox Text="{Binding NewExpenseAmount}" Style="{StaticResource MaterialDesignOutlinedTextBox}" />
-                        <TextBlock Text="Description" />
-                        <TextBox Text="{Binding NewExpenseDescription}" Style="{StaticResource MaterialDesignOutlinedTextBox}" />
-                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0 10 0 0">
-                            <Button Content="Save" Command="{Binding SaveExpenseCommand}" 
-                        Style="{StaticResource MaterialDesignFlatButton}" Margin="5"/>
-                            <Button Content="Cancel" Command="{Binding CancelFormCommand}" 
-                        Style="{StaticResource MaterialDesignFlatButton}" Margin="5"/>
+                    <Border Grid.Row="2"
+                            Visibility="{Binding IsExpenseFormVisible, Converter={StaticResource BoolToVis}}"
+                            Margin="0,10,0,10"
+                            Padding="15"
+                            BorderThickness="1"
+                            BorderBrush="LightGray"
+                            CornerRadius="4"
+                            Background="White">
+                        <StackPanel>
+                            <Label Content="Amount"/>
+                            <TextBox Text="{Binding NewExpenseAmount}" 
+                                     Style="{StaticResource MaterialDesignOutlinedTextBox}"
+                                     helpers:EnterKeyTraversal.IsEnabled="True"/>
+                            <Label Content="Description"/>
+                            <TextBox Text="{Binding NewExpenseDescription}" 
+                                     Style="{StaticResource MaterialDesignOutlinedTextBox}"
+                                     helpers:EnterKeyTraversal.IsEnabled="True"/>
+                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,10,0,0">
+                                <Button Command="{Binding SaveExpenseCommand}" 
+                                        Style="{StaticResource PrimaryButtonStyle}" 
+                                        Margin="0,0,10,0">
+                                    <materialDesign:PackIcon Kind="ContentSave" Width="20" Height="20"/>
+                                </Button>
+                                <Button Command="{Binding CancelFormCommand}" 
+                                        Style="{StaticResource OutlinedButtonStyle}">
+                                    <materialDesign:PackIcon Kind="Close" Width="20" Height="20"/>
+                                </Button>
+                            </StackPanel>
                         </StackPanel>
-                    </StackPanel>
+                    </Border>
 
-                    <!-- DataGrid Row -->
+                    <!-- DataGrid -->
                     <DataGrid Grid.Row="3"
-                 ItemsSource="{Binding CashFlows}"
-                 AutoGenerateColumns="False"
-                 RowStyle="{StaticResource CashFlowRowStyle}"
-                 CanUserAddRows="False"
-                 IsReadOnly="True"
-                 Margin="0 10"
-                 Style="{StaticResource MaterialDesignDataGrid}">
+                              ItemsSource="{Binding CashFlows}"
+                              AutoGenerateColumns="False"
+                              RowStyle="{StaticResource CashFlowRowStyle}"
+                              CanUserAddRows="False"
+                              IsReadOnly="True"
+                              Style="{StaticResource MaterialDesignDataGrid}">
                         <DataGrid.Columns>
-                            <DataGridTextColumn Header="Date" Binding="{Binding TransactionDate, StringFormat=d}" />
-                            <DataGridTextColumn Header="Description" Binding="{Binding Description}" />
-                            <DataGridTextColumn Header="Amount" Binding="{Binding Amount}" />
-                            <DataGridTextColumn Header="Type" Binding="{Binding Type}" />
+                            <DataGridTextColumn Header="Date" Binding="{Binding TransactionDate, StringFormat=d}" Width="Auto"/>
+                            <DataGridTextColumn Header="Description" Binding="{Binding Description}" Width="*"/>
+                            <DataGridTextColumn Header="Amount" Binding="{Binding Amount, StringFormat=C}" Width="Auto"/>
+                            <DataGridTextColumn Header="Type" Binding="{Binding Type}" Width="Auto"/>
                         </DataGrid.Columns>
                     </DataGrid>
                 </Grid>
@@ -160,65 +228,90 @@
                 <Grid>
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto"/>
-                        <!-- For buttons -->
                         <RowDefinition Height="Auto"/>
-                        <!-- For Loan Form -->
                         <RowDefinition Height="*"/>
-                        <!-- For DataGrid -->
                     </Grid.RowDefinitions>
 
                     <!-- Buttons Row -->
-                    <StackPanel Grid.Row="0" Orientation="Horizontal" HorizontalAlignment="Left" Margin="0 10">
-                        <Button Content="Add Loan" Command="{Binding ShowLoanFormCommand}" 
-                    Style="{StaticResource MaterialDesignFlatButton}" Margin="5"/>
-                        <Button Content="Mark as Repaid" Command="{Binding MarkAsRepaidCommand}" 
-                    Style="{StaticResource MaterialDesignFlatButton}" Margin="5"/>
+                    <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="0 10">
+                        <Button Command="{Binding ShowLoanFormCommand}" 
+                                Style="{StaticResource PrimaryButtonStyle}" 
+                                Margin="0,0,10,0">
+                            <StackPanel Orientation="Horizontal">
+                                <materialDesign:PackIcon Kind="Plus" Width="20" Height="20"/>
+                                <TextBlock Text="Add Loan" Margin="5,0,0,0"/>
+                            </StackPanel>
+                        </Button>
+                        <Button Command="{Binding MarkAsRepaidCommand}" 
+                                Style="{StaticResource OutlinedButtonStyle}">
+                            <StackPanel Orientation="Horizontal">
+                                <materialDesign:PackIcon Kind="Check" Width="20" Height="20"/>
+                                <TextBlock Text="Mark as Repaid" Margin="5,0,0,0"/>
+                            </StackPanel>
+                        </Button>
                     </StackPanel>
 
                     <!-- Loan Form -->
-                    <StackPanel Grid.Row="1"
-                    Visibility="{Binding IsLoanFormVisible, Converter={StaticResource BoolToVis}}"
-                    Margin="10">
-                        <TextBlock Text="Loan Amount" />
-                        <TextBox Text="{Binding NewLoanAmount}" Style="{StaticResource MaterialDesignOutlinedTextBox}" />
-                        <TextBlock Text="Lender" />
-                        <ComboBox ItemsSource="{Binding Users}" 
-                      DisplayMemberPath="UserName" 
-                      SelectedItem="{Binding SelectedUser}" 
-                      Style="{StaticResource MaterialDesignComboBox}" />
-                        <TextBlock Text="Payback Date" />
-                        <DatePicker SelectedDate="{Binding NewLoanPaybackDate}" 
-                        Style="{StaticResource MaterialDesignDatePicker}" />
-                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0 10 0 0">
-                            <Button Content="Save" Command="{Binding SaveLoanCommand}" 
-                        Style="{StaticResource MaterialDesignFlatButton}" Margin="5"/>
-                            <Button Content="Cancel" Command="{Binding CancelFormCommand}" 
-                        Style="{StaticResource MaterialDesignFlatButton}" Margin="5"/>
+                    <Border Grid.Row="1"
+                            Visibility="{Binding IsLoanFormVisible, Converter={StaticResource BoolToVis}}"
+                            Margin="0,10,0,10"
+                            Padding="15"
+                            BorderThickness="1"
+                            BorderBrush="LightGray"
+                            CornerRadius="4"
+                            Background="White">
+                        <StackPanel>
+                            <Label Content="Amount"/>
+                            <TextBox Text="{Binding NewLoanAmount}" 
+                                     Style="{StaticResource MaterialDesignOutlinedTextBox}"
+                                     helpers:EnterKeyTraversal.IsEnabled="True"/>
+                            <Label Content="Lender"/>
+                            <ComboBox ItemsSource="{Binding Users}" 
+                                      DisplayMemberPath="UserName" 
+                                      SelectedItem="{Binding SelectedUser}" 
+                                      Style="{StaticResource MaterialDesignComboBox}"
+                                      helpers:EnterKeyTraversal.IsEnabled="True"/>
+                            <Label Content="Payback Date"/>
+                            <DatePicker SelectedDate="{Binding NewLoanPaybackDate}" 
+                                        Style="{StaticResource MaterialDesignDatePicker}"
+                                        helpers:EnterKeyTraversal.IsEnabled="True"/>
+                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,10,0,0">
+                                <Button Command="{Binding SaveLoanCommand}" 
+                                        Style="{StaticResource PrimaryButtonStyle}" 
+                                        Margin="0,0,10,0">
+                                    <materialDesign:PackIcon Kind="ContentSave" Width="20" Height="20"/>
+                                </Button>
+                                <Button Command="{Binding CancelFormCommand}" 
+                                        Style="{StaticResource OutlinedButtonStyle}">
+                                    <materialDesign:PackIcon Kind="Close" Width="20" Height="20"/>
+                                </Button>
+                            </StackPanel>
                         </StackPanel>
-                    </StackPanel>
+                    </Border>
 
-                    <!-- DataGrid Row -->
+                    <!-- DataGrid -->
                     <DataGrid Grid.Row="2"
-                  ItemsSource="{Binding Loans}"
-                  SelectedItem="{Binding SelectedLoan}"
-                  AutoGenerateColumns="False"
-                  CanUserAddRows="False"
-                  IsReadOnly="True"
-                  Margin="10"
-                  Style="{StaticResource MaterialDesignDataGrid}">
+                              ItemsSource="{Binding Loans}"
+                              SelectedItem="{Binding SelectedLoan}"
+                              AutoGenerateColumns="False"
+                              CanUserAddRows="False"
+                              IsReadOnly="True"
+                              Style="{StaticResource MaterialDesignDataGrid}">
                         <DataGrid.Columns>
-                            <DataGridTemplateColumn Header="Select">
+                            <DataGridTemplateColumn Header="Select" Width="Auto">
                                 <DataGridTemplateColumn.CellTemplate>
                                     <DataTemplate>
-                                        <CheckBox VerticalAlignment="Center" HorizontalAlignment="Center"/>
+                                        <CheckBox VerticalAlignment="Center" 
+                                                  HorizontalAlignment="Center"
+                                                  IsChecked="{Binding IsSelected, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
                                     </DataTemplate>
                                 </DataGridTemplateColumn.CellTemplate>
                             </DataGridTemplateColumn>
-                            <DataGridTextColumn Header="Lender" Binding="{Binding LenderName}" />
-                            <DataGridTextColumn Header="Amount Loaned" Binding="{Binding AmountLoaned}" />
-                            <DataGridTextColumn Header="Outstanding" Binding="{Binding OutstandingBalance}" />
-                            <DataGridTextColumn Header="Loan Date" Binding="{Binding LoanDate, StringFormat=d}" />
-                            <DataGridTextColumn Header="Due Date" Binding="{Binding DueDate, StringFormat=d}" />
+                            <DataGridTextColumn Header="Lender" Binding="{Binding LenderName}" Width="*"/>
+                            <DataGridTextColumn Header="Amount Loaned" Binding="{Binding AmountLoaned, StringFormat=C}" Width="Auto"/>
+                            <DataGridTextColumn Header="Outstanding" Binding="{Binding OutstandingBalance, StringFormat=C}" Width="Auto"/>
+                            <DataGridTextColumn Header="Loan Date" Binding="{Binding LoanDate, StringFormat=d}" Width="Auto"/>
+                            <DataGridTextColumn Header="Due Date" Binding="{Binding DueDate, StringFormat=d}" Width="Auto"/>
                         </DataGrid.Columns>
                     </DataGrid>
                 </Grid>
@@ -226,15 +319,38 @@
 
             <!-- Emergency Reserve Tab -->
             <TabItem Header="Emergency Reserve">
-                <StackPanel Margin="20">
-                    <TextBlock Text="Adjust Emergency Reserve" FontWeight="Bold"/>
-                    <TextBlock Text="Amount:"/>
-                    <TextBox Text="{Binding EmergencyReserveAmount}" Style="{StaticResource MaterialDesignOutlinedTextBox}" />
-                    <StackPanel Orientation="Horizontal" Margin="10 0">
-                        <Button Content="Add Reserve" Command="{Binding AddReserveCommand}" Style="{StaticResource MaterialDesignFlatButton}" Margin="5"/>
-                        <Button Content="Release Reserve" Command="{Binding ReleaseReserveCommand}" Style="{StaticResource MaterialDesignFlatButton}" Margin="5"/>
+                <Border Margin="20"
+                        Padding="15"
+                        BorderThickness="1"
+                        BorderBrush="LightGray"
+                        CornerRadius="4"
+                        Background="White">
+                    <StackPanel>
+                        <TextBlock Text="Adjust Emergency Reserve" 
+                                   Style="{StaticResource HeadingTextStyle}"/>
+                        <Label Content="Amount"/>
+                        <TextBox Text="{Binding EmergencyReserveAmount}" 
+                                 Style="{StaticResource MaterialDesignOutlinedTextBox}"
+                                 helpers:EnterKeyTraversal.IsEnabled="True"/>
+                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,10,0,0">
+                            <Button Command="{Binding AddReserveCommand}" 
+                                    Style="{StaticResource PrimaryButtonStyle}" 
+                                    Margin="0,0,10,0">
+                                <StackPanel Orientation="Horizontal">
+                                    <materialDesign:PackIcon Kind="Plus" Width="20" Height="20"/>
+                                    <TextBlock Text="Add Reserve" Margin="5,0,0,0"/>
+                                </StackPanel>
+                            </Button>
+                            <Button Command="{Binding ReleaseReserveCommand}" 
+                                    Style="{StaticResource OutlinedButtonStyle}">
+                                <StackPanel Orientation="Horizontal">
+                                    <materialDesign:PackIcon Kind="Minus" Width="20" Height="20"/>
+                                    <TextBlock Text="Release Reserve" Margin="5,0,0,0"/>
+                                </StackPanel>
+                            </Button>
+                        </StackPanel>
                     </StackPanel>
-                </StackPanel>
+                </Border>
             </TabItem>
         </TabControl>
     </Grid>

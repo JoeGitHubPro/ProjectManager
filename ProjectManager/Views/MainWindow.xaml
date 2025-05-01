@@ -5,8 +5,13 @@
         xmlns:Identity="clr-namespace:ProjectManager.Views.Identities"
         xmlns:CapitalManagement="clr-namespace:ProjectManager.Views.CapitalManagement"
         Title="Project Manager" Height="600" Width="900" WindowState="Maximized" WindowStartupLocation="CenterScreen"
-        Background="{StaticResource WhiteBrush}">
-
+        Background="{StaticResource BackgroundBrush}" WindowStyle="None" ResizeMode="NoResize">
+   
+    <Window.InputBindings>
+        <KeyBinding Gesture="ESC" Command="{Binding CloseCommand}" />
+        <KeyBinding Gesture="Ctrl+l" Command="{Binding LogOutCommand}" />
+    </Window.InputBindings>
+    
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
@@ -16,10 +21,13 @@
         </Grid.RowDefinitions>
 
         <!-- Main Content (Tabs) -->
-        <TabControl Grid.Row="1" Margin="10" Background="{StaticResource WhiteBrush}">
-            <TabItem Header="Business Balance " IsEnabled="{Binding IsBusinessBalanceEnabled}">
-                <CapitalManagement:BusinessBalanceView DataContext="{Binding BusinessBalanceVM}" />
-            </TabItem>       
+        <TabControl x:Name="MainTabControl" Grid.Row="1" Margin="10" Background="{StaticResource BackgroundBrush}">
+            <TabItem Header="Welcome">
+                <views:WelcomeView DataContext="{Binding WelcomeVM}"/>
+            </TabItem>
+            <TabItem Header="Consumers" IsEnabled="{Binding IsConsumersEnabled}">
+                <views:ConsumerView DataContext="{Binding ConsumerVM}"/>
+            </TabItem>
             <TabItem Header="Project Order" IsEnabled="{Binding IsProjectOrderEnabled}">
                 <views:ProjectOrderView DataContext="{Binding ProjectOrderVM}" />
             </TabItem>
@@ -29,9 +37,9 @@
             <TabItem Header="Projects" IsEnabled="{Binding IsProjectsEnabled}">
                 <views:ProjectView DataContext="{Binding ProjectVM}" />
             </TabItem>
-            <TabItem Header="Consumers" IsEnabled="{Binding IsConsumersEnabled}">
-                <views:ConsumerView DataContext="{Binding ConsumerVM}"/>
-            </TabItem>
+            <TabItem Header="Business Balance " IsEnabled="{Binding IsBusinessBalanceEnabled}">
+                <CapitalManagement:BusinessBalanceView DataContext="{Binding BusinessBalanceVM}" />
+            </TabItem>   
             <TabItem Header="Users Management" IsEnabled="{Binding IsUsersManagementEnabled}">
                 <Identity:UserManagementView DataContext="{Binding UserManagementVM}"/>
             </TabItem>

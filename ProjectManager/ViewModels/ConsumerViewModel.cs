@@ -188,6 +188,7 @@ namespace ProjectManager.ViewModels
                 _commercialRegisterNo = value;
                 OnPropertyChanged();
                 ValidateProperty(nameof(CommercialRegisterNo));
+
             }
         }
 

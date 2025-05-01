@@ -1,0 +1,203 @@
+﻿<UserControl x:Class="ProjectManager.Views.WelcomeView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes">
+
+    <ScrollViewer VerticalScrollBarVisibility="Hidden" 
+              PanningMode="VerticalOnly"
+              CanContentScroll="True"
+              Background="Transparent">
+
+        <Grid Background="{StaticResource BackgroundBrush}">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="*"/>
+                <RowDefinition Height="Auto"/>
+            </Grid.RowDefinitions>
+
+            <!-- Floating geometric shapes -->
+            <Canvas>
+                <Rectangle Width="100" Height="100" Fill="{StaticResource BorderBrush}" Canvas.Left="700" Canvas.Top="50" RenderTransformOrigin="0.5,0.5" Opacity="0.7">
+                    <Rectangle.RenderTransform>
+                        <RotateTransform Angle="25"/>
+                    </Rectangle.RenderTransform>
+                </Rectangle>
+                <Polygon Points="0,0 50,0 25,50" Fill="{StaticResource PrimaryBrush}" Canvas.Left="750" Canvas.Top="200" Opacity="0.7"/>
+                <Ellipse Width="30" Height="30" Fill="{StaticResource SecondaryBrush}" Canvas.Left="850" Canvas.Top="300" Opacity="0.8"/>
+            </Canvas>
+
+            <!-- Main Content -->
+            <Grid Grid.Row="0" Margin="40,40,40,20">
+                <StackPanel HorizontalAlignment="Center" MaxWidth="900">
+                    <TextBlock Text="Ice Code"
+                               HorizontalAlignment="Center"
+                               Style="{StaticResource HeadingTextStyle}"
+                               FontSize="36"
+                               FontWeight="Bold"
+                               Margin="0,0,0,10"/>
+
+                    <TextBlock Text="Welcome to Project Manager Pro"
+                               HorizontalAlignment="Center"
+                               Style="{StaticResource HeadingTextStyle}"
+                               FontSize="30"
+                               FontWeight="Bold"
+                               Margin="0,0,0,10"/>
+
+                    <TextBlock Text="{Binding Username}"
+                               Style="{StaticResource HeadingTextStyle}"
+                               HorizontalAlignment="Center"
+                               FontSize="24"
+                               Margin="0,0,0,20"/>
+
+                    <TextBlock Text="{Binding WelcomeMessage}"
+                               Style="{StaticResource BodyTextStyle}"
+                               TextWrapping="Wrap"
+                               TextAlignment="Center"
+                               Margin="0,0,0,10"/>
+
+                    <TextBlock Text="Your comprehensive solution for managing projects, clients, and team collaboration."
+                               Style="{StaticResource BodyTextStyle}"
+                               TextWrapping="Wrap"
+                               TextAlignment="Center"
+                               Margin="0,0,0,30"/>
+
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,0,0,20">
+                        <Button x:Name="EXPLORECONSUMERSButton" Click="EXPLORECONSUMERSButton_Click"
+                                Content="EXPLORE Application"
+                                Style="{StaticResource PrimaryButtonStyle}"
+                                Margin="5"/>
+                        <Button  x:Name="OPENSITEButton" Click="OPENSITEButton_Click"
+                                Content="OPEN SITE"
+                                Style="{StaticResource OutlinedButtonStyle}"
+                                BorderBrush="{StaticResource PrimaryBrush}"
+                                Foreground="{StaticResource PrimaryBrush}"
+                                Margin="5"/>
+                    </StackPanel>
+                </StackPanel>
+            </Grid>
+
+            <!-- Key Features Section -->
+            <ScrollViewer Grid.Row="1"
+              VerticalScrollBarVisibility="Hidden"
+              HorizontalScrollBarVisibility="Hidden"
+              PanningMode="VerticalOnly"
+              CanContentScroll="True"
+              Background="Transparent">
+                <WrapPanel Margin="0,20,0,0" HorizontalAlignment="Center" ItemWidth="Auto" ItemHeight="Auto">
+                    <!-- Project Management -->
+                    <Border Background="White"
+                CornerRadius="8"
+                Padding="20"
+                Margin="10"
+                BorderBrush="{StaticResource BorderBrush}"
+                BorderThickness="1"
+                Width="280"
+                MaxWidth="500">
+                        <StackPanel>
+                            <materialDesign:PackIcon Kind="ClipboardCheckOutline"
+                                         Width="40"
+                                         Height="40"
+                                         Foreground="{StaticResource SecondaryBrush}" />
+                            <TextBlock Text="Project Management"
+                           Style="{StaticResource HeadingTextStyle}"
+                           FontSize="18"
+                           Margin="0,10,0,5" />
+                            <TextBlock Text="Track all project phases from initiation to completion. Monitor deadlines, budgets, and team assignments with real-time updates."
+                           Style="{StaticResource BodyTextStyle}"
+                           TextWrapping="Wrap" />
+                            <ProgressBar Style="{StaticResource RoundedProgressBar}"
+                             Value="75"
+                             Maximum="100"
+                             Foreground="{StaticResource SecondaryBrush}"
+                             Margin="0,15,0,0" />
+                        </StackPanel>
+                    </Border>
+
+                    <!-- Client Management -->
+                    <Border Background="White"
+                CornerRadius="8"
+                Padding="20"
+                Margin="10"
+                BorderBrush="{StaticResource BorderBrush}"
+                BorderThickness="1"
+                Width="280"
+                MaxWidth="500">
+                        <StackPanel>
+                            <materialDesign:PackIcon Kind="AccountGroup"
+                                         Width="40"
+                                         Height="40"
+                                         Foreground="{StaticResource PrimaryBrush}" />
+                            <TextBlock Text="Client Management"
+                           Style="{StaticResource HeadingTextStyle}"
+                           FontSize="18"
+                           Margin="0,10,0,5" />
+                            <TextBlock Text="Maintain complete client profiles with contact details, project history, and communication logs for better relationship management."
+                           Style="{StaticResource BodyTextStyle}"
+                           TextWrapping="Wrap" />
+                            <ProgressBar Style="{StaticResource RoundedProgressBar}"
+                             Value="60"
+                             Maximum="100"
+                             Foreground="{StaticResource PrimaryBrush}"
+                             Margin="0,15,0,0" />
+                        </StackPanel>
+                    </Border>
+
+                    <!-- Financial Oversight -->
+                    <Border Background="White"
+                CornerRadius="8"
+                Padding="20"
+                Margin="10"
+                BorderBrush="{StaticResource BorderBrush}"
+                BorderThickness="1"
+                Width="280"
+                MaxWidth="500">
+                        <StackPanel>
+                            <materialDesign:PackIcon Kind="CashMultiple"
+                                         Width="40"
+                                         Height="40"
+                                         Foreground="{StaticResource AccentBrush}" />
+                            <TextBlock Text="Financial Oversight"
+                           Style="{StaticResource HeadingTextStyle}"
+                           FontSize="18"
+                           Margin="0,10,0,5" />
+                            <TextBlock Text="Generate invoices, track payments, and analyze project profitability with our comprehensive financial dashboard."
+                           Style="{StaticResource BodyTextStyle}"
+                           TextWrapping="Wrap" />
+                            <ProgressBar Style="{StaticResource RoundedProgressBar}"
+                             Value="85"
+                             Maximum="100"
+                             Foreground="{StaticResource AccentBrush}"
+                             Margin="0,15,0,0" />
+                        </StackPanel>
+                    </Border>
+                </WrapPanel>
+            </ScrollViewer>
+
+
+            <!-- Footer -->
+            <Border Grid.Row="2"
+                    Background="Gray"
+                    Padding="20,10"
+                    CornerRadius="5"
+                    Margin="20">
+                <WrapPanel HorizontalAlignment="Center">
+                    <TextBlock Text="{Binding ProjectCount, StringFormat='{}Managing {0} active projects'}"
+                               Foreground="White"
+                               FontSize="15"
+                               FontWeight="Bold"
+                               Margin="10,0"/>
+                    <TextBlock Text="{Binding ClientCount, StringFormat='{}Serving {0} clients'}"
+                               Foreground="White"
+                               FontSize="15"
+                               FontWeight="Bold"
+                               Margin="10,0"/>
+                    <TextBlock Text="{Binding TeamCount, StringFormat='{}Collaborating with {0} team members'}"
+                               Foreground="White"
+                               FontSize="15"
+                               FontWeight="Bold"
+                               Margin="10,0"/>
+                </WrapPanel>
+            </Border>
+        </Grid>
+    </ScrollViewer>
+</UserControl>
