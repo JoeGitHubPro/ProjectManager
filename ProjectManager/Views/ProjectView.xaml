@@ -54,7 +54,10 @@
                       SelectedItem="{Binding SelectedProject}"
                       AutoGenerateColumns="False" 
                       IsReadOnly="True" 
-                      Style="{StaticResource MaterialDesignDataGrid}">
+                      Style="{StaticResource MaterialDesignDataGrid}"
+                      ScrollViewer.VerticalScrollBarVisibility="Hidden"
+          ScrollViewer.HorizontalScrollBarVisibility="Hidden"
+          ScrollViewer.CanContentScroll="True">
                 <DataGrid.Columns>
                     <DataGridTextColumn Header="Name" Binding="{Binding Name}" Width="*"/>
                     <DataGridTextColumn Header="Details" Binding="{Binding Details}" Width="2*"/>

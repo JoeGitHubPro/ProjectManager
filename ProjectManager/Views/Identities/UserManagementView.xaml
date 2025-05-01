@@ -54,7 +54,10 @@
                       SelectedItem="{Binding SelectedUser}"
                       AutoGenerateColumns="False"
                       IsReadOnly="True"
-                      Style="{StaticResource MaterialDesignDataGrid}">
+                      Style="{StaticResource MaterialDesignDataGrid}"
+                      ScrollViewer.VerticalScrollBarVisibility="Hidden"
+          ScrollViewer.HorizontalScrollBarVisibility="Hidden"
+          ScrollViewer.CanContentScroll="True">
                 <DataGrid.Columns>
                     <DataGridTextColumn Header="Username" Binding="{Binding UserName}" Width="*"/>
                     <DataGridTextColumn Header="Email" Binding="{Binding Email}" Width="*"/>
@@ -94,7 +97,10 @@
                     CornerRadius="4" 
                     Background="White"
                     Visibility="{Binding IsFormVisible, Converter={StaticResource BoolToVis}}">
-                <ScrollViewer VerticalScrollBarVisibility="Auto">
+                <ScrollViewer  VerticalScrollBarVisibility="Hidden" 
+              PanningMode="VerticalOnly"
+              CanContentScroll="True"
+              Background="Transparent">
                     <StackPanel>
                         <TextBlock Text="{Binding FormTitle}" 
                                    Style="{StaticResource HeadingTextStyle}" 

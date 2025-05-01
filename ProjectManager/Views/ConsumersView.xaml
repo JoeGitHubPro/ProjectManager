@@ -53,7 +53,10 @@
                       SelectedItem="{Binding SelectedConsumer, Mode=TwoWay}"
                       AutoGenerateColumns="False"
                       IsReadOnly="True"
-                      Style="{StaticResource MaterialDesignDataGrid}">
+                      Style="{StaticResource MaterialDesignDataGrid}"
+                      ScrollViewer.VerticalScrollBarVisibility="Hidden"
+          ScrollViewer.HorizontalScrollBarVisibility="Hidden"
+          ScrollViewer.CanContentScroll="True">
                 <DataGrid.Columns>
                     <DataGridTextColumn Header="Name" Binding="{Binding Name}" Width="*"/>
                     <DataGridTextColumn Header="Phone" Binding="{Binding Phone}" Width="*"/>
@@ -88,7 +91,10 @@
                     CornerRadius="4" 
                     Background="White"
                     Visibility="{Binding IsFormVisible, Converter={StaticResource BoolToVis}}">
-                <ScrollViewer VerticalScrollBarVisibility="Auto">
+                <ScrollViewer VerticalScrollBarVisibility="Hidden" 
+              PanningMode="VerticalOnly"
+              CanContentScroll="True"
+              Background="Transparent">
                     <StackPanel>
                         <TextBlock Text="Consumer Details" 
                                    Style="{StaticResource HeadingTextStyle}" 
