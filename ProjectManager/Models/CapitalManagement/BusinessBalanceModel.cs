@@ -24,7 +24,7 @@
         {
             get
             {
-                return (CashOnHand) - (TotalOutstandingLoans);
+                return (CashOnHand + EmergencyReserve) - (TotalOutstandingLoans);
             }
         }
 

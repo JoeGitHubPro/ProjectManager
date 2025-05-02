@@ -12,6 +12,7 @@ namespace ProjectManager.ViewModels.CapitalManagement
     public class BusinessBalanceViewModel : BaseViewModel
     {
         private readonly AppDbContext _context;
+        private LoanModel? selectedLoan;
 
         public BusinessBalanceModel BusinessBalance { get; set; } = new();
         public ObservableCollection<CashFlowModel> CashFlows { get; set; } = new();
@@ -19,7 +20,11 @@ namespace ProjectManager.ViewModels.CapitalManagement
         public ObservableCollection<IdentityUser> Users { get; set; } = new();
 
         public IdentityUser? SelectedUser { get; set; }
-        public LoanModel? SelectedLoan { get; set; }
+        public LoanModel? SelectedLoan
+        {
+            get => selectedLoan;
+            set => selectedLoan = value;
+        }
 
         public decimal NewIncomeAmount { get; set; }
         public string NewIncomeDescription { get; set; } = string.Empty;
@@ -205,11 +210,13 @@ namespace ProjectManager.ViewModels.CapitalManagement
             SelectedLoan.OutstandingBalance = 0;
             BusinessBalance.TotalOutstandingLoans -= SelectedLoan.AmountLoaned;
 
+            LoanModel Repaidloan = SelectedLoan;
+
             _context.Loans.Update(SelectedLoan);
             SaveBusinessBalance();
 
-            NewExpenseAmount = SelectedLoan.AmountLoaned;
-            NewExpenseDescription = $"Repaid loan to {SelectedLoan.LenderName}";
+            NewExpenseAmount = Repaidloan.AmountLoaned;
+            NewExpenseDescription = $"Repaid loan to {Repaidloan.LenderName}";
             SaveExpense();
         }
 

@@ -11,11 +11,19 @@
     <Color x:Key="WhiteColor">#FFFFFF</Color>
     <!-- White -->
 
+    <Color x:Key="SecondaryColor">#4A6CA3</Color>
+    <Color x:Key="BackgroundColor">#FFFFFF</Color>
+    <Color x:Key="TextColor">#07223F</Color>
+    <Color x:Key="BorderColor">#4A6CA3</Color>
+    
     <!-- Brushes -->
     <SolidColorBrush x:Key="PrimaryBrush" Color="{StaticResource PrimaryColor}"/>
     <SolidColorBrush x:Key="DarkBrush" Color="{StaticResource DarkColor}"/>
     <SolidColorBrush x:Key="AccentBrush" Color="{StaticResource AccentColor}"/>
     <SolidColorBrush x:Key="WhiteBrush" Color="{StaticResource WhiteColor}"/>
-
+    <SolidColorBrush x:Key="SecondaryBrush" Color="{StaticResource SecondaryColor}" />
+    <SolidColorBrush x:Key="BackgroundBrush" Color="{StaticResource BackgroundColor}" />
+    <SolidColorBrush x:Key="TextBrush" Color="{StaticResource TextColor}" />
+    <SolidColorBrush x:Key="BorderBrush" Color="{StaticResource BorderColor}" />
 
 </ResourceDictionary>
