@@ -115,9 +115,9 @@
                                   Margin="0,0,0,10"
                                   helpers:EnterKeyTraversal.IsEnabled="True"/>
 
-                        <Label Content="Consumer Phone"/>
+                        <Label Content="Consumer"/>
                         <ComboBox ItemsSource="{Binding Consumers}" 
-                                  DisplayMemberPath="Phone"
+                                  DisplayMemberPath="Name"
                                   SelectedValuePath="Id"
                                   SelectedValue="{Binding SelectedConsumerId, UpdateSourceTrigger=PropertyChanged}"
                                   Style="{StaticResource MaterialDesignComboBox}" 

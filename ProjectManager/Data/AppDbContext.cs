@@ -38,9 +38,8 @@ public partial class AppDbContext : IdentityDbContext<IdentityUser>
         modelBuilder.Entity<IdentityUserToken<string>>().ToTable("UserTokens");
 
         modelBuilder.Entity<Consumer>()
-            .HasIndex(u => new { u.Phone, u.CommercialRegisterNo })
+            .HasIndex(u => u.Name)
             .IsUnique();
-
 
         modelBuilder.Entity<ProjectOrder>()
             .HasOne(po => po.Consumer)

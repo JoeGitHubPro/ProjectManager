@@ -334,7 +334,7 @@ namespace ProjectManager.Migrations
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
                     b.Property<string>("CommercialRegisterNo")
-                        .HasColumnType("nvarchar(450)");
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("Description")
                         .HasColumnType("nvarchar(max)");
@@ -349,14 +349,14 @@ namespace ProjectManager.Migrations
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("Name")
-                        .HasColumnType("nvarchar(max)");
+                        .IsRequired()
+                        .HasColumnType("nvarchar(450)");
 
                     b.Property<string>("Notes")
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("Phone")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(450)");
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("Site")
                         .HasColumnType("nvarchar(max)");
@@ -372,9 +372,8 @@ namespace ProjectManager.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("Phone", "CommercialRegisterNo")
-                        .IsUnique()
-                        .HasFilter("[CommercialRegisterNo] IS NOT NULL");
+                    b.HasIndex("Name")
+                        .IsUnique();
 
                     b.ToTable("Consumers");
                 });

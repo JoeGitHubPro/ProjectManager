@@ -81,7 +81,8 @@ namespace ProjectManager.ViewModels
         public string Name
         {
             get => _name;
-            set => SetField(ref _name, value);
+            set => ValidateAndNotify(ref _name, value, nameof(Name));
+
         }
 
         public string Description
@@ -140,7 +141,7 @@ namespace ProjectManager.ViewModels
         public string Phone
         {
             get => _phone;
-            set => ValidateAndNotify(ref _phone, value, nameof(Phone));
+            set => SetField(ref _phone, value);
         }
 
         public string CommercialRegisterNo
@@ -256,36 +257,104 @@ namespace ProjectManager.ViewModels
                 var filePath = openFileDialog.FileName;
                 var consumers = ReaderHelper.ReadConsumersFromExcel(filePath);
 
-                // 1. Remove duplicates from Excel itself
-                var distinctExcelConsumers = consumers
-                    .Where(c => !string.IsNullOrWhiteSpace(c.Phone) || !string.IsNullOrWhiteSpace(c.CommercialRegisterNo))
-                    .GroupBy(c => (c.Phone?.Trim(), c.CommercialRegisterNo?.Trim()))
-                    .Select(g => g.First())
-                    .ToList();
+                // Step 1: Validate Excel Data
+                var validExcelConsumers = ValidateExcelData(consumers);
 
-                // 2. Fetch existing keys from DB
-                var existingKeys = _context.Consumers
-                    .Select(c => new { Phone = c.Phone.Trim(), CRN = c.CommercialRegisterNo.Trim() })
-                    .ToHashSet();
+                // Step 2: Validate Against Database
+                var newConsumers = FilterNewConsumersAgainstDatabase(validExcelConsumers);
 
-                // 3. Filter out consumers already in the database
-                var newConsumers = distinctExcelConsumers
-                    .Where(c =>
-                    {
-                        var key = new { Phone = c.Phone?.Trim(), CRN = c.CommercialRegisterNo?.Trim() };
-                        return !existingKeys.Contains(key);
-                    })
-                    .ToList();
-
-                // 4. Save only truly new consumers
+                // Step 3: Save to DB
                 if (newConsumers.Any())
                 {
                     _context.Consumers.AddRange(newConsumers);
                     _context.SaveChanges();
+                    new InformationDialog("Consumers saved successfully");
+                }
+                else
+                {
+                    new WarningDialog("There are no new consumers!");
                 }
 
                 LoadData();
             }
+        }
+        private List<Consumer> ValidateExcelData(List<Consumer> consumers)
+        {
+            var validNameConsumers = consumers
+                .Where(c => !string.IsNullOrWhiteSpace(c.Name))
+                .ToList();
+
+            // Ensure unique names
+            validNameConsumers = validNameConsumers
+                .GroupBy(c => c.Name.Trim())
+                .Where(g => g.Count() == 1)
+                .Select(g => g.First())
+                .ToList();
+
+            // Split phone-based groups
+            var uniquePhones = validNameConsumers
+                .Where(c => !string.IsNullOrWhiteSpace(c.Phone))
+                .GroupBy(c => c.Phone.Trim())
+                .Where(g => g.Count() == 1)
+                .Select(g => g.First())
+                .ToList();
+
+            var nullPhones = validNameConsumers
+                .Where(c => string.IsNullOrWhiteSpace(c.Phone))
+                .ToList();
+
+            // Split CRN-based groups
+            var uniqueCRNs = uniquePhones
+                .Where(c => !string.IsNullOrWhiteSpace(c.CommercialRegisterNo))
+                .GroupBy(c => c.CommercialRegisterNo.Trim())
+                .Where(g => g.Count() == 1)
+                .Select(g => g.First())
+                .ToList();
+
+            var nullCRNs = uniquePhones
+                .Where(c => string.IsNullOrWhiteSpace(c.CommercialRegisterNo))
+                .ToList();
+
+            // Combine all valid entries
+            return uniqueCRNs
+                .Concat(nullCRNs)
+                .Concat(nullPhones)
+                .Distinct()
+                .ToList();
+        }
+        private List<Consumer> FilterNewConsumersAgainstDatabase(List<Consumer> validatedConsumers)
+        {
+            // Fetch existing values from DB
+            var existingNames = _context.Consumers
+                .Where(c => !string.IsNullOrWhiteSpace(c.Name))
+                .Select(c => c.Name.Trim())
+                .ToHashSet();
+
+            var existingPhones = _context.Consumers
+                .Where(c => !string.IsNullOrWhiteSpace(c.Phone))
+                .Select(c => c.Phone.Trim())
+                .ToHashSet();
+
+            var existingCRNs = _context.Consumers
+                .Where(c => !string.IsNullOrWhiteSpace(c.CommercialRegisterNo))
+                .Select(c => c.CommercialRegisterNo.Trim())
+                .ToHashSet();
+
+            // Filter out consumers with duplicate Name, Phone, or CRN
+            return validatedConsumers
+                .Where(c =>
+                {
+                    var name = c.Name?.Trim();
+                    var phone = c.Phone?.Trim();
+                    var crn = c.CommercialRegisterNo?.Trim();
+
+                    bool isNameUnique = !string.IsNullOrWhiteSpace(name) && !existingNames.Contains(name);
+                    bool isPhoneUnique = string.IsNullOrWhiteSpace(phone) || !existingPhones.Contains(phone);
+                    bool isCrnUnique = string.IsNullOrWhiteSpace(crn) || !existingCRNs.Contains(crn);
+
+                    return isNameUnique && isPhoneUnique && isCrnUnique;
+                })
+                .ToList();
         }
 
 
@@ -309,29 +378,33 @@ namespace ProjectManager.ViewModels
                 return;
             }
 
-            try
+            bool result;
+
+            if (_isNewRecord)
+                result = SaveNewConsumer();
+            else
+                result = UpdateExistingConsumer();
+
+            if (result)
             {
-                if (_context == null) _context = new AppDbContext();
-
-                if (_isNewRecord)
-                    SaveNewConsumer();
-                else
-                    UpdateExistingConsumer();
-
-                _context.SaveChanges();
                 FilterConsumers();
                 ShowInfo("Consumer saved successfully.");
             }
-            catch (Exception ex)
-            {
-                ShowError($"Error saving consumer: {ex.Message}");
-            }
+
         }
 
-        private void SaveNewConsumer()
+        private bool SaveNewConsumer()
         {
-            if (_context.Consumers.Any(c => c.Phone == Phone))
-                throw new InvalidOperationException("A consumer with this phone number already exists.");
+            if (Consumers.Any(c => c.Phone == Phone || c.CommercialRegisterNo == CommercialRegisterNo))
+            {
+                new WarningDialog("A consumer with this phone number already exists.(1)");
+                return false;
+            }
+            else if (_context.Consumers.Any(c => c.Phone == Phone || c.CommercialRegisterNo == CommercialRegisterNo))
+            {
+                new WarningDialog("A consumer with this phone number already exists.");
+                return false;
+            }
 
             var consumer = new Consumer
             {
@@ -355,11 +428,14 @@ namespace ProjectManager.ViewModels
 
             Consumers.Add(consumer);
             FilteredConsumers.Add(consumer);
+
+            return true;
         }
 
-        private void UpdateExistingConsumer()
+        private bool UpdateExistingConsumer()
         {
-            if (SelectedConsumer == null || _context == null) return;
+            if (SelectedConsumer == null || _context == null)
+                return false;
 
             SelectedConsumer.Phone = Phone;
             SelectedConsumer.CommercialRegisterNo = CommercialRegisterNo;
@@ -376,6 +452,8 @@ namespace ProjectManager.ViewModels
 
             _context.Consumers.Update(SelectedConsumer);
             _context.SaveChanges();
+
+            return true;
         }
 
         private void DeleteConsumer()
@@ -424,10 +502,10 @@ namespace ProjectManager.ViewModels
             {
                 return propertyName switch
                 {
-                    nameof(Phone) => string.IsNullOrWhiteSpace(Phone)
-                        ? "Phone number is required"
-                        : Phone.Length > 20
-                            ? "Phone number cannot exceed 20 characters"
+                    nameof(Name) => string.IsNullOrWhiteSpace(Name)
+                        ? "Name is required"
+                        : Name.Length < 3
+                            ? "Name cannot be less than 3 characters"
                             : string.Empty,
 
                     nameof(CommercialRegisterNo) => !string.IsNullOrWhiteSpace(CommercialRegisterNo) && CommercialRegisterNo.Length > 50

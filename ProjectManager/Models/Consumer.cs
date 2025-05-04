@@ -3,9 +3,9 @@
     public class Consumer
     {
         public int Id { get; set; }
-        public string? Name { get; set; }
+        public string Name { get; set; } = string.Empty;
         public string? Description { get; set; }
-        public string Phone { get; set; }
+        public string? Phone { get; set; }
         public string? Whatsapp { get; set; }
         public string? Facebook { get; set; }
         public string? TikTok { get; set; }

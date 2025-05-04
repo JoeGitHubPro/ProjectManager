@@ -1,5 +1,4 @@
-﻿// Improved ProjectOrderViewModel with Dependency Injection, INotifyDataErrorInfo, and Async Support
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using ProjectManager.Data;
 using ProjectManager.Helpers;
 using ProjectManager.Models;
@@ -283,6 +282,7 @@ namespace ProjectManager.ViewModels
 
                 await _context.SaveChangesAsync();
                 await LoadDataAsync();
+                Clear();
                 new InformationDialog("Order saved successfully.");
             }
             catch (Exception ex)
