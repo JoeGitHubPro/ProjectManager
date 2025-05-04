@@ -243,12 +243,21 @@ namespace ProjectManager.ViewModels.Identities
                         CurrentUser.Roles)).Result;
 
                     success = result.Succeeded;
-                    StatusMessage = success ? "User added successfully" : "Failed to add user";
                 }
                 else
                 {
                     success = Task.Run(() => service.EditUserAsync(CurrentUser)).Result;
-                    StatusMessage = success ? "User updated successfully" : "Failed to update user";
+                }
+
+                if (success)
+                {
+                    StatusMessage = "User saved successfully";
+                    new InformationDialog(StatusMessage);
+                }
+                else
+                {
+                    StatusMessage = "Failed to save user";
+                    new WarningDialog(StatusMessage);
                 }
 
                 if (success)

@@ -17,7 +17,7 @@ namespace ProjectManager.StartUp
             await Task.Run(() =>
             {
                 // Simulate a delay (e.g., loading data or initializing the application)
-                System.Threading.Thread.Sleep(5500); // Delay
+                System.Threading.Thread.Sleep(6000); // Delay
             }).ContinueWith(t =>
             {
                 // Close the splash screen and open the main window

@@ -64,6 +64,8 @@ namespace ProjectManager.ViewModels.Identities
             }
 
             IdentityResultViewModel result;
+            MainWindow mainWindow = new MainWindow();
+
             using (var authService = new AuthenticationService())
             {
                 result = Task.Run(() => authService.LogInAsync(UsernameOrEmail, Password)).Result;
@@ -75,12 +77,12 @@ namespace ProjectManager.ViewModels.Identities
                 return;
             }
 
-            new InformationDialog("Logged in successfully!");
+            // new InformationDialog("Logged in successfully!");
 
             if (!SetCurrentUser(result))
                 return;
 
-            new MainWindow().Show();
+            mainWindow.Show();
             _window.Close();
         }
 
