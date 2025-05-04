@@ -1,5 +1,5 @@
 {
-  "ConnectionString": "Server =.;Database=PM;Integrated Security = SSPI ; TrustServerCertificate = True ; MultipleActiveResultSets=true",
+  "ConnectionString": "Server=db18797.public.databaseasp.net; Database=db18797; User Id=db18797; Password=gS-94sM#kX!3; Encrypt=True; TrustServerCertificate=True; MultipleActiveResultSets=True;",
 
   "mainFolder": "Dir",
   "subfolders": [
