@@ -59,6 +59,7 @@
                 <DataGrid.Columns>
                     <DataGridTextColumn Header="Project" Binding="{Binding Project.Name}" Width="*"/>
                     <DataGridTextColumn Header="Discount" Binding="{Binding Discount, StringFormat={}{0}%}" Width="Auto"/>
+                    <DataGridTextColumn Header="Commission" Binding="{Binding Commission, StringFormat={}{0}%}" Width="Auto"/>
                     <DataGridTextColumn Header="Installation Info" Binding="{Binding InstallationSystemInfo}" Width="*"/>
                     <DataGridTextColumn Header="Sold Date" Binding="{Binding SoldDate, StringFormat=d}" Width="Auto"/>
                     <DataGridTextColumn Header="Notes" Binding="{Binding Notes}" Width="*"/>
@@ -134,6 +135,13 @@
                                  Style="{StaticResource MaterialDesignOutlinedTextBox}" 
                                  Margin="0,0,0,10"
                                  helpers:EnterKeyTraversal.IsEnabled="True"/>
+                        
+                        <Label Content="Commission (%)"/>
+                        <TextBox Text="{Binding Commission, UpdateSourceTrigger=PropertyChanged}"
+                                 Style="{StaticResource MaterialDesignOutlinedTextBox}" 
+                                 Margin="0,0,0,10"
+                                 helpers:EnterKeyTraversal.IsEnabled="True"/>
+
 
                         <Label Content="Installation Info"/>
                         <TextBox Text="{Binding InstallationSystemInfo, UpdateSourceTrigger=PropertyChanged}"

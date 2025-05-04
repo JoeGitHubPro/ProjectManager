@@ -9,7 +9,12 @@ public class ProjectOrder
 
     [Range(0, 100)]
     public decimal Discount { get; set; }
+
+    [Range(0, 100)]
+    public decimal Commission { get; set; }
+
     public decimal TotalPrice { get; set; }
+
     public string? InstallationSystemInfo { get; set; }
 
     public DateTime SoldDate { get; set; }

@@ -432,6 +432,9 @@ namespace ProjectManager.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
+                    b.Property<decimal>("Commission")
+                        .HasColumnType("decimal(18,2)");
+
                     b.Property<int>("ConsumerId")
                         .HasColumnType("int");
 

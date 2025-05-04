@@ -42,6 +42,19 @@ namespace ProjectManager.ViewModels
             }
         }
 
+        private decimal _commission;
+        public decimal Commission
+        {
+            get => _commission;
+            set
+            {
+                SetProperty(ref _commission, value);
+                ValidateProperty(value);
+                UpdateTotalPrice();
+            }
+        }
+
+
         private bool _isFormVisible;
         public bool IsFormVisible
         {
@@ -128,6 +141,7 @@ namespace ProjectManager.ViewModels
                     if (value != null)
                     {
                         Discount = value.Discount;
+                        Commission = value.Commission;
                         InstallationSystemInfo = value.InstallationSystemInfo;
                         SoldDate = value.SoldDate;
                         Notes = value.Notes;
@@ -236,13 +250,15 @@ namespace ProjectManager.ViewModels
                     {
                         FolderSerial = FolderHelper.CreateUniqueFolder(),
                         Discount = Discount,
+                        Commission = Commission,
                         InstallationSystemInfo = InstallationSystemInfo,
                         SoldDate = SoldDate,
                         Notes = Notes,
                         ConsumerId = SelectedConsumerId,
                         ProjectId = SelectedProjectId,
-                        TotalPrice = project.Price * (1 - Discount / 100)
+                        TotalPrice = project.Price * (1 - Discount / 100 - Commission / 100)
                     };
+
 
                     var balanceVm = new BusinessBalanceViewModel();
                     balanceVm.NewIncomeAmount = order.TotalPrice;
@@ -254,12 +270,15 @@ namespace ProjectManager.ViewModels
                 else
                 {
                     SelectedOrder.Discount = Discount;
+                    SelectedOrder.Commission = Commission;
                     SelectedOrder.InstallationSystemInfo = InstallationSystemInfo;
                     SelectedOrder.SoldDate = SoldDate;
                     SelectedOrder.Notes = Notes;
                     SelectedOrder.ConsumerId = SelectedConsumerId;
                     SelectedOrder.ProjectId = SelectedProjectId;
-                    SelectedOrder.TotalPrice = project.Price * (1 - Discount / 100);
+                    SelectedOrder.TotalPrice = project.Price * (1 - Discount / 100 - Commission / 100);
+
+
                 }
 
                 await _context.SaveChangesAsync();
@@ -299,6 +318,7 @@ namespace ProjectManager.ViewModels
         private void Clear()
         {
             Discount = 0;
+            Commission = 0;
             InstallationSystemInfo = string.Empty;
             SoldDate = DateTime.Today;
             Notes = string.Empty;
@@ -324,8 +344,16 @@ namespace ProjectManager.ViewModels
         private void UpdateTotalPrice()
         {
             var project = Projects.FirstOrDefault(p => p.Id == SelectedProjectId);
-            TotalPrice = project != null ? project.Price * (1 - Discount / 100) : 0;
+            if (project != null)
+            {
+                TotalPrice = project.Price * (1 - Discount / 100 - Commission / 100);
+            }
+            else
+            {
+                TotalPrice = 0;
+            }
         }
+
 
         #region Validation (INotifyDataErrorInfo)
 
@@ -347,6 +375,11 @@ namespace ProjectManager.ViewModels
                 case nameof(Discount):
                     if ((decimal)value < 0 || (decimal)value > 100)
                         errors.Add("Discount must be between 0 and 100.");
+                    break;
+
+                case nameof(Commission):
+                    if ((decimal)value < 0)
+                        errors.Add("Commission cannot be negative.");
                     break;
 
                 case nameof(SoldDate):
