@@ -32,6 +32,11 @@
                         Margin="0,0,10,0">
                     <materialDesign:PackIcon Kind="Refresh" Width="20" Height="20"/>
                 </Button>
+                <Button Command="{Binding ReadExcelCommand}" 
+                        Style="{StaticResource OutlinedButtonStyle}" 
+                        Margin="0,0,10,0">
+                    <materialDesign:PackIcon Kind="FileExcel" Width="20" Height="20"/>
+                </Button>
                 <Button Command="{Binding AddNewCommand}" 
                         Style="{StaticResource PrimaryButtonStyle}">
                     <materialDesign:PackIcon Kind="Plus" Width="20" Height="20"/>
@@ -60,6 +65,7 @@
                 <DataGrid.Columns>
                     <DataGridTextColumn Header="Name" Binding="{Binding Name}" Width="*"/>
                     <DataGridTextColumn Header="Phone" Binding="{Binding Phone}" Width="*"/>
+                    <DataGridTextColumn Header="Location" Binding="{Binding Location}" Width="*"/>
                     <DataGridTextColumn Header="Whatsapp" Binding="{Binding Whatsapp}" Width="*"/>
                     <DataGridTextColumn Header="Facebook" Binding="{Binding Facebook}" Width="*"/>
                     <DataGridTextColumn Header="Instagram" Binding="{Binding Instagram}" Width="*"/>
@@ -112,6 +118,12 @@
                                  Style="{StaticResource MaterialDesignOutlinedTextBox}" 
                                  Margin="0,0,0,10"
                                  helpers:EnterKeyTraversal.IsEnabled="True"/>
+                        <Label Content="Location"/>
+                        <TextBox Text="{Binding Location, UpdateSourceTrigger=PropertyChanged}"
+                                 Style="{StaticResource MaterialDesignOutlinedTextBox}" 
+                                 Margin="0,0,0,10"
+                                 helpers:EnterKeyTraversal.IsEnabled="True"/>
+
 
                         <Label Content="Whatsapp"/>
                         <TextBox Text="{Binding Whatsapp, UpdateSourceTrigger=PropertyChanged}"

@@ -1,4 +1,6 @@
-﻿using ProjectManager.Data;
+﻿using Microsoft.Win32;
+using ProjectManager.Data;
+using ProjectManager.Helpers;
 using ProjectManager.Models;
 using ProjectManager.Views.Dialogs;
 using System.Collections.ObjectModel;
@@ -14,6 +16,7 @@ namespace ProjectManager.ViewModels
         private string _commercialRegisterNo = string.Empty;
         private string _name = string.Empty;
         private string _description = string.Empty;
+        private string _location = string.Empty;
         private string _whatsapp = string.Empty;
         private string _facebook = string.Empty;
         private string _tikTok = string.Empty;
@@ -52,6 +55,7 @@ namespace ProjectManager.ViewModels
                     CommercialRegisterNo = value.CommercialRegisterNo;
                     Name = value.Name;
                     Description = value.Description;
+                    Location = value.Location;
                     Whatsapp = value.Whatsapp;
                     Facebook = value.Facebook;
                     TikTok = value.TikTok;
@@ -84,6 +88,11 @@ namespace ProjectManager.ViewModels
         {
             get => _description;
             set => SetField(ref _description, value);
+        }
+        public string Location
+        {
+            get => _location;
+            set => SetField(ref _location, value);
         }
 
         public string Whatsapp
@@ -162,6 +171,7 @@ namespace ProjectManager.ViewModels
         public RelayCommand RefreshCommand { get; private set; }
         public RelayCommand SearchCommand { get; private set; }
         public RelayCommand AddNewCommand { get; private set; }
+        public RelayCommand ReadExcelCommand { get; private set; }
         public RelayCommand EditCommand { get; private set; }
         public RelayCommand ClearCommand { get; private set; }
 
@@ -172,9 +182,12 @@ namespace ProjectManager.ViewModels
             RefreshCommand = new RelayCommand(LoadData);
             SearchCommand = new RelayCommand(FilterConsumers);
             AddNewCommand = new RelayCommand(AddNewConsumer);
+            ReadExcelCommand = new RelayCommand(ReadExcel);
             EditCommand = new RelayCommand(EditConsumer);
             ClearCommand = new RelayCommand(ClearFields);
         }
+
+
 
         #endregion
 
@@ -214,6 +227,7 @@ namespace ProjectManager.ViewModels
                     Consumers.Where(c =>
                         (!string.IsNullOrEmpty(c.Name) && c.Name.ToLower().Contains(search)) ||
                         (!string.IsNullOrEmpty(c.Description) && c.Description.ToLower().Contains(search)) ||
+                        (!string.IsNullOrEmpty(c.Location) && c.Location.ToLower().Contains(search)) ||
                         (!string.IsNullOrEmpty(c.Phone) && c.Phone.ToLower().Contains(search)) ||
                         (!string.IsNullOrEmpty(c.Whatsapp) && c.Whatsapp.ToLower().Contains(search)) ||
                         (!string.IsNullOrEmpty(c.Facebook) && c.Facebook.ToLower().Contains(search)) ||
@@ -228,6 +242,53 @@ namespace ProjectManager.ViewModels
 
             OnPropertyChanged(nameof(FilteredConsumers));
         }
+
+        private void ReadExcel()
+        {
+            var openFileDialog = new OpenFileDialog
+            {
+                Filter = "Excel Files (*.xlsx)|*.xlsx",
+                Title = "Select an Excel File"
+            };
+
+            if (openFileDialog.ShowDialog() == true)
+            {
+                var filePath = openFileDialog.FileName;
+                var consumers = ReaderHelper.ReadConsumersFromExcel(filePath);
+
+                // 1. Remove duplicates from Excel itself
+                var distinctExcelConsumers = consumers
+                    .Where(c => !string.IsNullOrWhiteSpace(c.Phone) || !string.IsNullOrWhiteSpace(c.CommercialRegisterNo))
+                    .GroupBy(c => (c.Phone?.Trim(), c.CommercialRegisterNo?.Trim()))
+                    .Select(g => g.First())
+                    .ToList();
+
+                // 2. Fetch existing keys from DB
+                var existingKeys = _context.Consumers
+                    .Select(c => new { Phone = c.Phone.Trim(), CRN = c.CommercialRegisterNo.Trim() })
+                    .ToHashSet();
+
+                // 3. Filter out consumers already in the database
+                var newConsumers = distinctExcelConsumers
+                    .Where(c =>
+                    {
+                        var key = new { Phone = c.Phone?.Trim(), CRN = c.CommercialRegisterNo?.Trim() };
+                        return !existingKeys.Contains(key);
+                    })
+                    .ToList();
+
+                // 4. Save only truly new consumers
+                if (newConsumers.Any())
+                {
+                    _context.Consumers.AddRange(newConsumers);
+                    _context.SaveChanges();
+                }
+
+                LoadData();
+            }
+        }
+
+
 
         private void AddNewConsumer()
         {
@@ -284,8 +345,10 @@ namespace ProjectManager.ViewModels
                 X = X,
                 Instagram = Instagram,
                 Site = Site,
-                Notes = Notes
+                Notes = Notes,
+                Location = Location
             };
+
 
             _context.Consumers.Add(consumer);
             _context.SaveChanges();
@@ -302,6 +365,7 @@ namespace ProjectManager.ViewModels
             SelectedConsumer.CommercialRegisterNo = CommercialRegisterNo;
             SelectedConsumer.Name = Name;
             SelectedConsumer.Description = Description;
+            SelectedConsumer.Location = Location;
             SelectedConsumer.Whatsapp = Whatsapp;
             SelectedConsumer.Facebook = Facebook;
             SelectedConsumer.TikTok = TikTok;
@@ -343,7 +407,7 @@ namespace ProjectManager.ViewModels
         private void ClearFields()
         {
             SelectedConsumer = null;
-            Phone = CommercialRegisterNo = Name = Description = Whatsapp =
+            Phone = CommercialRegisterNo = Name = Description = Location = Whatsapp =
                 Facebook = TikTok = X = Instagram = Site = Notes = string.Empty;
 
             _isNewRecord = true;

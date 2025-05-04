@@ -13,8 +13,9 @@
         public string? Instagram { get; set; }
         public string? Site { get; set; }
         public string? Notes { get; set; }
-
         public string? CommercialRegisterNo { get; set; }
+
+        public string? Location { get; set; }
 
         // Navigation
         public ICollection<ProjectOrder> ProjectOrders { get; set; }
