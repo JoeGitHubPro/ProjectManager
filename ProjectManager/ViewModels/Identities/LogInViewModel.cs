@@ -11,6 +11,7 @@ namespace ProjectManager.ViewModels.Identities
     {
         private readonly Window _window;
         private readonly Dictionary<string, string> _errors = new();
+        private bool _isLoggingIn;
 
         private string _usernameOrEmail;
         public string UsernameOrEmail
@@ -42,7 +43,7 @@ namespace ProjectManager.ViewModels.Identities
         public LogInViewModel(Window window)
         {
             _window = window;
-            LoginCommand = new RelayCommand(ExecuteLogin);
+            LoginCommand = new AsyncRelayCommand(ExecuteLoginAsync, () => !_isLoggingIn);
             TogglePasswordVisibilityCommand = new RelayCommand(TogglePasswordVisibility);
         }
 
@@ -51,39 +52,55 @@ namespace ProjectManager.ViewModels.Identities
             IsPasswordVisible = !IsPasswordVisible;
         }
 
-        private void ExecuteLogin()
+        private async Task ExecuteLoginAsync()
         {
-            ClearErrors();
-            ValidateFields();
-
-            if (_errors.Any())
+            try
             {
-                OnPropertyChanged(nameof(UsernameError));
-                OnPropertyChanged(nameof(PasswordError));
-                return;
+                _isLoggingIn = true;
+                ((AsyncRelayCommand)LoginCommand).RaiseCanExecuteChanged();
+
+                ClearErrors();
+                ValidateFields();
+
+                if (_errors.Any())
+                {
+                    OnPropertyChanged(nameof(UsernameError));
+                    OnPropertyChanged(nameof(PasswordError));
+                    return;
+                }
+
+                IdentityResultViewModel result;
+                using (var authService = new AuthenticationService())
+                {
+                    result = await authService.LogInAsync(UsernameOrEmail, Password);
+                }
+
+                if (!result.IsSuccessed)
+                {
+                    SetError(nameof(Password), "Username or password is incorrect!");
+                    return;
+                }
+
+                if (!SetCurrentUser(result))
+                    return;
+
+                await Application.Current.Dispatcher.InvokeAsync(() =>
+                {
+                    var mainWindow = new MainWindow();
+                    mainWindow.Show();
+                    _window.Close();
+                });
             }
-
-            IdentityResultViewModel result;
-            MainWindow mainWindow = new MainWindow();
-
-            using (var authService = new AuthenticationService())
+            catch (Exception ex)
             {
-                result = Task.Run(() => authService.LogInAsync(UsernameOrEmail, Password)).Result;
+                await ShowErrorAsync("Login Error", "An error occurred during login");
+                // Consider logging the actual exception
             }
-
-            if (!result.IsSuccessed)
+            finally
             {
-                SetError(nameof(Password), "Username or password is incorrect!");
-                return;
+                _isLoggingIn = false;
+                ((AsyncRelayCommand)LoginCommand).RaiseCanExecuteChanged();
             }
-
-            // new InformationDialog("Logged in successfully!");
-
-            if (!SetCurrentUser(result))
-                return;
-
-            mainWindow.Show();
-            _window.Close();
         }
 
         private void ValidateFields()
@@ -106,7 +123,7 @@ namespace ProjectManager.ViewModels.Identities
         {
             _errors[propertyName] = errorMessage;
             OnPropertyChanged(propertyName + "Error");
-            new WarningDialog(errorMessage);
+            _ = ShowWarningAsync("Validation Error", errorMessage);
         }
 
         private string GetError(string propertyName) =>
@@ -116,19 +133,35 @@ namespace ProjectManager.ViewModels.Identities
         {
             if (string.IsNullOrWhiteSpace(result.UserName))
             {
-                new WarningDialog("Unable to set user!");
+                _ = ShowWarningAsync("User Error", "Unable to set user!");
                 return false;
             }
 
             if (string.IsNullOrWhiteSpace(result.Role))
             {
-                new WarningDialog("Invalid user role!");
+                _ = ShowWarningAsync("Role Error", "Invalid user role!");
                 return false;
             }
 
             UserSession.Username = result.UserName;
             UserSession.Role = result.Role;
             return true;
+        }
+
+        private async Task ShowErrorAsync(string title, string message)
+        {
+            await Application.Current.Dispatcher.InvokeAsync(() =>
+            {
+                new ErrorDialog(title, message);
+            });
+        }
+
+        private async Task ShowWarningAsync(string title, string message)
+        {
+            await Application.Current.Dispatcher.InvokeAsync(() =>
+            {
+                new WarningDialog($"{title}\t{message}");
+            });
         }
     }
 }

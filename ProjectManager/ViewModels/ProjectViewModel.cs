@@ -3,6 +3,8 @@ using ProjectManager.Data;
 using ProjectManager.Models;
 using ProjectManager.Views.Dialogs;
 using System.Collections.ObjectModel;
+using System.Windows;
+using System.Windows.Input;
 
 namespace ProjectManager.ViewModels
 {
@@ -55,23 +57,23 @@ namespace ProjectManager.ViewModels
             _context.Projects.Any(a => a.Name == SelectedProject.Name);
 
         // Commands
-        public RelayCommand SaveCommand { get; }
-        public RelayCommand DeleteCommand { get; }
-        public RelayCommand RefreshCommand { get; }
-        public RelayCommand SearchCommand { get; }
-        public RelayCommand AddNewCommand { get; }
-        public RelayCommand EditCommand { get; }
+        public ICommand SaveCommand { get; }
+        public ICommand DeleteCommand { get; }
+        public ICommand RefreshCommand { get; }
+        public ICommand SearchCommand { get; }
+        public ICommand AddNewCommand { get; }
+        public ICommand EditCommand { get; }
 
         public ProjectViewModel()
         {
-            SaveCommand = new RelayCommand(SaveProject, () => !HasErrors);
-            DeleteCommand = new RelayCommand(DeleteProject, () => !HasErrors && CanDelete);
-            RefreshCommand = new RelayCommand(LoadData);
+            SaveCommand = new AsyncRelayCommand(SaveProjectAsync, () => !HasErrors);
+            DeleteCommand = new AsyncRelayCommand(DeleteProjectAsync, () => !HasErrors && CanDelete);
+            RefreshCommand = new AsyncRelayCommand(LoadDataAsync);
             SearchCommand = new RelayCommand(FilterProjects);
             AddNewCommand = new RelayCommand(AddNewProject);
             EditCommand = new RelayCommand(EditCategory);
 
-            LoadData();
+            _ = LoadDataAsync(); // Fire-and-forget async initialization
         }
 
         private void EditCategory()
@@ -79,24 +81,42 @@ namespace ProjectManager.ViewModels
             IsFormVisible = true;
         }
 
-        private void LoadData()
+        private async Task LoadDataAsync()
         {
-            Projects.Clear();
-            FilteredProjects.Clear();
-            ProjectCategories.Clear();
-
-            var projects = _context.Projects.Include(p => p.ProjectCategory).ToList();
-            foreach (var p in projects)
+            try
             {
-                Projects.Add(p);
-                FilteredProjects.Add(p);
+                await Application.Current.Dispatcher.InvokeAsync(() =>
+                {
+                    Projects.Clear();
+                    FilteredProjects.Clear();
+                    ProjectCategories.Clear();
+                });
+
+                var projects = await _context.Projects
+                    .Include(p => p.ProjectCategory)
+                    .ToListAsync();
+
+                var categories = await _context.ProjectCategories.ToListAsync();
+
+                await Application.Current.Dispatcher.InvokeAsync(() =>
+                {
+                    foreach (var p in projects)
+                    {
+                        Projects.Add(p);
+                        FilteredProjects.Add(p);
+                    }
+
+                    foreach (var c in categories)
+                        ProjectCategories.Add(c);
+
+                    SelectedProject = new Project();
+                    IsFormVisible = false;
+                });
             }
-
-            foreach (var c in _context.ProjectCategories.ToList())
-                ProjectCategories.Add(c);
-
-            SelectedProject = new Project();
-            IsFormVisible = false;
+            catch (Exception ex)
+            {
+                await ShowErrorAsync("Error loading data", $" {ex.Message}");
+            }
         }
 
         private void FilterProjects()
@@ -120,44 +140,57 @@ namespace ProjectManager.ViewModels
             }
         }
 
-        private void SaveProject()
+        private async Task SaveProjectAsync()
         {
             if (SelectedProject == null)
                 return;
 
             if (HasErrors)
             {
-                new ErrorDialog("Validation Error",
-                        $"{this[nameof(SelectedProject.Name)] ?? ""}\n" +
-                        $"{this[nameof(SelectedProject.Details)] ?? ""}\n" +
-                        $"{this[nameof(SelectedProject.Price)] ?? ""}\n" +
-                        $"{this[nameof(SelectedProject.ProjectCategoryId)] ?? ""}");
+                await ShowErrorAsync("Validation Error",
+                    $"{this[nameof(SelectedProject.Name)] ?? ""}\n" +
+                    $"{this[nameof(SelectedProject.Details)] ?? ""}\n" +
+                    $"{this[nameof(SelectedProject.Price)] ?? ""}\n" +
+                    $"{this[nameof(SelectedProject.ProjectCategoryId)] ?? ""}");
                 return;
             }
 
-            if (SelectedProject.Id == 0)
-                _context.Projects.Add(SelectedProject);
-            else
-                _context.Projects.Update(SelectedProject);
+            try
+            {
+                if (SelectedProject.Id == 0)
+                    await _context.Projects.AddAsync(SelectedProject);
+                else
+                    _context.Projects.Update(SelectedProject);
 
-            _context.SaveChanges();
-            LoadData();
+                await _context.SaveChangesAsync();
+                await LoadDataAsync();
+            }
+            catch (Exception ex)
+            {
+                await ShowErrorAsync("Error saving project", ex.Message);
+            }
         }
 
-        private void DeleteProject()
+        private async Task DeleteProjectAsync()
         {
             if (SelectedProject == null || string.IsNullOrWhiteSpace(SelectedProject.Name))
                 return;
 
-            var result = new ConfirmationDialog(
+            var confirmed = await ShowConfirmationDialogAsync(
                 $"Are you sure you want to delete the project: {SelectedProject.Name}?");
-            result.ShowDialog();
 
-            if (result.IsConfirmed)
+            if (confirmed)
             {
-                _context.Projects.Remove(SelectedProject);
-                _context.SaveChanges();
-                LoadData();
+                try
+                {
+                    _context.Projects.Remove(SelectedProject);
+                    await _context.SaveChangesAsync();
+                    await LoadDataAsync();
+                }
+                catch (Exception ex)
+                {
+                    await ShowErrorAsync("Error deleting project", ex.Message);
+                }
             }
         }
 
@@ -198,5 +231,22 @@ namespace ProjectManager.ViewModels
             this[nameof(SelectedProject.Name)] != null ||
             this[nameof(SelectedProject.Price)] != null ||
             this[nameof(SelectedProject.ProjectCategoryId)] != null;
+        private async Task<bool> ShowConfirmationDialogAsync(string message)
+        {
+            bool? result = await Application.Current.Dispatcher.InvokeAsync(() =>
+            {
+                var dialog = new ConfirmationDialog(message);
+                return dialog.ShowDialog();
+            });
+
+            return result == true;
+        }
+        private async Task ShowErrorAsync(string title, string message)
+        {
+            await Application.Current.Dispatcher.InvokeAsync(() =>
+            {
+                new ErrorDialog(title, message);
+            });
+        }
     }
 }

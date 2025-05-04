@@ -1,34 +1,46 @@
 ﻿using ProjectManager.Views;
+using ProjectManager.Views.Dialogs;
 using ProjectManager.Views.Identities;
+using System.Windows;
 
 namespace ProjectManager.StartUp
 {
     public static class SplashScreen
     {
-
-        public static async Task Start()
+        public static async Task StartAsync()
         {
-            // Show the splash screen
-            SplashWindow splashScreen = new SplashWindow();
+            var splashScreen = new SplashWindow();
+            var loginScreen = new LogInWindow();
             splashScreen.Show();
-            LogInWindow mainWindow = new LogInWindow();
 
-            // Simulate loading process
-            await Task.Run(() =>
+            try
             {
-                // Simulate a delay (e.g., loading data or initializing the application)
-                System.Threading.Thread.Sleep(6000); // Delay
-            }).ContinueWith(t =>
+                // Simulate async loading process
+                await SimulateLoadingAsync().ConfigureAwait(false);
+
+                // Switch back to UI thread before window operations
+                await Application.Current.Dispatcher.InvokeAsync(() =>
+                {
+                    loginScreen.Show();
+                    splashScreen.Close();
+                });
+            }
+            catch (Exception ex)
             {
-                // Close the splash screen and open the main window
-                splashScreen.Dispatcher.Invoke(() =>
+                // Handle any errors during splash screen process
+                await Application.Current.Dispatcher.InvokeAsync(() =>
                 {
                     splashScreen.Close();
-                    mainWindow.Show();
+                    new ErrorDialog("Error", $"Application initialization failed: {ex.Message}");
                 });
-            }, TaskScheduler.FromCurrentSynchronizationContext());
+                throw; // Re-throw if you want the caller to handle it
+            }
+        }
 
-
+        private static async Task SimulateLoadingAsync()
+        {
+            // Replace with actual initialization logic
+            await Task.Delay(6000).ConfigureAwait(false); // Better than Thread.Sleep
         }
     }
 }

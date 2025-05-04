@@ -5,104 +5,128 @@ using ProjectManager.Config;
 using ProjectManager.Data;
 using ProjectManager.Helpers;
 using ProjectManager.Views.Dialogs;
+using System.Windows;
 
 namespace ProjectManager.Database
 {
-    public class DatabaseBackupService : IDisposable
+    public class DatabaseBackupService : IAsyncDisposable, IDisposable
     {
         private bool _disposed = false;
-        private string _serverName;
-        private string _databaseName;
+        private readonly string _serverName;
+        private readonly string _databaseName;
+        private SqlConnection? _connection;
+
         public DatabaseBackupService()
         {
-            var config = ConfigHelper.LoadConfig<AppConfig>("jsconfig.json");
-
-            var builder = new SqlConnectionStringBuilder(config.ConnectionString);
-
+            var config = Task.Run(() => ConfigHelper.LoadConfigAsync<AppConfig>("jsconfig.json"));
+            var builder = new SqlConnectionStringBuilder(config.Result.ConnectionString);
             _serverName = builder.DataSource;
             _databaseName = builder.InitialCatalog;
         }
-        /// <summary>
-        /// Backup the database and let the user choose the save location.
-        /// </summary>
-        public bool BackupDatabase()
-        {
-            using (AppDbContext context = new AppDbContext())
-            {
-                try
-                {
-                    SaveFileDialog saveFileDialog = new SaveFileDialog
-                    {
-                        Title = "Save Database Backup",
-                        Filter = "Backup Files (*.bak)|*.bak",
-                        FileName = $"{_databaseName}_Backup_{DateTime.Now:yyyyMMdd_HHmmss}.bak"
-                    };
 
-                    if (saveFileDialog.ShowDialog() == true)
-                    {
-                        string backupFilePath = saveFileDialog.FileName;
-                        string backupQuery = $"BACKUP DATABASE [{_databaseName}] TO DISK = '{backupFilePath}' WITH FORMAT, INIT, NAME = 'Backup of {_databaseName}'";
-
-                        context.Database.ExecuteSqlRaw(backupQuery);
-                        return true;
-                    }
-                    return false; // User canceled
-                }
-                catch (Exception ex)
-                {
-                    new ErrorDialog(ex.Message, ex.InnerException?.Message);
-                    return false;
-                }
-            }
-
-        }
-
-        /// <summary>
-        /// Restore the database from a user-selected backup file.
-        /// </summary>
-        public bool RestoreDatabase()
+        public async Task<bool> BackupDatabaseAsync()
         {
             try
             {
-                OpenFileDialog openFileDialog = new OpenFileDialog
+                var saveFileDialog = new SaveFileDialog
+                {
+                    Title = "Save Database Backup",
+                    Filter = "Backup Files (*.bak)|*.bak",
+                    FileName = $"{_databaseName}_Backup_{DateTime.Now:yyyyMMdd_HHmmss}.bak"
+                };
+
+                if (saveFileDialog.ShowDialog() != true)
+                    return false; // User canceled
+
+                await using var context = new AppDbContext();
+                var backupFilePath = saveFileDialog.FileName;
+                var backupQuery = $"""
+                    BACKUP DATABASE [{_databaseName}] 
+                    TO DISK = '{backupFilePath}' 
+                    WITH FORMAT, INIT, 
+                    NAME = 'Backup of {_databaseName}'
+                    """;
+
+                await context.Database.ExecuteSqlRawAsync(backupQuery);
+                return true;
+            }
+            catch (Exception ex)
+            {
+                await ShowErrorDialogAsync("Backup Failed", ex);
+                return false;
+            }
+        }
+
+        public async Task<bool> RestoreDatabaseAsync()
+        {
+            try
+            {
+                var openFileDialog = new OpenFileDialog
                 {
                     Title = "Select Backup File",
                     Filter = "Backup Files (*.bak)|*.bak"
                 };
 
-                if (openFileDialog.ShowDialog() == true)
-                {
-                    string backupFilePath = openFileDialog.FileName;
-                    string connectionString = $"Server={_serverName};Database=master;Trusted_Connection=True;Integrated Security=SSPI;TrustServerCertificate=True;MultipleActiveResultSets=true";
+                if (openFileDialog.ShowDialog() != true)
+                    return false; // User canceled
 
-                    using (SqlConnection connection = new SqlConnection(connectionString))
-                    {
-                        connection.Open();
-                        ExecuteSqlCommand(connection, $"ALTER DATABASE [{_databaseName}] SET SINGLE_USER WITH ROLLBACK IMMEDIATE;");
-                        ExecuteSqlCommand(connection, $"RESTORE DATABASE [{_databaseName}] FROM DISK = '{backupFilePath}' WITH REPLACE;");
-                        ExecuteSqlCommand(connection, $"ALTER DATABASE [{_databaseName}] SET MULTI_USER;");
-                    }
-                    return true;
-                }
-                return false; // User canceled
+                var backupFilePath = openFileDialog.FileName;
+                var masterConnectionString = $"Server={_serverName};Database=master;Trusted_Connection=True;Integrated Security=SSPI;TrustServerCertificate=True;MultipleActiveResultSets=true";
+
+                _connection = new SqlConnection(masterConnectionString);
+                await _connection.OpenAsync();
+
+                await ExecuteSqlCommandAsync($"ALTER DATABASE [{_databaseName}] SET SINGLE_USER WITH ROLLBACK IMMEDIATE");
+                await ExecuteSqlCommandAsync($"RESTORE DATABASE [{_databaseName}] FROM DISK = '{backupFilePath}' WITH REPLACE");
+                await ExecuteSqlCommandAsync($"ALTER DATABASE [{_databaseName}] SET MULTI_USER");
+
+                return true;
             }
-            catch (Exception)
+            catch (Exception ex)
             {
+                await ShowErrorDialogAsync("Restore Failed", ex);
                 return false;
             }
         }
 
-        private void ExecuteSqlCommand(SqlConnection connection, string commandText)
+        private async Task ExecuteSqlCommandAsync(string commandText)
         {
-            using (SqlCommand command = new SqlCommand(commandText, connection))
+            if (_connection == null) throw new InvalidOperationException("Connection not established");
+
+            await using var command = new SqlCommand(commandText, _connection);
+            await command.ExecuteNonQueryAsync();
+        }
+
+        private async Task ShowErrorDialogAsync(string title, Exception ex)
+        {
+            await Application.Current.Dispatcher.InvokeAsync(() =>
             {
-                command.ExecuteNonQuery();
+                new ErrorDialog(title, $"""
+                    {ex.Message}
+                    
+                    Database: {_databaseName}
+                    Server: {_serverName}
+                    {(ex.InnerException != null ? $"Details: {ex.InnerException.Message}" : "")}
+                    """);
+            });
+        }
+
+        public async ValueTask DisposeAsync()
+        {
+            await DisposeAsyncCore().ConfigureAwait(false);
+            Dispose(false);
+            GC.SuppressFinalize(this);
+        }
+
+        protected virtual async ValueTask DisposeAsyncCore()
+        {
+            if (_connection != null)
+            {
+                await _connection.DisposeAsync().ConfigureAwait(false);
+                _connection = null;
             }
         }
 
-        /// <summary>
-        /// Dispose pattern implementation.
-        /// </summary>
         public void Dispose()
         {
             Dispose(true);
@@ -113,6 +137,10 @@ namespace ProjectManager.Database
         {
             if (!_disposed)
             {
+                if (disposing)
+                {
+                    _connection?.Dispose();
+                }
                 _disposed = true;
             }
         }
@@ -122,6 +150,4 @@ namespace ProjectManager.Database
             Dispose(false);
         }
     }
-
-
 }

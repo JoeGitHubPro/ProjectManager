@@ -5,6 +5,7 @@ using ProjectManager.Data;
 using ProjectManager.Models.CapitalManagement;
 using ProjectManager.Views.Dialogs;
 using System.Collections.ObjectModel;
+using System.Windows;
 using System.Windows.Input;
 
 namespace ProjectManager.ViewModels.CapitalManagement
@@ -57,195 +58,355 @@ namespace ProjectManager.ViewModels.CapitalManagement
         {
             _context = new AppDbContext();
 
-            RefreshCommand = new RelayCommand(LoadBusinessBalance);
+            RefreshCommand = new AsyncRelayCommand(LoadBusinessBalanceAsync);
             ShowIncomeFormCommand = new RelayCommand(ShowIncomeForm);
             ShowExpenseFormCommand = new RelayCommand(ShowExpenseForm);
             ShowLoanFormCommand = new RelayCommand(ShowLoanForm);
             CancelFormCommand = new RelayCommand(HideAllForms);
-            SaveIncomeCommand = new RelayCommand(SaveIncome);
-            SaveExpenseCommand = new RelayCommand(SaveExpense);
-            SaveLoanCommand = new RelayCommand(SaveLoan);
-            MarkAsRepaidCommand = new RelayCommand(MarkLoanAsRepaid);
-            AddReserveCommand = new RelayCommand(AddEmergencyReserve);
-            ReleaseReserveCommand = new RelayCommand(ReleaseEmergencyReserve);
+            SaveIncomeCommand = new AsyncRelayCommand(SaveIncomeAsync);
+            SaveExpenseCommand = new AsyncRelayCommand(SaveExpenseAsync);
+            SaveLoanCommand = new AsyncRelayCommand(SaveLoanAsync);
+            MarkAsRepaidCommand = new AsyncRelayCommand(MarkLoanAsRepaidAsync);
+            AddReserveCommand = new AsyncRelayCommand(AddEmergencyReserveAsync);
+            ReleaseReserveCommand = new AsyncRelayCommand(ReleaseEmergencyReserveAsync);
 
-            LoadInitialData();
+            _ = LoadInitialDataAsync(); // Fire-and-forget async initialization
         }
 
-        private void LoadInitialData()
+        public async Task LoadInitialDataAsync()
         {
-            LoadBusinessBalance();
-            Users = new ObservableCollection<IdentityUser>(_context.Users.ToList());
-            OnPropertyChanged(nameof(Users));
+            await LoadBusinessBalanceAsync();
+            await LoadUsersAsync();
         }
 
-        private void LoadBusinessBalance()
+        private async Task LoadUsersAsync()
         {
-            BusinessBalance = _context.BusinessBalances
-                .Include(bb => bb.CashFlows)
-                .Include(bb => bb.Loans)
-                .FirstOrDefault() ?? new BusinessBalanceModel();
-
-            if (BusinessBalance.Id == 0)
+            try
             {
-                _context.BusinessBalances.Add(BusinessBalance);
-                _context.SaveChanges();
+                var users = await _context.Users.ToListAsync();
+                await Application.Current.Dispatcher.InvokeAsync(() =>
+                {
+                    Users = new ObservableCollection<IdentityUser>(users);
+                    OnPropertyChanged(nameof(Users));
+                });
             }
-
-            CashFlows = new ObservableCollection<CashFlowModel>(
-                (BusinessBalance.CashFlows ?? new List<CashFlowModel>())
-                .OrderByDescending(x => x.TransactionDate));
-
-            Loans = new ObservableCollection<LoanModel>(
-                (BusinessBalance.Loans ?? new List<LoanModel>())
-                .Where(x => !x.IsRepaid)
-                .OrderByDescending(x => x.LoanDate));
-
-            OnPropertyChanged(nameof(BusinessBalance));
-            OnPropertyChanged(nameof(CashFlows));
-            OnPropertyChanged(nameof(Loans));
-        }
-
-
-        private void SaveBusinessBalance()
-        {
-            _context.BusinessBalances.Update(BusinessBalance);
-            _context.SaveChanges();
-            LoadBusinessBalance();
-        }
-
-        public void SaveIncome()
-        {
-            if (NewIncomeAmount <= 0 || string.IsNullOrWhiteSpace(NewIncomeDescription))
-                return;
-
-            var income = new CashFlowModel
+            catch (Exception ex)
             {
-                Amount = NewIncomeAmount,
-                Description = NewIncomeDescription,
-                TransactionDate = DateTime.Now,
-                Type = TransactionType.Income
-            };
-
-            BusinessBalance.CashFlows.Add(income);
-            BusinessBalance.TotalSalesIncome += NewIncomeAmount;
-            BusinessBalance.CashOnHand += NewIncomeAmount;
-
-            _context.CashFlows.Add(income);
-            SaveBusinessBalance();
-
-            NewIncomeAmount = 0;
-            NewIncomeDescription = string.Empty;
-            HideAllForms();
-        }
-
-        private void SaveExpense()
-        {
-            if (NewExpenseAmount <= 0 || string.IsNullOrWhiteSpace(NewExpenseDescription))
-                return;
-
-            if (NewExpenseAmount > BusinessBalance.CashOnHand)
-            {
-                new WarningDialog("Not enough available cash.");
-                return;
+                await ShowErrorAsync("Error loading users", ex.Message);
             }
-
-            var expense = new CashFlowModel
-            {
-                Amount = NewExpenseAmount,
-                Description = NewExpenseDescription,
-                TransactionDate = DateTime.Now,
-                Type = TransactionType.Expense
-            };
-
-            BusinessBalance.CashFlows.Add(expense);
-            BusinessBalance.TotalExpenses += NewExpenseAmount;
-            BusinessBalance.CashOnHand -= NewExpenseAmount;
-
-            _context.CashFlows.Add(expense);
-            SaveBusinessBalance();
-
-            NewExpenseAmount = 0;
-            NewExpenseDescription = string.Empty;
-            HideAllForms();
         }
 
-        private void SaveLoan()
+        private async Task LoadBusinessBalanceAsync()
         {
-            if (NewLoanAmount <= 0 || SelectedUser == null || NewLoanPaybackDate == null)
-                return;
-
-            var loan = new LoanModel
+            try
             {
-                AmountLoaned = NewLoanAmount,
-                OutstandingBalance = NewLoanAmount,
-                LoanDate = DateTime.Now,
-                LenderId = SelectedUser.Id,
-                LenderName = SelectedUser.UserName,
-                DueDate = NewLoanPaybackDate.Value,
-                IsRepaid = false
-            };
+                var businessBalance = await _context.BusinessBalances
+                    .Include(bb => bb.CashFlows)
+                    .Include(bb => bb.Loans)
+                    .FirstOrDefaultAsync();
 
-            BusinessBalance.Loans.Add(loan);
-            BusinessBalance.TotalOutstandingLoans += NewLoanAmount;
-            BusinessBalance.CashOnHand += NewLoanAmount;
+                if (businessBalance == null)
+                {
+                    businessBalance = new BusinessBalanceModel();
+                    await _context.BusinessBalances.AddAsync(businessBalance);
+                    await _context.SaveChangesAsync();
+                }
 
-            _context.Loans.Add(loan);
-            SaveBusinessBalance();
+                await Application.Current.Dispatcher.InvokeAsync(() =>
+                {
+                    BusinessBalance = businessBalance;
 
-            NewLoanAmount = 0;
-            NewLoanPaybackDate = null;
-            SelectedUser = null;
-            HideAllForms();
-        }
+                    CashFlows = new ObservableCollection<CashFlowModel>(
+                        (BusinessBalance.CashFlows ?? new List<CashFlowModel>())
+                        .OrderByDescending(x => x.TransactionDate));
 
-        private void MarkLoanAsRepaid()
-        {
-            if (SelectedLoan == null || SelectedLoan.IsRepaid)
-                return;
+                    Loans = new ObservableCollection<LoanModel>(
+                        (BusinessBalance.Loans ?? new List<LoanModel>())
+                        .Where(x => !x.IsRepaid)
+                        .OrderByDescending(x => x.LoanDate));
 
-            if (SelectedLoan.AmountLoaned > BusinessBalance.CashOnHand)
-            {
-                new WarningDialog("Not enough available cash.");
-                return;
+                    OnPropertyChanged(nameof(BusinessBalance));
+                    OnPropertyChanged(nameof(CashFlows));
+                    OnPropertyChanged(nameof(Loans));
+                });
             }
-
-            SelectedLoan.IsRepaid = true;
-            SelectedLoan.OutstandingBalance = 0;
-            BusinessBalance.TotalOutstandingLoans -= SelectedLoan.AmountLoaned;
-
-            LoanModel Repaidloan = SelectedLoan;
-
-            _context.Loans.Update(SelectedLoan);
-            SaveBusinessBalance();
-
-            NewExpenseAmount = Repaidloan.AmountLoaned;
-            NewExpenseDescription = $"Repaid loan to {Repaidloan.LenderName}";
-            SaveExpense();
+            catch (Exception ex)
+            {
+                await ShowErrorAsync("Error loading balance", ex.Message);
+            }
         }
 
-        private void AddEmergencyReserve()
+        private async Task SaveBusinessBalanceAsync()
         {
-            if (EmergencyReserveAmount <= 0 || BusinessBalance.CashOnHand < EmergencyReserveAmount)
-                return;
+            try
+            {
+                _context.BusinessBalances.Update(BusinessBalance);
+                await _context.SaveChangesAsync();
+                await LoadBusinessBalanceAsync();
+            }
+            catch (Exception ex)
+            {
+                await ShowErrorAsync("Error saving balance", ex.Message);
+            }
+        }
+        public async Task SaveIncomeAsync(decimal amount, string description)
+        {
+            try
+            {
+                if (amount <= 0 || string.IsNullOrWhiteSpace(description))
+                {
+                    await ShowWarningAsync("Validation Error", "Amount and description are required");
+                    return;
+                }
 
-            BusinessBalance.EmergencyReserve += EmergencyReserveAmount;
-            BusinessBalance.CashOnHand -= EmergencyReserveAmount;
+                var income = new CashFlowModel
+                {
+                    Amount = amount,
+                    Description = description,
+                    TransactionDate = DateTime.Now,
+                    Type = TransactionType.Income
+                };
 
-            SaveBusinessBalance();
-            EmergencyReserveAmount = 0;
+                BusinessBalance.CashFlows.Add(income);
+                BusinessBalance.TotalSalesIncome += amount;
+                BusinessBalance.CashOnHand += amount;
+
+                await _context.CashFlows.AddAsync(income);
+                await SaveBusinessBalanceAsync();
+
+                await Application.Current.Dispatcher.InvokeAsync(() =>
+                {
+                    NewIncomeAmount = 0;
+                    NewIncomeDescription = string.Empty;
+                });
+            }
+            catch (Exception ex)
+            {
+                await ShowErrorAsync("Error saving income", ex.Message);
+            }
+        }
+        public async Task SaveIncomeAsync()
+        {
+            try
+            {
+                if (NewIncomeAmount <= 0 || string.IsNullOrWhiteSpace(NewIncomeDescription))
+                {
+                    await ShowWarningAsync("Validation Error", "Amount and description are required");
+                    return;
+                }
+
+                var income = new CashFlowModel
+                {
+                    Amount = NewIncomeAmount,
+                    Description = NewIncomeDescription,
+                    TransactionDate = DateTime.Now,
+                    Type = TransactionType.Income
+                };
+
+                BusinessBalance.CashFlows.Add(income);
+                BusinessBalance.TotalSalesIncome += NewIncomeAmount;
+                BusinessBalance.CashOnHand += NewIncomeAmount;
+
+                await _context.CashFlows.AddAsync(income);
+                await SaveBusinessBalanceAsync();
+
+                await Application.Current.Dispatcher.InvokeAsync(() =>
+                {
+                    NewIncomeAmount = 0;
+                    NewIncomeDescription = string.Empty;
+                    HideAllForms();
+                });
+            }
+            catch (Exception ex)
+            {
+                await ShowErrorAsync("Error saving income", ex.Message);
+            }
         }
 
-        private void ReleaseEmergencyReserve()
+        private async Task SaveExpenseAsync()
         {
-            if (EmergencyReserveAmount <= 0 || BusinessBalance.EmergencyReserve < EmergencyReserveAmount)
-                return;
+            try
+            {
+                if (NewExpenseAmount <= 0 || string.IsNullOrWhiteSpace(NewExpenseDescription))
+                {
+                    await ShowWarningAsync("Validation Error", "Amount and description are required");
+                    return;
+                }
 
-            BusinessBalance.EmergencyReserve -= EmergencyReserveAmount;
-            BusinessBalance.CashOnHand += EmergencyReserveAmount;
+                if (NewExpenseAmount > BusinessBalance.CashOnHand)
+                {
+                    await ShowWarningAsync("Insufficient Funds", "Not enough available cash.");
+                    return;
+                }
 
-            SaveBusinessBalance();
-            EmergencyReserveAmount = 0;
+                var expense = new CashFlowModel
+                {
+                    Amount = NewExpenseAmount,
+                    Description = NewExpenseDescription,
+                    TransactionDate = DateTime.Now,
+                    Type = TransactionType.Expense
+                };
+
+                BusinessBalance.CashFlows.Add(expense);
+                BusinessBalance.TotalExpenses += NewExpenseAmount;
+                BusinessBalance.CashOnHand -= NewExpenseAmount;
+
+                await _context.CashFlows.AddAsync(expense);
+                await SaveBusinessBalanceAsync();
+
+                await Application.Current.Dispatcher.InvokeAsync(() =>
+                {
+                    NewExpenseAmount = 0;
+                    NewExpenseDescription = string.Empty;
+                    HideAllForms();
+                });
+            }
+            catch (Exception ex)
+            {
+                await ShowErrorAsync("Error saving expense", ex.Message);
+            }
+        }
+
+        private async Task SaveLoanAsync()
+        {
+            try
+            {
+                if (NewLoanAmount <= 0 || SelectedUser == null || NewLoanPaybackDate == null)
+                {
+                    await ShowWarningAsync("Validation Error", "Please fill all loan details");
+                    return;
+                }
+
+                var loan = new LoanModel
+                {
+                    AmountLoaned = NewLoanAmount,
+                    OutstandingBalance = NewLoanAmount,
+                    LoanDate = DateTime.Now,
+                    LenderId = SelectedUser.Id,
+                    LenderName = SelectedUser.UserName,
+                    DueDate = NewLoanPaybackDate.Value,
+                    IsRepaid = false
+                };
+
+                BusinessBalance.Loans.Add(loan);
+                BusinessBalance.TotalOutstandingLoans += NewLoanAmount;
+                BusinessBalance.CashOnHand += NewLoanAmount;
+
+                await _context.Loans.AddAsync(loan);
+                await SaveBusinessBalanceAsync();
+
+                await Application.Current.Dispatcher.InvokeAsync(() =>
+                {
+                    NewLoanAmount = 0;
+                    NewLoanPaybackDate = null;
+                    SelectedUser = null;
+                    HideAllForms();
+                });
+            }
+            catch (Exception ex)
+            {
+                await ShowErrorAsync("Error saving loan", ex.Message);
+            }
+        }
+
+        private async Task MarkLoanAsRepaidAsync()
+        {
+            try
+            {
+                if (SelectedLoan == null || SelectedLoan.IsRepaid)
+                    return;
+
+                if (SelectedLoan.AmountLoaned > BusinessBalance.CashOnHand)
+                {
+                    await ShowWarningAsync("Insufficient Funds", "Not enough available cash.");
+                    return;
+                }
+
+                SelectedLoan.IsRepaid = true;
+                SelectedLoan.OutstandingBalance = 0;
+                BusinessBalance.TotalOutstandingLoans -= SelectedLoan.AmountLoaned;
+
+                var repaidLoan = SelectedLoan;
+
+                _context.Loans.Update(SelectedLoan);
+                await SaveBusinessBalanceAsync();
+
+                await Application.Current.Dispatcher.InvokeAsync(() =>
+                {
+                    NewExpenseAmount = repaidLoan.AmountLoaned;
+                    NewExpenseDescription = $"Repaid loan to {repaidLoan.LenderName}";
+                });
+
+                await SaveExpenseAsync();
+            }
+            catch (Exception ex)
+            {
+                await ShowErrorAsync("Error marking loan as repaid", ex.Message);
+            }
+        }
+
+        private async Task AddEmergencyReserveAsync()
+        {
+            try
+            {
+                if (EmergencyReserveAmount <= 0)
+                {
+                    await ShowWarningAsync("Validation Error", "Amount must be positive");
+                    return;
+                }
+
+                if (BusinessBalance.CashOnHand < EmergencyReserveAmount)
+                {
+                    await ShowWarningAsync("Insufficient Funds", "Not enough available cash.");
+                    return;
+                }
+
+                BusinessBalance.EmergencyReserve += EmergencyReserveAmount;
+                BusinessBalance.CashOnHand -= EmergencyReserveAmount;
+
+                await SaveBusinessBalanceAsync();
+
+                await Application.Current.Dispatcher.InvokeAsync(() =>
+                {
+                    EmergencyReserveAmount = 0;
+                });
+            }
+            catch (Exception ex)
+            {
+                await ShowErrorAsync("Error adding reserve", ex.Message);
+            }
+        }
+
+        private async Task ReleaseEmergencyReserveAsync()
+        {
+            try
+            {
+                if (EmergencyReserveAmount <= 0)
+                {
+                    await ShowWarningAsync("Validation Error", "Amount must be positive");
+                    return;
+                }
+
+                if (BusinessBalance.EmergencyReserve < EmergencyReserveAmount)
+                {
+                    await ShowWarningAsync("Insufficient Reserve", "Not enough reserve funds.");
+                    return;
+                }
+
+                BusinessBalance.EmergencyReserve -= EmergencyReserveAmount;
+                BusinessBalance.CashOnHand += EmergencyReserveAmount;
+
+                await SaveBusinessBalanceAsync();
+
+                await Application.Current.Dispatcher.InvokeAsync(() =>
+                {
+                    EmergencyReserveAmount = 0;
+                });
+            }
+            catch (Exception ex)
+            {
+                await ShowErrorAsync("Error releasing reserve", ex.Message);
+            }
         }
 
         private void HideAllForms()
@@ -276,5 +437,31 @@ namespace ProjectManager.ViewModels.CapitalManagement
             IsLoanFormVisible = true;
             OnPropertyChanged(nameof(IsLoanFormVisible));
         }
+
+        #region Dialog Helpers
+        private async Task ShowErrorAsync(string title, string message)
+        {
+            await Application.Current.Dispatcher.InvokeAsync(() =>
+            {
+                new ErrorDialog(title, message);
+            });
+        }
+
+        private async Task ShowWarningAsync(string title, string message)
+        {
+            await Application.Current.Dispatcher.InvokeAsync(() =>
+            {
+                new WarningDialog($"{title}\t{message}");
+            });
+        }
+
+        private async Task ShowInfoAsync(string title, string message)
+        {
+            await Application.Current.Dispatcher.InvokeAsync(() =>
+            {
+                new InformationDialog($"{title}\t{message}");
+            });
+        }
+        #endregion
     }
 }

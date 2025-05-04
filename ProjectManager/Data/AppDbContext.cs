@@ -53,11 +53,16 @@ public partial class AppDbContext : IdentityDbContext<IdentityUser>
 
         OnModelCreatingPartial(modelBuilder);
     }
-    protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
+    protected override async void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
     {
-        var config = ConfigHelper.LoadConfig<AppConfig>("jsconfig.json");
+        // One-time async initialization
+        string _connectionString = Task.Run(async () =>
+         {
+             var config = await ConfigHelper.LoadConfigAsync<AppConfig>("jsconfig.json");
+             return config.ConnectionString;
+         }).GetAwaiter().GetResult();
 
-        optionsBuilder.UseSqlServer(config.ConnectionString);
+        optionsBuilder.UseSqlServer(_connectionString);
     }
     partial void OnModelCreatingPartial(ModelBuilder modelBuilder);
 }

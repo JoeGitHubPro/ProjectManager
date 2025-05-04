@@ -1,9 +1,12 @@
-﻿using Microsoft.Win32;
+﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.Win32;
 using ProjectManager.Data;
 using ProjectManager.Helpers;
 using ProjectManager.Models;
 using ProjectManager.Views.Dialogs;
 using System.Collections.ObjectModel;
+using System.Windows;
+using System.Windows.Input;
 
 namespace ProjectManager.ViewModels
 {
@@ -29,11 +32,10 @@ namespace ProjectManager.ViewModels
         public ConsumerViewModel()
         {
             InitializeCommands();
-            LoadData();
+            _ = LoadDataAsync(); // Fire-and-forget async initialization
         }
 
         #region Properties
-
         public ObservableCollection<Consumer> Consumers { get; private set; } = new();
         public ObservableCollection<Consumer> FilteredConsumers { get; private set; } = new();
 
@@ -82,67 +84,18 @@ namespace ProjectManager.ViewModels
         {
             get => _name;
             set => ValidateAndNotify(ref _name, value, nameof(Name));
-
         }
 
-        public string Description
-        {
-            get => _description;
-            set => SetField(ref _description, value);
-        }
-        public string Location
-        {
-            get => _location;
-            set => SetField(ref _location, value);
-        }
-
-        public string Whatsapp
-        {
-            get => string.IsNullOrEmpty(_whatsapp) ? Phone : _whatsapp;
-            set => SetField(ref _whatsapp, value);
-        }
-
-        public string Facebook
-        {
-            get => _facebook;
-            set => SetField(ref _facebook, value);
-        }
-
-        public string TikTok
-        {
-            get => _tikTok;
-            set => SetField(ref _tikTok, value);
-        }
-
-        public string X
-        {
-            get => _x;
-            set => SetField(ref _x, value);
-        }
-
-        public string Instagram
-        {
-            get => _instagram;
-            set => SetField(ref _instagram, value);
-        }
-
-        public string Site
-        {
-            get => _site;
-            set => SetField(ref _site, value);
-        }
-
-        public string Notes
-        {
-            get => _notes;
-            set => SetField(ref _notes, value);
-        }
-
-        public string Phone
-        {
-            get => _phone;
-            set => SetField(ref _phone, value);
-        }
+        public string Description { get => _description; set => SetField(ref _description, value); }
+        public string Location { get => _location; set => SetField(ref _location, value); }
+        public string Whatsapp { get => string.IsNullOrEmpty(_whatsapp) ? Phone : _whatsapp; set => SetField(ref _whatsapp, value); }
+        public string Facebook { get => _facebook; set => SetField(ref _facebook, value); }
+        public string TikTok { get => _tikTok; set => SetField(ref _tikTok, value); }
+        public string X { get => _x; set => SetField(ref _x, value); }
+        public string Instagram { get => _instagram; set => SetField(ref _instagram, value); }
+        public string Site { get => _site; set => SetField(ref _site, value); }
+        public string Notes { get => _notes; set => SetField(ref _notes, value); }
+        public string Phone { get => _phone; set => SetField(ref _phone, value); }
 
         public string CommercialRegisterNo
         {
@@ -162,59 +115,310 @@ namespace ProjectManager.ViewModels
         }
 
         public bool CanDelete => SelectedConsumer != null;
-
         #endregion
 
         #region Commands
-
-        public RelayCommand SaveCommand { get; private set; }
-        public RelayCommand DeleteCommand { get; private set; }
-        public RelayCommand RefreshCommand { get; private set; }
-        public RelayCommand SearchCommand { get; private set; }
-        public RelayCommand AddNewCommand { get; private set; }
-        public RelayCommand ReadExcelCommand { get; private set; }
-        public RelayCommand EditCommand { get; private set; }
-        public RelayCommand ClearCommand { get; private set; }
+        public ICommand SaveCommand { get; private set; }
+        public ICommand DeleteCommand { get; private set; }
+        public ICommand RefreshCommand { get; private set; }
+        public ICommand SearchCommand { get; private set; }
+        public ICommand AddNewCommand { get; private set; }
+        public ICommand ReadExcelCommand { get; private set; }
+        public ICommand EditCommand { get; private set; }
+        public ICommand ClearCommand { get; private set; }
 
         private void InitializeCommands()
         {
-            SaveCommand = new RelayCommand(SaveConsumer, () => !HasErrors);
-            DeleteCommand = new RelayCommand(DeleteConsumer);
-            RefreshCommand = new RelayCommand(LoadData);
+            SaveCommand = new AsyncRelayCommand(SaveConsumerAsync, () => !HasErrors);
+            DeleteCommand = new AsyncRelayCommand(DeleteConsumerAsync);
+            RefreshCommand = new AsyncRelayCommand(LoadDataAsync);
             SearchCommand = new RelayCommand(FilterConsumers);
             AddNewCommand = new RelayCommand(AddNewConsumer);
-            ReadExcelCommand = new RelayCommand(ReadExcel);
+            ReadExcelCommand = new AsyncRelayCommand(ReadExcelAsync);
             EditCommand = new RelayCommand(EditConsumer);
             ClearCommand = new RelayCommand(ClearFields);
         }
-
-
-
         #endregion
 
-        #region Methods
-
-        private void LoadData()
+        #region Async Methods
+        private async Task LoadDataAsync()
         {
-            ClearFields();
-
             try
             {
+                ClearFields();
                 _context = new AppDbContext();
 
-                var consumers = _context.Consumers.ToList();
-                Consumers = new ObservableCollection<Consumer>(consumers);
-                FilteredConsumers = new ObservableCollection<Consumer>(consumers);
+                var consumers = await _context.Consumers.ToListAsync();
 
-                OnPropertyChanged(nameof(Consumers));
-                OnPropertyChanged(nameof(FilteredConsumers));
+                await Application.Current.Dispatcher.InvokeAsync(() =>
+                {
+                    Consumers = new ObservableCollection<Consumer>(consumers);
+                    FilteredConsumers = new ObservableCollection<Consumer>(consumers);
+                    OnPropertyChanged(nameof(Consumers));
+                    OnPropertyChanged(nameof(FilteredConsumers));
+                });
             }
             catch (Exception ex)
             {
-                ShowError($"Error loading data: {ex.Message}");
+                await ShowErrorAsync($"Error loading data: {ex.Message}");
             }
         }
 
+        private async Task<List<Consumer>> ValidateAndImportExcelDataAsync(string filePath)
+        {
+            // Step 1: Read Excel data (offload to background thread)
+            var rawConsumers = await Task.Run(() => ReaderHelper.ReadConsumersFromExcelAsync(filePath));
+
+            // Step 2: Validate Excel data
+            var validConsumers = ValidateExcelData(rawConsumers);
+
+            // Step 3: Filter against existing database records
+            return await FilterNewConsumersAgainstDatabaseAsync(validConsumers);
+        }
+
+        private List<Consumer> ValidateExcelData(List<Consumer> consumers)
+        {
+            if (consumers == null || consumers.Count == 0)
+                return new List<Consumer>();
+
+            // Basic validation - remove empty names
+            var validNameConsumers = consumers
+                .Where(c => !string.IsNullOrWhiteSpace(c?.Name))
+                .ToList();
+
+            // Ensure unique names (case insensitive)
+            validNameConsumers = validNameConsumers
+                .GroupBy(c => c.Name.Trim(), StringComparer.OrdinalIgnoreCase)
+                .Where(g => g.Count() == 1)
+                .Select(g => g.First())
+                .ToList();
+
+            // Split into phone-based groups
+            var withPhones = validNameConsumers
+                .Where(c => !string.IsNullOrWhiteSpace(c.Phone))
+                .ToList();
+
+            var withoutPhones = validNameConsumers
+                .Where(c => string.IsNullOrWhiteSpace(c.Phone))
+                .ToList();
+
+            // Ensure unique phones
+            var uniquePhones = withPhones
+                .GroupBy(c => c.Phone.Trim())
+                .Where(g => g.Count() == 1)
+                .Select(g => g.First())
+                .ToList();
+
+            // Split into CRN-based groups
+            var withCRNs = uniquePhones
+                .Where(c => !string.IsNullOrWhiteSpace(c.CommercialRegisterNo))
+                .ToList();
+
+            var withoutCRNs = uniquePhones
+                .Where(c => string.IsNullOrWhiteSpace(c.CommercialRegisterNo))
+                .ToList();
+
+            // Ensure unique CRNs
+            var uniqueCRNs = withCRNs
+                .GroupBy(c => c.CommercialRegisterNo.Trim())
+                .Where(g => g.Count() == 1)
+                .Select(g => g.First())
+                .ToList();
+
+            // Combine all valid entries
+            return uniqueCRNs
+                .Concat(withoutCRNs)
+                .Concat(withoutPhones)
+                .Distinct()
+                .ToList();
+        }
+
+        private async Task<List<Consumer>> FilterNewConsumersAgainstDatabaseAsync(List<Consumer> validatedConsumers)
+        {
+            if (validatedConsumers == null || validatedConsumers.Count == 0)
+                return new List<Consumer>();
+
+            // Fetch existing values from DB
+            var existingData = await _context.Consumers
+                .Select(c => new
+                {
+                    Name = c.Name.Trim(),
+                    Phone = c.Phone != null ? c.Phone.Trim() : null,
+                    CRN = c.CommercialRegisterNo != null ? c.CommercialRegisterNo.Trim() : null
+                })
+                .ToListAsync();
+
+            var existingNames = existingData.Select(x => x.Name).ToHashSet(StringComparer.OrdinalIgnoreCase);
+            var existingPhones = existingData.Where(x => x.Phone != null).Select(x => x.Phone).ToHashSet();
+            var existingCRNs = existingData.Where(x => x.CRN != null).Select(x => x.CRN).ToHashSet();
+
+            // Filter consumers that don't exist in database
+            return validatedConsumers
+                .Where(c =>
+                {
+                    var name = c.Name?.Trim();
+                    var phone = c.Phone?.Trim();
+                    var crn = c.CommercialRegisterNo?.Trim();
+
+                    // Name must be unique (case insensitive)
+                    bool isNameNew = !string.IsNullOrWhiteSpace(name) &&
+                                    !existingNames.Contains(name);
+
+                    // Phone must be either null or unique
+                    bool isPhoneNew = string.IsNullOrWhiteSpace(phone) ||
+                                    !existingPhones.Contains(phone);
+
+                    // CRN must be either null or unique
+                    bool isCrnNew = string.IsNullOrWhiteSpace(crn) ||
+                                   !existingCRNs.Contains(crn);
+
+                    return isNameNew && isPhoneNew && isCrnNew;
+                })
+                .ToList();
+        }
+
+        private async Task ReadExcelAsync()
+        {
+            var openFileDialog = new OpenFileDialog
+            {
+                Filter = "Excel Files (*.xlsx)|*.xlsx",
+                Title = "Select an Excel File"
+            };
+
+            if (openFileDialog.ShowDialog() == true)
+            {
+                try
+                {
+                    var newConsumers = await ValidateAndImportExcelDataAsync(openFileDialog.FileName);
+
+                    if (newConsumers.Any())
+                    {
+                        await _context.Consumers.AddRangeAsync(newConsumers);
+                        await _context.SaveChangesAsync();
+                        await ShowInfoAsync($"{newConsumers.Count} consumers imported successfully");
+                        await LoadDataAsync();
+                    }
+                    else
+                    {
+                        await ShowWarningAsync("No valid new consumers found in the Excel file!");
+                    }
+                }
+                catch (Exception ex)
+                {
+                    await ShowErrorAsync($"Error importing Excel data: {ex.Message}");
+                }
+            }
+        }
+        private async Task SaveConsumerAsync()
+        {
+            if (HasErrors)
+            {
+                await ShowWarningAsync("Please fix validation errors before saving.");
+                return;
+            }
+
+            bool result = _isNewRecord ?
+                await SaveNewConsumerAsync() :
+                await UpdateExistingConsumerAsync();
+
+            if (result)
+            {
+                FilterConsumers();
+                await ShowInfoAsync("Consumer saved successfully.");
+            }
+        }
+
+        private async Task<bool> SaveNewConsumerAsync()
+        {
+            if (await _context.Consumers.AnyAsync(c => c.Phone == Phone || c.CommercialRegisterNo == CommercialRegisterNo))
+            {
+                await ShowWarningAsync("A consumer with this phone number or commercial register already exists.");
+                return false;
+            }
+
+            var consumer = new Consumer
+            {
+                Phone = Phone,
+                CommercialRegisterNo = CommercialRegisterNo,
+                Name = Name,
+                Description = Description,
+                Whatsapp = Whatsapp,
+                Facebook = Facebook,
+                TikTok = TikTok,
+                X = X,
+                Instagram = Instagram,
+                Site = Site,
+                Notes = Notes,
+                Location = Location
+            };
+
+            await _context.Consumers.AddAsync(consumer);
+            await _context.SaveChangesAsync();
+
+            await Application.Current.Dispatcher.InvokeAsync(() =>
+            {
+                Consumers.Add(consumer);
+                FilteredConsumers.Add(consumer);
+            });
+
+            return true;
+        }
+
+        private async Task<bool> UpdateExistingConsumerAsync()
+        {
+            if (SelectedConsumer == null || _context == null)
+                return false;
+
+            SelectedConsumer.Phone = Phone;
+            SelectedConsumer.CommercialRegisterNo = CommercialRegisterNo;
+            SelectedConsumer.Name = Name;
+            SelectedConsumer.Description = Description;
+            SelectedConsumer.Location = Location;
+            SelectedConsumer.Whatsapp = Whatsapp;
+            SelectedConsumer.Facebook = Facebook;
+            SelectedConsumer.TikTok = TikTok;
+            SelectedConsumer.X = X;
+            SelectedConsumer.Instagram = Instagram;
+            SelectedConsumer.Site = Site;
+            SelectedConsumer.Notes = Notes;
+
+            _context.Consumers.Update(SelectedConsumer);
+            await _context.SaveChangesAsync();
+
+            return true;
+        }
+
+        private async Task DeleteConsumerAsync()
+        {
+            if (SelectedConsumer == null || _context == null) return;
+
+            var confirmed = await ShowConfirmationDialogAsync(
+                "Are you sure you want to delete this consumer? This action cannot be undone.");
+
+            if (!confirmed) return;
+
+            try
+            {
+                _context.Consumers.Remove(SelectedConsumer);
+                await _context.SaveChangesAsync();
+
+                await Application.Current.Dispatcher.InvokeAsync(() =>
+                {
+                    Consumers.Remove(SelectedConsumer);
+                    FilteredConsumers.Remove(SelectedConsumer);
+                    ClearFields();
+                });
+
+                await ShowInfoAsync("Consumer deleted successfully.");
+            }
+            catch (Exception ex)
+            {
+                await ShowErrorAsync($"Error deleting consumer: {ex.Message}");
+            }
+        }
+        #endregion
+
+        #region Synchronous Methods
         private void FilterConsumers()
         {
             if (string.IsNullOrWhiteSpace(SearchText))
@@ -244,242 +448,16 @@ namespace ProjectManager.ViewModels
             OnPropertyChanged(nameof(FilteredConsumers));
         }
 
-        private void ReadExcel()
-        {
-            var openFileDialog = new OpenFileDialog
-            {
-                Filter = "Excel Files (*.xlsx)|*.xlsx",
-                Title = "Select an Excel File"
-            };
-
-            if (openFileDialog.ShowDialog() == true)
-            {
-                var filePath = openFileDialog.FileName;
-                var consumers = ReaderHelper.ReadConsumersFromExcel(filePath);
-
-                // Step 1: Validate Excel Data
-                var validExcelConsumers = ValidateExcelData(consumers);
-
-                // Step 2: Validate Against Database
-                var newConsumers = FilterNewConsumersAgainstDatabase(validExcelConsumers);
-
-                // Step 3: Save to DB
-                if (newConsumers.Any())
-                {
-                    _context.Consumers.AddRange(newConsumers);
-                    _context.SaveChanges();
-                    new InformationDialog("Consumers saved successfully");
-                }
-                else
-                {
-                    new WarningDialog("There are no new consumers!");
-                }
-
-                LoadData();
-            }
-        }
-        private List<Consumer> ValidateExcelData(List<Consumer> consumers)
-        {
-            var validNameConsumers = consumers
-                .Where(c => !string.IsNullOrWhiteSpace(c.Name))
-                .ToList();
-
-            // Ensure unique names
-            validNameConsumers = validNameConsumers
-                .GroupBy(c => c.Name.Trim())
-                .Where(g => g.Count() == 1)
-                .Select(g => g.First())
-                .ToList();
-
-            // Split phone-based groups
-            var uniquePhones = validNameConsumers
-                .Where(c => !string.IsNullOrWhiteSpace(c.Phone))
-                .GroupBy(c => c.Phone.Trim())
-                .Where(g => g.Count() == 1)
-                .Select(g => g.First())
-                .ToList();
-
-            var nullPhones = validNameConsumers
-                .Where(c => string.IsNullOrWhiteSpace(c.Phone))
-                .ToList();
-
-            // Split CRN-based groups
-            var uniqueCRNs = uniquePhones
-                .Where(c => !string.IsNullOrWhiteSpace(c.CommercialRegisterNo))
-                .GroupBy(c => c.CommercialRegisterNo.Trim())
-                .Where(g => g.Count() == 1)
-                .Select(g => g.First())
-                .ToList();
-
-            var nullCRNs = uniquePhones
-                .Where(c => string.IsNullOrWhiteSpace(c.CommercialRegisterNo))
-                .ToList();
-
-            // Combine all valid entries
-            return uniqueCRNs
-                .Concat(nullCRNs)
-                .Concat(nullPhones)
-                .Distinct()
-                .ToList();
-        }
-        private List<Consumer> FilterNewConsumersAgainstDatabase(List<Consumer> validatedConsumers)
-        {
-            // Fetch existing values from DB
-            var existingNames = _context.Consumers
-                .Where(c => !string.IsNullOrWhiteSpace(c.Name))
-                .Select(c => c.Name.Trim())
-                .ToHashSet();
-
-            var existingPhones = _context.Consumers
-                .Where(c => !string.IsNullOrWhiteSpace(c.Phone))
-                .Select(c => c.Phone.Trim())
-                .ToHashSet();
-
-            var existingCRNs = _context.Consumers
-                .Where(c => !string.IsNullOrWhiteSpace(c.CommercialRegisterNo))
-                .Select(c => c.CommercialRegisterNo.Trim())
-                .ToHashSet();
-
-            // Filter out consumers with duplicate Name, Phone, or CRN
-            return validatedConsumers
-                .Where(c =>
-                {
-                    var name = c.Name?.Trim();
-                    var phone = c.Phone?.Trim();
-                    var crn = c.CommercialRegisterNo?.Trim();
-
-                    bool isNameUnique = !string.IsNullOrWhiteSpace(name) && !existingNames.Contains(name);
-                    bool isPhoneUnique = string.IsNullOrWhiteSpace(phone) || !existingPhones.Contains(phone);
-                    bool isCrnUnique = string.IsNullOrWhiteSpace(crn) || !existingCRNs.Contains(crn);
-
-                    return isNameUnique && isPhoneUnique && isCrnUnique;
-                })
-                .ToList();
-        }
-
-
-
         private void AddNewConsumer()
         {
             ClearFields();
             _isNewRecord = true;
             IsFormVisible = true;
         }
+
         private void EditConsumer()
         {
             IsFormVisible = true;
-        }
-
-        private void SaveConsumer()
-        {
-            if (HasErrors)
-            {
-                ShowWarning("Please fix validation errors before saving.");
-                return;
-            }
-
-            bool result;
-
-            if (_isNewRecord)
-                result = SaveNewConsumer();
-            else
-                result = UpdateExistingConsumer();
-
-            if (result)
-            {
-                FilterConsumers();
-                ShowInfo("Consumer saved successfully.");
-            }
-
-        }
-
-        private bool SaveNewConsumer()
-        {
-            if (Consumers.Any(c => c.Phone == Phone || c.CommercialRegisterNo == CommercialRegisterNo))
-            {
-                new WarningDialog("A consumer with this phone number already exists.(1)");
-                return false;
-            }
-            else if (_context.Consumers.Any(c => c.Phone == Phone || c.CommercialRegisterNo == CommercialRegisterNo))
-            {
-                new WarningDialog("A consumer with this phone number already exists.");
-                return false;
-            }
-
-            var consumer = new Consumer
-            {
-                Phone = Phone,
-                CommercialRegisterNo = CommercialRegisterNo,
-                Name = Name,
-                Description = Description,
-                Whatsapp = Whatsapp,
-                Facebook = Facebook,
-                TikTok = TikTok,
-                X = X,
-                Instagram = Instagram,
-                Site = Site,
-                Notes = Notes,
-                Location = Location
-            };
-
-
-            _context.Consumers.Add(consumer);
-            _context.SaveChanges();
-
-            Consumers.Add(consumer);
-            FilteredConsumers.Add(consumer);
-
-            return true;
-        }
-
-        private bool UpdateExistingConsumer()
-        {
-            if (SelectedConsumer == null || _context == null)
-                return false;
-
-            SelectedConsumer.Phone = Phone;
-            SelectedConsumer.CommercialRegisterNo = CommercialRegisterNo;
-            SelectedConsumer.Name = Name;
-            SelectedConsumer.Description = Description;
-            SelectedConsumer.Location = Location;
-            SelectedConsumer.Whatsapp = Whatsapp;
-            SelectedConsumer.Facebook = Facebook;
-            SelectedConsumer.TikTok = TikTok;
-            SelectedConsumer.X = X;
-            SelectedConsumer.Instagram = Instagram;
-            SelectedConsumer.Site = Site;
-            SelectedConsumer.Notes = Notes;
-
-            _context.Consumers.Update(SelectedConsumer);
-            _context.SaveChanges();
-
-            return true;
-        }
-
-        private void DeleteConsumer()
-        {
-            if (SelectedConsumer == null || _context == null) return;
-
-            var result = new ConfirmationDialog("Are you sure you want to delete this consumer? This action cannot be undone.");
-            result.ShowDialog();
-
-            if (!result.IsConfirmed) return;
-
-            try
-            {
-                _context.Consumers.Remove(SelectedConsumer);
-                _context.SaveChanges();
-
-                Consumers.Remove(SelectedConsumer);
-                FilteredConsumers.Remove(SelectedConsumer);
-
-                ClearFields();
-                ShowInfo("Consumer deleted successfully.");
-            }
-            catch (Exception ex)
-            {
-                ShowError($"Error deleting consumer: {ex.Message}");
-            }
         }
 
         private void ClearFields()
@@ -491,11 +469,9 @@ namespace ProjectManager.ViewModels
             _isNewRecord = true;
             IsFormVisible = false;
         }
-
         #endregion
 
         #region Validation
-
         public string this[string propertyName]
         {
             get
@@ -536,26 +512,32 @@ namespace ProjectManager.ViewModels
         }
 
         public bool HasErrors => _errorCollection.Values.Any(error => !string.IsNullOrWhiteSpace(error));
-
         #endregion
 
         #region Helper Methods
-
         private void SetField(ref string field, string value, [System.Runtime.CompilerServices.CallerMemberName] string propertyName = null)
         {
             field = value;
             OnPropertyChanged(propertyName);
         }
+        private async Task<bool> ShowConfirmationDialogAsync(string message)
+        {
+            bool? result = await Application.Current.Dispatcher.InvokeAsync(() =>
+            {
+                var dialog = new ConfirmationDialog(message);
+                return dialog.ShowDialog();
+            });
 
-        private void ShowError(string message) =>
-        new ErrorDialog("Error", message);
+            return result == true;
+        }
+        private async Task ShowErrorAsync(string message) =>
+            await Application.Current.Dispatcher.InvokeAsync(() => new ErrorDialog("Error", message));
 
-        private void ShowWarning(string message) =>
-        new WarningDialog(message);
+        private async Task ShowWarningAsync(string message) =>
+            await Application.Current.Dispatcher.InvokeAsync(() => new WarningDialog(message));
 
-        private void ShowInfo(string message) =>
-        new InformationDialog(message);
-
+        private async Task ShowInfoAsync(string message) =>
+            await Application.Current.Dispatcher.InvokeAsync(() => new InformationDialog(message));
         #endregion
     }
 }

@@ -2,6 +2,7 @@
 using ProjectManager.Validators;
 using ProjectManager.Views.Dialogs;
 using System.Collections.ObjectModel;
+using System.Windows;
 using System.Windows.Input;
 
 namespace ProjectManager.ViewModels.Identities
@@ -14,6 +15,7 @@ namespace ProjectManager.ViewModels.Identities
         private bool _isFormVisible;
         private string _formTitle;
         private UserViewModel _currentUser;
+        private bool _isLoading;
 
         public ObservableCollection<UserViewModel> Users { get; } = new();
         public ObservableCollection<string> Roles { get; } = new()
@@ -58,7 +60,7 @@ namespace ProjectManager.ViewModels.Identities
         public string SearchText
         {
             get => _searchText;
-            set { _searchText = value; OnPropertyChanged(); FilterUsers(); }
+            set { _searchText = value; OnPropertyChanged(); _ = FilterUsersAsync(); }
         }
 
         // Validation Errors
@@ -79,46 +81,61 @@ namespace ProjectManager.ViewModels.Identities
 
         public UserManagementViewModel()
         {
-
             ShowAddUserFormCommand = new RelayCommand(ShowAddUserForm);
-            EditUserCommand = new RelayCommand(EditUser);
-            DeleteUserCommand = new RelayCommand(DeleteUser);
-            SaveUserCommand = new RelayCommand(SaveUser);
+            EditUserCommand = new AsyncRelayCommand(EditUserAsync);
+            DeleteUserCommand = new AsyncRelayCommand(DeleteUserAsync);
+            SaveUserCommand = new AsyncRelayCommand(SaveUserAsync, () => !_isLoading);
             CancelFormCommand = new RelayCommand(CancelForm);
-            RefreshCommand = new RelayCommand(LoadUsers);
+            RefreshCommand = new AsyncRelayCommand(LoadUsersAsync);
 
-            LoadUsers();
+            _ = LoadUsersAsync(); // Fire-and-forget async initialization
         }
 
-        private void LoadUsers()
+        private async Task LoadUsersAsync()
         {
             try
             {
-                Users.Clear();
-                IsFormVisible = false;
+                _isLoading = true;
+                ((AsyncRelayCommand)RefreshCommand)?.RaiseCanExecuteChanged();
+
+                await Application.Current.Dispatcher.InvokeAsync(() =>
+                {
+                    Users.Clear();
+                    IsFormVisible = false;
+                });
 
                 using var service = new AuthenticationService();
-                var users = Task.Run(() => service.GetAllUsersAsync()).Result;
+                var users = await service.GetAllUsersAsync();
 
-                foreach (var user in users)
-                    Users.Add(user);
-
-                StatusMessage = $"Loaded {Users.Count} users";
+                await Application.Current.Dispatcher.InvokeAsync(() =>
+                {
+                    foreach (var user in users)
+                    {
+                        Users.Add(user);
+                    }
+                    StatusMessage = $"Loaded {Users.Count} users";
+                });
             }
             catch (Exception ex)
             {
-                ShowError("loading users", ex);
+                await ShowErrorAsync("Error loading users", ex.Message);
+            }
+            finally
+            {
+                _isLoading = false;
+                ((AsyncRelayCommand)RefreshCommand)?.RaiseCanExecuteChanged();
             }
         }
 
-        private void FilterUsers()
+        private async Task FilterUsersAsync()
         {
             try
             {
-                Users.Clear();
+                _isLoading = true;
+                await Application.Current.Dispatcher.InvokeAsync(() => Users.Clear());
 
                 using var service = new AuthenticationService();
-                var allUsers = Task.Run(() => service.GetAllUsersAsync()).Result;
+                var allUsers = await service.GetAllUsersAsync();
 
                 var filtered = string.IsNullOrWhiteSpace(SearchText)
                     ? allUsers
@@ -127,14 +144,22 @@ namespace ProjectManager.ViewModels.Identities
                         (u.Email?.Contains(SearchText, StringComparison.OrdinalIgnoreCase) ?? false) ||
                         (u.PhoneNumber?.Contains(SearchText, StringComparison.OrdinalIgnoreCase) ?? false));
 
-                foreach (var user in filtered)
-                    Users.Add(user);
-
-                StatusMessage = $"Found {Users.Count} users";
+                await Application.Current.Dispatcher.InvokeAsync(() =>
+                {
+                    foreach (var user in filtered)
+                    {
+                        Users.Add(user);
+                    }
+                    StatusMessage = $"Found {Users.Count} users";
+                });
             }
             catch (Exception ex)
             {
-                ShowError("filtering users", ex);
+                await ShowErrorAsync("Error filtering users", ex.Message);
+            }
+            finally
+            {
+                _isLoading = false;
             }
         }
 
@@ -145,64 +170,87 @@ namespace ProjectManager.ViewModels.Identities
             IsFormVisible = true;
         }
 
-        private void EditUser()
+        private async Task EditUserAsync()
         {
             if (SelectedUser == null) return;
 
             try
             {
+                _isLoading = true;
+                ((AsyncRelayCommand)EditUserCommand)?.RaiseCanExecuteChanged();
+
                 using var service = new AuthenticationService();
-                var user = service.GetUser(SelectedUser.UserName);
+                var user = await service.GetUserAsync(SelectedUser.UserName);
 
-                CurrentUser = new UserViewModel
+                await Application.Current.Dispatcher.InvokeAsync(() =>
                 {
-                    UserId = user.Id,
-                    UserName = SelectedUser.UserName,
-                    Email = SelectedUser.Email,
-                    PhoneNumber = SelectedUser.PhoneNumber,
-                    Roles = SelectedUser.Roles
-                };
+                    CurrentUser = new UserViewModel
+                    {
+                        UserId = user.Id,
+                        UserName = SelectedUser.UserName,
+                        Email = SelectedUser.Email,
+                        PhoneNumber = SelectedUser.PhoneNumber,
+                        Roles = SelectedUser.Roles
+                    };
 
-                FormTitle = "Edit User";
-                IsFormVisible = true;
+                    FormTitle = "Edit User";
+                    IsFormVisible = true;
+                });
             }
             catch (Exception ex)
             {
-                ShowError("loading user for edit", ex);
+                await ShowErrorAsync("Error loading user for edit", ex.Message);
+            }
+            finally
+            {
+                _isLoading = false;
+                ((AsyncRelayCommand)EditUserCommand)?.RaiseCanExecuteChanged();
             }
         }
 
-        private void DeleteUser()
+        private async Task DeleteUserAsync()
         {
             if (SelectedUser == null) return;
-            var resultDialog = new ConfirmationDialog($"Are you sure you want to delete '{SelectedUser.UserName}'?");
-            resultDialog.ShowDialog();
 
-            if (!resultDialog.IsConfirmed)
-                return;
+            var confirmed = await ShowConfirmationDialogAsync(
+                "Confirm Delete",
+                $"Are you sure you want to delete '{SelectedUser.UserName}'?");
+
+            if (!confirmed) return;
 
             try
             {
-                using var service = new AuthenticationService();
-                var result = Task.Run(() => service.DeleteUserAsync(SelectedUser.Email)).Result;
+                _isLoading = true;
+                ((AsyncRelayCommand)DeleteUserCommand)?.RaiseCanExecuteChanged();
 
-                if (result.IsSuccessed)
+                using var service = new AuthenticationService();
+                var result = await service.DeleteUserAsync(SelectedUser.Email);
+
+                await Application.Current.Dispatcher.InvokeAsync(async () =>
                 {
-                    StatusMessage = $"User '{SelectedUser.UserName}' deleted";
-                    LoadUsers();
-                }
-                else
-                {
-                    new ErrorDialog("Error", $"Delete failed: {result.Errors.Description}");
-                }
+                    if (result.IsSuccessed)
+                    {
+                        StatusMessage = $"User '{SelectedUser.UserName}' deleted";
+                        await LoadUsersAsync();
+                    }
+                    else
+                    {
+                        await ShowErrorAsync("Delete Error", $"Delete failed: {result.Errors.Description}");
+                    }
+                });
             }
             catch (Exception ex)
             {
-                ShowError("deleting user", ex);
+                await ShowErrorAsync("Error deleting user", ex.Message);
+            }
+            finally
+            {
+                _isLoading = false;
+                ((AsyncRelayCommand)DeleteUserCommand)?.RaiseCanExecuteChanged();
             }
         }
 
-        private void SaveUser()
+        private async Task SaveUserAsync()
         {
             ClearErrors();
 
@@ -230,49 +278,52 @@ namespace ProjectManager.ViewModels.Identities
 
             try
             {
+                _isLoading = true;
+                ((AsyncRelayCommand)SaveUserCommand)?.RaiseCanExecuteChanged();
+
                 using var service = new AuthenticationService();
                 bool success;
 
                 if (string.IsNullOrEmpty(CurrentUser.UserId))
                 {
-                    var result = Task.Run(() => service.RegisterAsync(
+                    var result = await service.RegisterAsync(
                         CurrentUser.UserName,
                         CurrentUser.Email,
                         CurrentUser.PhoneNumber,
                         CurrentUser.Password,
-                        CurrentUser.Roles)).Result;
+                        CurrentUser.Roles);
 
                     success = result.Succeeded;
                 }
                 else
                 {
-                    success = Task.Run(() => service.EditUserAsync(CurrentUser)).Result;
+                    success = await service.EditUserAsync(CurrentUser);
                 }
 
-                if (success)
+                await Application.Current.Dispatcher.InvokeAsync(async () =>
                 {
-                    StatusMessage = "User saved successfully";
-                    new InformationDialog(StatusMessage);
-                }
-                else
-                {
-                    StatusMessage = "Failed to save user";
-                    new WarningDialog(StatusMessage);
-                }
-
-                if (success)
-                {
-                    LoadUsers();
-                    IsFormVisible = false;
-                }
-                else
-                {
-                    new ErrorDialog("Error", "Operation failed. Check the input data.");
-                }
+                    if (success)
+                    {
+                        StatusMessage = "User saved successfully";
+                        await ShowInfoAsync("Success", StatusMessage);
+                        await LoadUsersAsync();
+                        IsFormVisible = false;
+                    }
+                    else
+                    {
+                        StatusMessage = "Failed to save user";
+                        await ShowErrorAsync("Save Error", "Operation failed. Check the input data.");
+                    }
+                });
             }
             catch (Exception ex)
             {
-                ShowError("saving user", ex);
+                await ShowErrorAsync("Error saving user", ex.Message);
+            }
+            finally
+            {
+                _isLoading = false;
+                ((AsyncRelayCommand)SaveUserCommand)?.RaiseCanExecuteChanged();
             }
         }
 
@@ -281,7 +332,6 @@ namespace ProjectManager.ViewModels.Identities
             IsFormVisible = false;
             ClearErrors();
         }
-
 
         private void ClearErrors()
         {
@@ -306,10 +356,32 @@ namespace ProjectManager.ViewModels.Identities
             !string.IsNullOrWhiteSpace(RoleError) ||
             !string.IsNullOrWhiteSpace(ConfirmPasswordError);
 
-        private void ShowError(string context, Exception ex)
+        #region Dialog Helpers
+        private async Task ShowErrorAsync(string title, string message)
         {
-            StatusMessage = $"Error {context}";
-            new ErrorDialog("Error", $"Error {context}: {ex.Message}");
+            await Application.Current.Dispatcher.InvokeAsync(() =>
+            {
+                new ErrorDialog(title, message);
+            });
         }
+
+        private async Task ShowInfoAsync(string title, string message)
+        {
+            await Application.Current.Dispatcher.InvokeAsync(() =>
+            {
+                new InformationDialog($"{title}\t{message}");
+            });
+        }
+
+        private async Task<bool> ShowConfirmationDialogAsync(string title, string message)
+        {
+            return await Application.Current.Dispatcher.InvokeAsync(() =>
+            {
+                var dialog = new ConfirmationDialog($"{title}\t{message}");
+                dialog.ShowDialog();
+                return dialog.IsConfirmed;
+            });
+        }
+        #endregion
     }
 }

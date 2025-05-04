@@ -9,9 +9,9 @@ namespace ProjectManager.Helpers
     {
         public static string baseDir = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Dir");
 
-        public static string CreateUniqueFolder()
+        public static async Task<string> CreateUniqueFolder()
         {
-            var config = ConfigHelper.LoadConfig<AppConfig>("jsconfig.json");
+            var config = await ConfigHelper.LoadConfigAsync<AppConfig>("jsconfig.json");
 
             // Ensure the base folder (e.g., \Dir) exists in the application root
             Directory.CreateDirectory(baseDir);
@@ -61,16 +61,16 @@ namespace ProjectManager.Helpers
                 {
                     // Delete the directory and all its contents
                     Directory.Delete(targetPath, true);
-                    Console.WriteLine($"Folder '{targetPath}' deleted successfully.");
+                    new InformationDialog($"Folder '{targetPath}' deleted successfully.");
                 }
                 else
                 {
-                    Console.WriteLine($"Folder '{targetPath}' does not exist.");
+                    new WarningDialog($"Folder '{targetPath}' does not exist.");
                 }
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"An error occurred: {ex.Message}");
+                new ErrorDialog($"An error occurred: ", $"{ex.Message}");
             }
         }
     }

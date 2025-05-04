@@ -1,40 +1,56 @@
 ﻿using ProjectManager.Services;
 using ProjectManager.StartUp;
+using ProjectManager.Views.Dialogs;
 using System.Windows;
 
 namespace ProjectManager
 {
-    /// <summary>
-    /// Interaction logic for App.xaml
-    /// </summary>
     public partial class App : Application
     {
-        protected async override void OnStartup(StartupEventArgs e)
+        protected override async void OnStartup(StartupEventArgs e)
         {
             base.OnStartup(e);
 
-            ExceptionHandle();
+            try
+            {
+                // Setup global exception handling first
+                RegisterExceptionHandlers();
 
-            await StartUp.SplashScreen.Start();
+                // Show splash screen immediately
+                await StartUp.SplashScreen.StartAsync();
 
-            await AutoMigration.MigrateAsync();
-
-            await Seed.SeedRolesAsync();
-
-            await Seed.SeedAdminAsync();
-
+                // Run initialization tasks sequentially
+                await InitializeApplicationAsync();
+            }
+            catch (Exception ex)
+            {
+                HandleStartupFailure(ex);
+                Shutdown(1); // Non-zero exit code indicates error
+            }
         }
-        private void ExceptionHandle()
+
+        private async Task InitializeApplicationAsync()
         {
-            // Handle UI Thread Exceptions
-            this.DispatcherUnhandledException += ExceptionHandler.App_DispatcherUnhandledException;
+            // Order matters - migrate first, then seed
+            await AutoMigration.MigrateAsync();
+            await Seed.SeedRolesAsync();
+            await Seed.SeedAdminAsync();
+        }
 
-            // Handle Non-UI Thread Exceptions
+        private void RegisterExceptionHandlers()
+        {
+            DispatcherUnhandledException += ExceptionHandler.App_DispatcherUnhandledException;
             AppDomain.CurrentDomain.UnhandledException += ExceptionHandler.CurrentDomain_UnhandledException;
-
-            // Handle Task Thread Exceptions
             TaskScheduler.UnobservedTaskException += ExceptionHandler.TaskScheduler_UnobservedTaskException;
         }
-    }
 
+        private void HandleStartupFailure(Exception ex)
+        {
+            // Ensure we're on the UI thread for message boxes
+            Current.Dispatcher.Invoke(() =>
+            {
+                new ErrorDialog("Fatal Error", $"Application failed to start: {ex.Message}");
+            });
+        }
+    }
 }

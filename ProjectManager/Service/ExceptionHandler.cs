@@ -1,60 +1,103 @@
 ﻿using ProjectManager.Views.Dialogs;
 using System.IO;
+using System.Windows;
+using System.Windows.Threading;
 
 namespace ProjectManager.Services
 {
     public static class ExceptionHandler
     {
-        private static string _lastKnownState = "Default State"; // Store last application state
+        private static string _lastKnownState = "Application Started";
+        private const string LogFileName = "ErrorLog.txt";
+        private static readonly object _logLock = new object();
 
-        public static void App_DispatcherUnhandledException(object sender, System.Windows.Threading.DispatcherUnhandledExceptionEventArgs e)
+        public static void App_DispatcherUnhandledException(object sender, DispatcherUnhandledExceptionEventArgs e)
         {
-            LogException(e.Exception, "An unexpected error occurred:", "Error");
-
-            // Show error dialog
-            System.Windows.Application.Current.Dispatcher.Invoke(() =>
-            {
-                new ErrorDialog("An error occurred", e.Exception.Message);
-            });
-
-            // Prevent application from crashing
-            e.Handled = true;
+            HandleExceptionAsync(e.Exception, "UI Thread Error", isCritical: false).Wait();
+            e.Handled = true; // Mark as handled to prevent app crash
         }
-
 
         public static void CurrentDomain_UnhandledException(object sender, UnhandledExceptionEventArgs e)
         {
             if (e.ExceptionObject is Exception ex)
             {
-                LogException(ex, "A critical error occurred", "Critical Error");
+                // Run synchronously since we might be crashing
+                HandleExceptionAsync(ex, "Domain-Wide Error", isCritical: true).Wait();
             }
         }
 
         public static void TaskScheduler_UnobservedTaskException(object sender, UnobservedTaskExceptionEventArgs e)
         {
-            LogException(e.Exception, "An unobserved task error occurred", "Task Error");
-            e.SetObserved(); // Prevents application crash
+            HandleExceptionAsync(e.Exception, "Unobserved Task Error", isCritical: false).Wait();
+            e.SetObserved();
         }
 
-        public static void LogException(Exception ex, string info, string type)
+        public static async Task HandleExceptionAsync(Exception ex, string errorType, bool isCritical)
         {
-            string logMessage = $"{DateTime.Now}\t=> Info: {info}\t Error Type: {type}\n" +
-                                $"Message: {ex.Message}\n" +
-                                $"Inner Exception: {ex.InnerException?.Message ?? "None"}\n" +
-                                $"Stack Trace:\n{ex.StackTrace}\n\n";
-
-            File.AppendAllText("Log.txt", logMessage);
-
-            // Show error dialog (ensure it's shown on UI thread)
-            System.Windows.Application.Current.Dispatcher.Invoke(() =>
+            try
             {
-                new ErrorDialog(info, $"{type}: {ex.Message}");
-            });
+                var logEntry = CreateLogEntry(ex, errorType, isCritical);
+
+                // Async file writing
+                await WriteLogAsync(logEntry).ConfigureAwait(false);
+
+                // Show error dialog on UI thread
+                await Application.Current.Dispatcher.InvokeAsync(() =>
+                {
+                    new ErrorDialog(
+                        $"{(isCritical ? "CRITICAL: " : "")}{errorType}",
+                        $"{ex.Message}\n\nLast State: {_lastKnownState}")
+                    .ShowDialog();
+                });
+            }
+            catch (Exception loggingEx)
+            {
+                // Fallback to console if logging fails
+                new ErrorDialog("Failed to log error: ", $"{loggingEx}");
+                new ErrorDialog($"Original error: ", $"{ex}");
+            }
+        }
+
+        private static string CreateLogEntry(Exception ex, string errorType, bool isCritical)
+        {
+            return $"[{DateTime.Now:yyyy-MM-dd HH:mm:ss.fff}] {(isCritical ? "CRITICAL " : "")}{errorType}\n" +
+                   $"Last State: {_lastKnownState}\n" +
+                   $"Message: {ex.Message}\n" +
+                   $"Type: {ex.GetType().FullName}\n" +
+                   $"Stack Trace:\n{ex.StackTrace}\n" +
+                   $"Inner Exception: {ex.InnerException?.ToString() ?? "None"}\n\n";
+        }
+
+        private static async Task WriteLogAsync(string logEntry)
+        {
+            try
+            {
+                await Task.Run(() =>
+                {
+                    lock (_logLock)
+                    {
+                        File.AppendAllText(LogFileName, logEntry);
+                    }
+                }).ConfigureAwait(false);
+            }
+            catch (Exception ex)
+            {
+                new ErrorDialog($"Failed to write to log file: ", $"{ex.Message}");
+            }
         }
 
         public static void SaveState(string newState)
         {
-            _lastKnownState = newState;
+            _lastKnownState = newState ?? throw new ArgumentNullException(nameof(newState));
+        }
+
+        public static async Task LogWarningAsync(string message)
+        {
+            var logEntry = $"[{DateTime.Now:yyyy-MM-dd HH:mm:ss.fff}] WARNING\n" +
+                          $"Last State: {_lastKnownState}\n" +
+                          $"Message: {message}\n\n";
+
+            await WriteLogAsync(logEntry).ConfigureAwait(false);
         }
     }
 }

@@ -1,5 +1,8 @@
-﻿using ProjectManager.Constants;
+﻿using Microsoft.EntityFrameworkCore;
+using ProjectManager.Constants;
 using ProjectManager.Data;
+using ProjectManager.Views.Dialogs;
+using System.Windows;
 using System.Windows.Input;
 
 namespace ProjectManager.ViewModels
@@ -7,156 +10,164 @@ namespace ProjectManager.ViewModels
     public class WelcomeViewModel : BaseViewModel
     {
         #region Private Fields
-
         private string _welcomeMessage;
         private int _projectCount;
         private int _clientCount;
         private int _teamCount;
-        private AppDbContext _context = new();
-
-
+        private readonly AppDbContext _context = new();
         #endregion
 
         #region Public Properties
-
-        /// <summary>
-        /// Dynamic welcome message that can be personalized
-        /// </summary>
         public string WelcomeMessage
         {
             get => _welcomeMessage;
-            set
-            {
-                if (_welcomeMessage != value)
-                {
-                    _welcomeMessage = value;
-                    OnPropertyChanged();
-                }
-            }
-        }
-        public string? Username
-        {
-            get
-            {
-                return $"Hi {UserSession.Username} 👋";
-            }
-
+            set => SetProperty(ref _welcomeMessage, value);
         }
 
-        /// <summary>
-        /// Number of active projects
-        /// </summary>
+        public string Username => $"Hi {UserSession.Username} 👋";
+
         public int ProjectCount
         {
             get => _projectCount;
-            set
-            {
-                if (_projectCount != value)
-                {
-                    _projectCount = value;
-                    OnPropertyChanged();
-                }
-            }
+            set => SetProperty(ref _projectCount, value);
         }
 
-        /// <summary>
-        /// Number of clients in the system
-        /// </summary>
         public int ClientCount
         {
             get => _clientCount;
-            set
-            {
-                if (_clientCount != value)
-                {
-                    _clientCount = value;
-                    OnPropertyChanged();
-                }
-            }
+            set => SetProperty(ref _clientCount, value);
         }
 
-        /// <summary>
-        /// Number of team members in the system
-        /// </summary>
         public int TeamCount
         {
             get => _teamCount;
-            set
-            {
-                if (_teamCount != value)
-                {
-                    _teamCount = value;
-                    OnPropertyChanged();
-                }
-            }
+            set => SetProperty(ref _teamCount, value);
         }
-
         #endregion
 
-        /// <summary>
-        /// Command to navigate to the Projects view
-        /// </summary>
-        public ICommand NavigateToProjectsCommand { get; private set; }
+        #region Commands
+        public ICommand NavigateToProjectsCommand { get; }
+        public ICommand ShowTutorialCommand { get; }
+        public ICommand RefreshDataCommand { get; }
+        #endregion
 
-        /// <summary>
-        /// Command to show the app tutorial/demo
-        /// </summary>
-        public ICommand ShowTutorialCommand { get; private set; }
-
-
-
-        /// <summary>
-        /// Default constructor
-        /// </summary>
         public WelcomeViewModel()
         {
-            // Initialize commands
             NavigateToProjectsCommand = new RelayCommand(ExecuteNavigateToProjects);
             ShowTutorialCommand = new RelayCommand(ExecuteShowTutorial);
+            RefreshDataCommand = new AsyncRelayCommand(LoadInitialDataAsync);
 
-            // Load data
-            LoadInitialData();
+            _ = LoadInitialDataAsync(); // Fire-and-forget async initialization
         }
 
         private void ExecuteShowTutorial()
         {
-            throw new NotImplementedException();
+            // Implementation would go here
+            // Consider making this async if it involves I/O operations
+            new InformationDialog("Tutorial This feature is coming soon!");
         }
 
         private void ExecuteNavigateToProjects()
         {
-            throw new NotImplementedException();
+            // Implementation would go here
+            // This would typically trigger navigation which should be handled by your navigation service
         }
 
-
-
-        /// <summary>
-        /// Loads initial data for the view
-        /// </summary>
-        private void LoadInitialData()
+        public async Task LoadInitialDataAsync()
         {
             try
             {
-                // Get the user's name for personalized welcome message
-                var currentUserName = UserSession.Username;
-                WelcomeMessage = $"Welcome back, {currentUserName}! Here's your project management overview for today.";
+                // Set welcome message on UI thread
+                await Application.Current.Dispatcher.InvokeAsync(() =>
+                {
+                    WelcomeMessage = $"Welcome back, {UserSession.Username}! Here's your project management overview for today.";
+                });
 
-                // Load statistics
-                ProjectCount = _context.Projects.Count();
-                ClientCount = _context.Consumers.Count();
-                TeamCount = _context.Users.Count();
+                // Initialize default values
+                int projects = 0;
+                int clients = 0;
+                int users = 0;
+
+                // Load data with individual error handling
+                try
+                {
+                    projects = await GetProjectCountAsync();
+                }
+                catch (Exception ex)
+                {
+                    new ErrorDialog("Error loading projects: ", $"{ex.Message}");
+                }
+
+                try
+                {
+                    clients = await GetClientCountAsync();
+                }
+                catch (Exception ex)
+                {
+                    new ErrorDialog("Error loading clients:", $"{ex.Message}");
+                }
+
+                try
+                {
+                    users = await GetTeamCountAsync();
+                }
+                catch (Exception ex)
+                {
+                    new ErrorDialog("Error loading users: ", $"{ex.Message}");
+                }
+
+                // Update UI with results
+                await Application.Current.Dispatcher.InvokeAsync(() =>
+                {
+                    ProjectCount = projects;
+                    ClientCount = clients;
+                    TeamCount = users;
+                });
             }
             catch (Exception ex)
             {
-                // Handle exceptions - log and set default values
-                // Logger.LogError(ex, "Error loading welcome page data");
+                new ErrorDialog("Critical error in LoadInitialDataAsync: ", $"{ex}");
+                await HandleLoadErrorAsync(ex);
+            }
+        }
+
+        private async Task HandleLoadErrorAsync(Exception ex)
+        {
+            // Log the error if you have logging infrastructure
+            // Logger.LogError(ex, "Error loading welcome page data");
+
+            await ShowErrorAsync("Loading Error", "Could not load dashboard data");
+
+            await Application.Current.Dispatcher.InvokeAsync(() =>
+            {
                 WelcomeMessage = "Welcome to your project management dashboard.";
                 ProjectCount = 0;
                 ClientCount = 0;
                 TeamCount = 0;
-            }
+            });
+        }
+
+        private async Task<int> GetProjectCountAsync()
+        {
+            return await _context.Projects.CountAsync();
+        }
+
+        private async Task<int> GetClientCountAsync()
+        {
+            return await _context.Consumers.CountAsync();
+        }
+
+        private async Task<int> GetTeamCountAsync()
+        {
+            return await _context.Users.CountAsync();
+        }
+
+        private async Task ShowErrorAsync(string title, string message)
+        {
+            await Application.Current.Dispatcher.InvokeAsync(() =>
+            {
+                new ErrorDialog(title, message);
+            });
         }
     }
 }
-
-

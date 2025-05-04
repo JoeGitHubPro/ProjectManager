@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using ProjectManager.Constants;
 using ProjectManager.Data;
 using ProjectManager.Service;
@@ -10,56 +11,74 @@ namespace ProjectManager.StartUp
     {
         public static async Task SeedAdminAsync()
         {
-            using (AuthenticationService service = new AuthenticationService())
-            {
-                var user = service.GetUser("Admin");
-                if (user is null)
-                {
-                    await service.RegisterAsync("Admin", "Admin@mail.com", "01012345678", "7nJ4oq7@f*Dg", Roles.Admin);
+            using var service = new AuthenticationService();
+            var user = await service.GetUserAsync("Admin")
+                .ConfigureAwait(false);
 
-                }
-                else
-                {
-                    return;
-                }
+            if (user != null) return;
+
+            var result = await service.RegisterAsync(
+                "Admin",
+                "Admin@mail.com",
+                "01012345678",
+                "7nJ4oq7@f*Dg",
+                Roles.Admin)
+                .ConfigureAwait(false);
+
+            if (!result.Succeeded)
+            {
+                var errors = string.Join(", ", result.Errors.Select(e => e.Description));
+                throw new ApplicationException($"Admin user seeding failed: {errors}");
             }
         }
-        public async static Task SeedRolesAsync()
+
+        public static async Task SeedRolesAsync()
         {
-            using (AppDbContext _context = new AppDbContext())
+            await using var context = new AppDbContext();
+            if (await context.Roles.AnyAsync().ConfigureAwait(false))
+                return;
+
+            var roles = new List<string>
             {
-                var isContainElements = _context.Roles.Any();
+                Roles.Admin,
+                Roles.Manager,
+                Roles.User
+            };
 
-                if (isContainElements)
-                    return;
+            var roleStore = new RoleStore<IdentityRole>(context);
 
-                // List of roles from the Roles class
-                var roles = new List<string>
-        {
-            Roles.Admin,
-            Roles.Manager,
-            Roles.User
-        };
-
-                RoleStore<IdentityRole> roleStore = new RoleStore<IdentityRole>(_context);
-
-                foreach (var roleName in roles)
+            foreach (var roleName in roles)
+            {
+                if (!await context.Roles.AnyAsync(r => r.Name == roleName)
+                    .ConfigureAwait(false))
                 {
-                    if (!_context.Roles.Any(r => r.Name == roleName))
+                    var newRole = new IdentityRole
                     {
-                        IdentityRole newRole = new IdentityRole
-                        {
-                            Id = Guid.NewGuid().ToString(),
-                            Name = roleName,
-                            NormalizedName = roleName.ToUpper(),
-                            ConcurrencyStamp = Guid.NewGuid().ToString()
-                        };
+                        Id = Guid.NewGuid().ToString(),
+                        Name = roleName,
+                        NormalizedName = roleName.ToUpper(),
+                        ConcurrencyStamp = Guid.NewGuid().ToString()
+                    };
 
-                        await roleStore.CreateAsync(newRole);
-                    }
+                    await roleStore.CreateAsync(newRole)
+                        .ConfigureAwait(false);
                 }
+            }
 
-                await _context.SaveChangesAsync();
+            await context.SaveChangesAsync()
+                .ConfigureAwait(false);
+        }
+
+        public static async Task InitializeDatabaseAsync()
+        {
+            try
+            {
+                await SeedRolesAsync().ConfigureAwait(false);
+                await SeedAdminAsync().ConfigureAwait(false);
+            }
+            catch (Exception ex)
+            {
+                throw new ApplicationException("Database initialization failed", ex);
             }
         }
     }

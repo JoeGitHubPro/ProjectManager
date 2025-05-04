@@ -3,6 +3,8 @@ using ProjectManager.Data;
 using ProjectManager.Models;
 using ProjectManager.Views.Dialogs;
 using System.Collections.ObjectModel;
+using System.Windows;
+using System.Windows.Input;
 
 namespace ProjectManager.ViewModels
 {
@@ -18,11 +20,10 @@ namespace ProjectManager.ViewModels
         public ProjectCategoryViewModel()
         {
             InitializeCommands();
-            LoadData();
+            _ = LoadDataAsync(); // Fire-and-forget async initialization
         }
 
         #region Properties
-
         public ObservableCollection<ProjectCategory> ProjectCategories { get; private set; } = new();
         public ObservableCollection<ProjectCategory> FilteredCategories { get; private set; } = new();
 
@@ -82,60 +83,148 @@ namespace ProjectManager.ViewModels
         }
 
         public bool CanDelete => SelectedCategory != null;
-
         #endregion
 
         #region Commands
-
-        public RelayCommand SaveCommand { get; private set; }
-        public RelayCommand DeleteCommand { get; private set; }
-        public RelayCommand RefreshCommand { get; private set; }
-        public RelayCommand SearchCommand { get; private set; }
-        public RelayCommand AddNewCommand { get; private set; }
-        public RelayCommand EditCommand { get; private set; }
-        public RelayCommand ClearCommand { get; private set; }
+        public ICommand SaveCommand { get; private set; }
+        public ICommand DeleteCommand { get; private set; }
+        public ICommand RefreshCommand { get; private set; }
+        public ICommand SearchCommand { get; private set; }
+        public ICommand AddNewCommand { get; private set; }
+        public ICommand EditCommand { get; private set; }
+        public ICommand ClearCommand { get; private set; }
 
         private void InitializeCommands()
         {
-            SaveCommand = new RelayCommand(SaveCategory, () => !HasErrors);
-            DeleteCommand = new RelayCommand(DeleteCategory, () => CanDelete);
-            RefreshCommand = new RelayCommand(LoadData);
-            SearchCommand = new RelayCommand(FilterCategories);
-            AddNewCommand = new RelayCommand(AddNewCategory);
-            EditCommand = new RelayCommand(EditCategory);
-            ClearCommand = new RelayCommand(ClearFields);
+            SaveCommand = new AsyncRelayCommand(SaveCategoryAsync, () => !HasErrors);
+            DeleteCommand = new AsyncRelayCommand(DeleteCategoryAsync, () => CanDelete);
+            RefreshCommand = new AsyncRelayCommand(LoadDataAsync);
+            SearchCommand = new RelayCommand(FilterCategories); // Remains synchronous
+            AddNewCommand = new RelayCommand(AddNewCategory); // Remains synchronous
+            EditCommand = new RelayCommand(EditCategory); // Remains synchronous
+            ClearCommand = new RelayCommand(ClearFields); // Remains synchronous
         }
 
         private void EditCategory()
         {
             IsFormVisible = true;
         }
-
         #endregion
 
-        #region Methods
-
-        private void LoadData()
+        #region Async Methods
+        private async Task LoadDataAsync()
         {
-            ClearFields();
-
             try
             {
+                ClearFields();
                 _context = new AppDbContext();
 
-                var categories = _context.ProjectCategories.ToList();
-                ProjectCategories = new ObservableCollection<ProjectCategory>(categories);
-                FilteredCategories = new ObservableCollection<ProjectCategory>(categories);
+                var categories = await _context.ProjectCategories.ToListAsync();
 
-                OnPropertyChanged(nameof(ProjectCategories));
-                OnPropertyChanged(nameof(FilteredCategories));
+                await Application.Current.Dispatcher.InvokeAsync(() =>
+                {
+                    ProjectCategories = new ObservableCollection<ProjectCategory>(categories);
+                    FilteredCategories = new ObservableCollection<ProjectCategory>(categories);
+                    OnPropertyChanged(nameof(ProjectCategories));
+                    OnPropertyChanged(nameof(FilteredCategories));
+                });
             }
             catch (Exception ex)
             {
-                ShowError($"Error loading data: {ex.Message}");
+                await ShowErrorAsync($"Error loading data: {ex.Message}");
             }
         }
 
+        private async Task SaveCategoryAsync()
+        {
+            if (HasErrors || string.IsNullOrWhiteSpace(CategoryName))
+            {
+                await ShowWarningAsync("Please fix validation errors before saving.");
+                return;
+            }
+
+            try
+            {
+                if (_isNewRecord)
+                {
+                    await SaveNewCategoryAsync();
+                }
+                else
+                {
+                    await UpdateExistingCategoryAsync();
+                }
+
+                await _context.SaveChangesAsync();
+                await LoadDataAsync();
+                FilterCategories();
+
+                await ShowInfoAsync("Category saved successfully.");
+                IsFormVisible = false;
+            }
+            catch (Exception ex)
+            {
+                await ShowErrorAsync($"Error saving category: {ex.Message}");
+            }
+        }
+
+        private async Task SaveNewCategoryAsync()
+        {
+            var existing = await _context.ProjectCategories
+                .FirstOrDefaultAsync(c => c.Name == CategoryName);
+
+            if (existing != null)
+            {
+                throw new InvalidOperationException("A category with this name already exists.");
+            }
+
+            var category = new ProjectCategory { Name = CategoryName };
+            await _context.ProjectCategories.AddAsync(category);
+
+            await Application.Current.Dispatcher.InvokeAsync(() =>
+            {
+                ProjectCategories.Add(category);
+            });
+        }
+
+        private async Task UpdateExistingCategoryAsync()
+        {
+            if (SelectedCategory == null) return;
+
+            SelectedCategory.Name = CategoryName;
+            _context.Entry(SelectedCategory).State = EntityState.Modified;
+        }
+
+        private async Task DeleteCategoryAsync()
+        {
+            if (SelectedCategory == null) return;
+
+            try
+            {
+                var confirmed = await ShowConfirmationDialogAsync(
+                    "Are you sure you want to delete this category? This action cannot be undone.");
+
+                if (!confirmed) return;
+
+                _context.ProjectCategories.Remove(SelectedCategory);
+                await _context.SaveChangesAsync();
+
+                await Application.Current.Dispatcher.InvokeAsync(() =>
+                {
+                    ProjectCategories.Remove(SelectedCategory);
+                    FilteredCategories.Remove(SelectedCategory);
+                    ClearFields();
+                });
+
+                await ShowInfoAsync("Category deleted successfully.");
+            }
+            catch (Exception ex)
+            {
+                await ShowErrorAsync($"Error deleting category: {ex.Message}");
+            }
+        }
+        #endregion
+
+        #region Synchronous Methods
         private void FilterCategories()
         {
             if (string.IsNullOrWhiteSpace(SearchText))
@@ -149,7 +238,6 @@ namespace ProjectManager.ViewModels
                     ProjectCategories.Where(c => (c.Name ?? string.Empty).ToLower().Contains(searchLower))
                 );
             }
-
             OnPropertyChanged(nameof(FilteredCategories));
         }
 
@@ -158,87 +246,6 @@ namespace ProjectManager.ViewModels
             ClearFields();
             _isNewRecord = true;
             IsFormVisible = true;
-        }
-
-        private void SaveCategory()
-        {
-            if (HasErrors || string.IsNullOrWhiteSpace(CategoryName))
-            {
-                ShowWarning("Please fix validation errors before saving.");
-                return;
-            }
-
-            try
-            {
-                if (_isNewRecord)
-                {
-                    SaveNewCategory();
-                }
-                else
-                {
-                    UpdateExistingCategory();
-                }
-
-                _context.SaveChanges();
-                LoadData();
-                FilterCategories();
-
-                ShowInfo("Category saved successfully.");
-                IsFormVisible = false;
-            }
-            catch (Exception ex)
-            {
-                ShowError($"Error saving category: {ex.Message}");
-            }
-        }
-
-        private void SaveNewCategory()
-        {
-            var existing = _context.ProjectCategories.FirstOrDefault(c => c.Name == CategoryName);
-            if (existing != null)
-            {
-                throw new InvalidOperationException("A category with this name already exists.");
-            }
-
-            var category = new ProjectCategory { Name = CategoryName };
-            _context.ProjectCategories.Add(category);
-            ProjectCategories.Add(category);
-        }
-
-        private void UpdateExistingCategory()
-        {
-            if (SelectedCategory == null)
-                return;
-
-            SelectedCategory.Name = CategoryName;
-            _context.Entry(SelectedCategory).State = EntityState.Modified;
-        }
-
-        private void DeleteCategory()
-        {
-            if (SelectedCategory == null)
-                return;
-
-            var result = new ConfirmationDialog("Are you sure you want to delete this category? This action cannot be undone.");
-            result.ShowDialog();
-            if (!result.IsConfirmed)
-                return;
-
-            try
-            {
-                _context.ProjectCategories.Remove(SelectedCategory);
-                _context.SaveChanges();
-
-                ProjectCategories.Remove(SelectedCategory);
-                FilteredCategories.Remove(SelectedCategory);
-                ClearFields();
-
-                ShowInfo("Category deleted successfully.");
-            }
-            catch (Exception ex)
-            {
-                ShowError($"Error deleting category: {ex.Message}");
-            }
         }
 
         private void ClearFields()
@@ -252,11 +259,9 @@ namespace ProjectManager.ViewModels
             OnPropertyChanged(nameof(ErrorCollection));
             OnPropertyChanged(nameof(HasErrors));
         }
-
         #endregion
 
         #region Validation
-
         public string this[string propertyName]
         {
             get
@@ -277,10 +282,7 @@ namespace ProjectManager.ViewModels
             }
         }
 
-        public Dictionary<string, string> ErrorCollection
-        {
-            get => _errorCollection;
-        }
+        public Dictionary<string, string> ErrorCollection => _errorCollection;
 
         private void ValidateProperty(string propertyName)
         {
@@ -296,27 +298,41 @@ namespace ProjectManager.ViewModels
         }
 
         public bool HasErrors => _errorCollection.Values.Any(error => !string.IsNullOrEmpty(error));
-
         #endregion
 
-        #region Helper Methods
-
-        private void ShowError(string message)
+        #region Async Helper Methods
+        private async Task ShowErrorAsync(string message)
         {
-            new ErrorDialog("Error", message);
+            await Application.Current.Dispatcher.InvokeAsync(() =>
+            {
+                new ErrorDialog("Error", message);
+            });
+        }
+        private async Task<bool> ShowConfirmationDialogAsync(string message)
+        {
+            bool? result = await Application.Current.Dispatcher.InvokeAsync(() =>
+            {
+                var dialog = new ConfirmationDialog(message);
+                return dialog.ShowDialog();
+            });
+
+            return result == true;
+        }
+        private async Task ShowWarningAsync(string message)
+        {
+            await Application.Current.Dispatcher.InvokeAsync(() =>
+            {
+                new WarningDialog(message).ShowDialog();
+            });
         }
 
-        private void ShowWarning(string message)
+        private async Task ShowInfoAsync(string message)
         {
-            new WarningDialog(message);
-
+            await Application.Current.Dispatcher.InvokeAsync(() =>
+            {
+                new InformationDialog(message);
+            });
         }
-
-        private void ShowInfo(string message)
-        {
-            new InformationDialog(message);
-        }
-
         #endregion
     }
 }

@@ -4,19 +4,47 @@ using ProjectManager.Views.Dialogs;
 
 namespace ProjectManager.StartUp
 {
-    public class AutoMigration
+    public static class AutoMigration
     {
-        public async static Task MigrateAsync()
+        public static async Task MigrateAsync()
         {
-            using (AppDbContext _context = new AppDbContext())
+            try
             {
-                var pendingMigrations = await _context.Database.GetPendingMigrationsAsync();
-                if (pendingMigrations.Any())
+                await using (var context = new AppDbContext())
                 {
-                    await _context.Database.MigrateAsync();
-                    new InformationDialog("Database migrated successfully.");
+                    var pendingMigrations = await context.Database.GetPendingMigrationsAsync()
+                        .ConfigureAwait(false);
+
+                    if (pendingMigrations.Any())
+                    {
+                        await context.Database.MigrateAsync()
+                            .ConfigureAwait(false);
+
+                        await ShowMigrationSuccessDialogAsync()
+                            .ConfigureAwait(false);
+                    }
                 }
             }
+            catch (Exception ex)
+            {
+                await HandleMigrationErrorAsync(ex)
+                    .ConfigureAwait(false);
+                throw; // Re-throw to let caller handle if needed
+            }
+        }
+
+        private static async Task ShowMigrationSuccessDialogAsync()
+        {
+            var dialog = new InformationDialog("Database migrated successfully.");
+            // If your dialog has async methods, use them here
+            // Example: await dialog.ShowAsync();
+        }
+
+        private static async Task HandleMigrationErrorAsync(Exception ex)
+        {
+            // Implement proper error logging/notification here
+            // Example: await Logger.LogErrorAsync(ex);
+            Console.Error.WriteLine($"Migration failed: {ex.Message}");
         }
     }
 }
