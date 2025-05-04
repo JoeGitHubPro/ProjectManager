@@ -1,5 +1,6 @@
 ﻿using ProjectManager.Constants;
 using ProjectManager.ViewModels;
+using ProjectManager.Views.Database;
 using ProjectManager.Views.Dialogs;
 using ProjectManager.Views.Identities;
 using System.ComponentModel;
@@ -13,15 +14,29 @@ public class BaseViewModel : INotifyPropertyChanged//, IDataErrorInfo
     public event PropertyChangedEventHandler PropertyChanged;
     private readonly Dictionary<string, string> _errors = new();
 
+    public ICommand BackupAndRestoreCommand { get; }
     public ICommand CloseCommand { get; }
     public ICommand LogOutCommand { get; }
 
     public BaseViewModel()
     {
+        BackupAndRestoreCommand = new RelayCommand(BackupAndRestore);
         LogOutCommand = new RelayCommand(LogOut);
         CloseCommand = new RelayCommand(Close);
 
     }
+    private void BackupAndRestore()
+    {
+        if (UserSession.Role is Roles.Admin)
+        {
+            new BackupWindow().ShowDialog();
+        }
+        else
+        {
+            new WarningDialog("This action requires administrator privileges.");
+        }
+    }
+
     private void Close()
     {
         Application.Current.Shutdown();

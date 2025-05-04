@@ -8,6 +8,7 @@
         Background="{StaticResource BackgroundBrush}" WindowStyle="None" ResizeMode="NoResize">
    
     <Window.InputBindings>
+        <KeyBinding Gesture="Ctrl+B" Command="{Binding BackupAndRestoreCommand}" />
         <KeyBinding Gesture="ESC" Command="{Binding CloseCommand}" />
         <KeyBinding Gesture="Ctrl+l" Command="{Binding LogOutCommand}" />
     </Window.InputBindings>
