@@ -35,7 +35,7 @@
                 <Button Command="{Binding ReadExcelCommand}" 
                         Style="{StaticResource OutlinedButtonStyle}" 
                         Margin="0,0,10,0">
-                    <materialDesign:PackIcon Kind="FileExcel" Width="20" Height="20"/>
+                    <materialDesign:PackIcon Kind="FileExcel" Foreground="ForestGreen" Width="20" Height="20"/>
                 </Button>
                 <Button Command="{Binding AddNewCommand}" 
                         Style="{StaticResource PrimaryButtonStyle}">
