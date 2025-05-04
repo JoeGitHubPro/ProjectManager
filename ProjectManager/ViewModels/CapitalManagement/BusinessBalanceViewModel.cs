@@ -93,15 +93,19 @@ namespace ProjectManager.ViewModels.CapitalManagement
             }
 
             CashFlows = new ObservableCollection<CashFlowModel>(
-                BusinessBalance.CashFlows.OrderByDescending(x => x.TransactionDate));
+                (BusinessBalance.CashFlows ?? new List<CashFlowModel>())
+                .OrderByDescending(x => x.TransactionDate));
 
             Loans = new ObservableCollection<LoanModel>(
-                BusinessBalance.Loans.Where(x => !x.IsRepaid).OrderByDescending(x => x.LoanDate));
+                (BusinessBalance.Loans ?? new List<LoanModel>())
+                .Where(x => !x.IsRepaid)
+                .OrderByDescending(x => x.LoanDate));
 
             OnPropertyChanged(nameof(BusinessBalance));
             OnPropertyChanged(nameof(CashFlows));
             OnPropertyChanged(nameof(Loans));
         }
+
 
         private void SaveBusinessBalance()
         {
