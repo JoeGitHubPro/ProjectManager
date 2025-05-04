@@ -15,6 +15,9 @@
     <Color x:Key="BackgroundColor">#FFFFFF</Color>
     <Color x:Key="TextColor">#07223F</Color>
     <Color x:Key="BorderColor">#4A6CA3</Color>
+    <Color x:Key="InformationColor">#1b08c7</Color>
+    <Color x:Key="WarningColor">#fcba03</Color>
+    <Color x:Key="ErorrColor">#e00215</Color>
     
     <!-- Brushes -->
     <SolidColorBrush x:Key="PrimaryBrush" Color="{StaticResource PrimaryColor}"/>
@@ -25,5 +28,8 @@
     <SolidColorBrush x:Key="BackgroundBrush" Color="{StaticResource BackgroundColor}" />
     <SolidColorBrush x:Key="TextBrush" Color="{StaticResource TextColor}" />
     <SolidColorBrush x:Key="BorderBrush" Color="{StaticResource BorderColor}" />
+    <SolidColorBrush x:Key="InformationBrush" Color="{StaticResource InformationColor}" />
+    <SolidColorBrush x:Key="WarningBrush" Color="{StaticResource WarningColor}" />
+    <SolidColorBrush x:Key="ErorrBrush" Color="{StaticResource ErorrColor}" />
 
 </ResourceDictionary>

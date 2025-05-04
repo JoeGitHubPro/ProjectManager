@@ -48,7 +48,7 @@
                 <materialDesign:PackIcon Kind="AlertCircleOutline"
                                          Width="48"
                                          Height="48"
-                                         Foreground="{DynamicResource MaterialDesignValidationErrorBrush}"
+                                         Foreground="{DynamicResource ErorrBrush}"
                                          HorizontalAlignment="Center"
                                          Margin="0,0,0,20"/>
 
