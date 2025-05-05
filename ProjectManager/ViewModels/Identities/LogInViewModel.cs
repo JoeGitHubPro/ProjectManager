@@ -64,7 +64,6 @@ namespace ProjectManager.ViewModels.Identities
             }
 
             IdentityResultViewModel result;
-            MainWindow mainWindow = new MainWindow();
 
             using (var authService = new AuthenticationService())
             {
@@ -77,12 +76,10 @@ namespace ProjectManager.ViewModels.Identities
                 return;
             }
 
-            // new InformationDialog("Logged in successfully!");
-
             if (!SetCurrentUser(result))
                 return;
 
-            mainWindow.Show();
+            new MainWindow().Show();
             _window.Close();
         }
 
