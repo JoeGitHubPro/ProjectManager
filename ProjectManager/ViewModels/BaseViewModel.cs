@@ -52,20 +52,31 @@ public class BaseViewModel : INotifyPropertyChanged
 
         await Application.Current.Dispatcher.InvokeAsync(() =>
         {
-            var logInWindow = new LogInWindow();
 
-            foreach (Window window in Application.Current.Windows)
+            // Clear session
+            UserSession.ClearSession();
+
+            // Show login window
+            var loginWindow = new LogInWindow();
+            loginWindow.Show();
+
+            // Close all windows
+            foreach (Window window in Application.Current.Windows.OfType<Window>().ToList())
             {
-                if (window != logInWindow)
+                if (window != loginWindow)
+                {
                     window.Close();
+
+                }
             }
 
-            UserSession.ClearSession();
-            logInWindow.Show();
+
         });
 
         await ShowInformationDialogAsync("Successfully logged out!");
     }
+
+
     #endregion
 
     #region Property Handling
