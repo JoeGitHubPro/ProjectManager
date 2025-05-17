@@ -65,6 +65,7 @@
                 <DataGrid.Columns>
                     <DataGridTextColumn Header="Name" Binding="{Binding Name}" Width="*"/>
                     <DataGridTextColumn Header="Phone" Binding="{Binding Phone}" Width="*"/>
+                    <DataGridTextColumn Header="Description" Binding="{Binding Description}" Width="*"/>
                     <DataGridTextColumn Header="Location" Binding="{Binding Location}" Width="*"/>
                     <DataGridTextColumn Header="Whatsapp" Binding="{Binding Whatsapp}" Width="*"/>
                     <DataGridTextColumn Header="Facebook" Binding="{Binding Facebook}" Width="*"/>
