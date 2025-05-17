@@ -1,4 +1,5 @@
 ﻿using ProjectManager.Config;
+using ProjectManager.Constants;
 using ProjectManager.Views.Dialogs;
 using System.Diagnostics;
 using System.IO;
@@ -18,7 +19,7 @@ namespace ProjectManager.Helpers
 
             // Build unique folder name
             string guid = Guid.NewGuid().ToString("N");
-            string folderName = guid;
+            string folderName = $"{UserSession.Username}-{guid}";
             string fullPath = Path.Combine(baseDir, folderName);
 
             // Create the main folder
