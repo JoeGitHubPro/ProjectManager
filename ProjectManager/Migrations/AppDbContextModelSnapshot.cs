@@ -378,6 +378,26 @@ namespace ProjectManager.Migrations
                     b.ToTable("Consumers");
                 });
 
+            modelBuilder.Entity("ProjectManager.Models.Location", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Description")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("Locations");
+                });
+
             modelBuilder.Entity("ProjectManager.Models.Project", b =>
                 {
                     b.Property<int>("Id")

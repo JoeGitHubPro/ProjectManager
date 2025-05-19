@@ -15,6 +15,7 @@ namespace ProjectManager.ViewModels
         public ProjectOrderViewModel ProjectOrderVM { get; private set; }
         public UserManagementViewModel UserManagementVM { get; private set; }
         public BusinessBalanceViewModel BusinessBalanceVM { get; private set; }
+        public LocationViewModel LocationVM { get; private set; }
         public WelcomeViewModel WelcomeVM { get; private set; }
 
         // Role-based access properties
@@ -23,6 +24,7 @@ namespace ProjectManager.ViewModels
         public bool IsProjectsEnabled { get; private set; }
         public bool IsConsumersEnabled { get; private set; } = true; // Enabled for all roles
         public bool IsUsersManagementEnabled { get; private set; }
+        public bool IsLocationsEnabled { get; private set; }
         public bool IsBusinessBalanceEnabled { get; private set; }
 
         public MainViewModel()
@@ -34,6 +36,7 @@ namespace ProjectManager.ViewModels
             ProjectOrderVM = new ProjectOrderViewModel();
             UserManagementVM = new UserManagementViewModel();
             BusinessBalanceVM = BusinessBalanceViewModel.Instance;
+            LocationVM = new LocationViewModel();
             WelcomeVM = new WelcomeViewModel();
 
             SetupRoleBasedAccess();
@@ -49,12 +52,14 @@ namespace ProjectManager.ViewModels
                     IsProjectCategoriesEnabled = true;
                     IsProjectsEnabled = true;
                     IsBusinessBalanceEnabled = true;
+                    IsLocationsEnabled = true;
                     break;
 
                 case Roles.Manager:
                     IsProjectOrderEnabled = true;
                     IsProjectCategoriesEnabled = true;
                     IsProjectsEnabled = true;
+                    IsLocationsEnabled = true;
                     IsBusinessBalanceEnabled = true;
                     break;
 
@@ -75,6 +80,7 @@ namespace ProjectManager.ViewModels
             OnPropertyChanged(nameof(IsConsumersEnabled));
             OnPropertyChanged(nameof(IsUsersManagementEnabled));
             OnPropertyChanged(nameof(IsBusinessBalanceEnabled));
+            OnPropertyChanged(nameof(IsLocationsEnabled));
         }
 
         // Optional: Async initialization if needed

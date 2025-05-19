@@ -14,6 +14,7 @@ public partial class AppDbContext : IdentityDbContext<IdentityUser>
     public virtual DbSet<Project> Projects { get; set; }
     public virtual DbSet<ProjectCategory> ProjectCategories { get; set; }
     public virtual DbSet<Consumer> Consumers { get; set; }
+    public virtual DbSet<Location> Locations { get; set; }
 
     //Capital Management
     public DbSet<LoanModel> Loans { get; set; }

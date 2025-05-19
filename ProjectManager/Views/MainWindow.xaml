@@ -38,9 +38,9 @@
             <TabItem Header="Projects" IsEnabled="{Binding IsProjectsEnabled}">
                 <views:ProjectView DataContext="{Binding ProjectVM}" />
             </TabItem>
-            <TabItem Header="Business Balance " IsEnabled="{Binding IsBusinessBalanceEnabled}">
-                <CapitalManagement:BusinessBalanceView DataContext="{Binding BusinessBalanceVM}" />
-            </TabItem>   
+            <TabItem Header="Locations" IsEnabled="{Binding IsLocationsEnabled}">
+                <views:LocationView DataContext="{Binding LocationVM}" />
+            </TabItem>          
             <TabItem Header="Users Management" IsEnabled="{Binding IsUsersManagementEnabled}">
                 <Identity:UserManagementView DataContext="{Binding UserManagementVM}"/>
             </TabItem>
