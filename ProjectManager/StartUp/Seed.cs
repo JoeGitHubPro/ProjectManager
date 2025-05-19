@@ -15,6 +15,11 @@ namespace ProjectManager.StartUp
             var user = await service.GetUserAsync("Admin")
                 .ConfigureAwait(false);
 
+            if (user is null)
+            {
+                user = await service.GetUserAsync("Admin@mail.com")
+                .ConfigureAwait(false);
+            }
             if (user != null) return;
 
             var result = await service.RegisterAsync(

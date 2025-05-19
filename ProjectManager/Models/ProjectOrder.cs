@@ -1,4 +1,5 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using Microsoft.AspNetCore.Identity;
+using System.ComponentModel.DataAnnotations;
 
 namespace ProjectManager.Models;
 public class ProjectOrder
@@ -24,7 +25,8 @@ public class ProjectOrder
     // Foreign Key to Consumer.Id
     public int ConsumerId { get; set; }
     public Consumer Consumer { get; set; }
-
+    public string? SellerId { get; set; }
+    public IdentityUser? Seller { get; set; }
     public int ProjectId { get; set; }
     public Project Project { get; set; }
 }

@@ -154,6 +154,22 @@ namespace ProjectManager.Service
             var user = await GetUserAsync(usernameOrEmail);
             return user != null && await userManager.IsInRoleAsync(user, role);
         }
+        public async Task<List<IdentityUser>> GetUsersInRoleAsync(string roleName)
+        {
+            using var userManager = CreateUserManager();
+
+            var usersInRole = new List<IdentityUser>();
+
+            foreach (var user in userManager.Users)
+            {
+                if (await userManager.IsInRoleAsync(user, roleName))
+                {
+                    usersInRole.Add(user);
+                }
+            }
+
+            return usersInRole;
+        }
 
         public async Task<bool> EditUserAsync(UserViewModel user)
         {

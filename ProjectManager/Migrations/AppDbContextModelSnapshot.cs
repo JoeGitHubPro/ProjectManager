@@ -453,6 +453,9 @@ namespace ProjectManager.Migrations
                     b.Property<int>("ProjectId")
                         .HasColumnType("int");
 
+                    b.Property<string>("SellerId")
+                        .HasColumnType("nvarchar(450)");
+
                     b.Property<DateTime>("SoldDate")
                         .HasColumnType("datetime2");
 
@@ -464,6 +467,8 @@ namespace ProjectManager.Migrations
                     b.HasIndex("ConsumerId");
 
                     b.HasIndex("ProjectId");
+
+                    b.HasIndex("SellerId");
 
                     b.ToTable("ProjectOrders");
                 });
@@ -566,9 +571,15 @@ namespace ProjectManager.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
+                    b.HasOne("Microsoft.AspNetCore.Identity.IdentityUser", "Seller")
+                        .WithMany()
+                        .HasForeignKey("SellerId");
+
                     b.Navigation("Consumer");
 
                     b.Navigation("Project");
+
+                    b.Navigation("Seller");
                 });
 
             modelBuilder.Entity("ProjectManager.Models.CapitalManagement.BusinessBalanceModel", b =>

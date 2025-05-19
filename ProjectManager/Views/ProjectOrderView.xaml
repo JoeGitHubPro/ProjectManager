@@ -59,6 +59,7 @@
                 <DataGrid.Columns>
                     <DataGridTextColumn Header="Project" Binding="{Binding Project.Name}" Width="*"/>
                     <DataGridTextColumn Header="Discount" Binding="{Binding Discount, StringFormat={}{0}%}" Width="Auto"/>
+                    <DataGridTextColumn Header="Seller" Binding="{Binding Seller.UserName}" Width="Auto"/>
                     <DataGridTextColumn Header="Commission" Binding="{Binding Commission, StringFormat={}{0}%}" Width="Auto"/>
                     <DataGridTextColumn Header="Installation Info" Binding="{Binding InstallationSystemInfo}" Width="*"/>
                     <DataGridTextColumn Header="Sold Date" Binding="{Binding SoldDate, StringFormat=d}" Width="Auto"/>
@@ -123,6 +124,16 @@
                                   Style="{StaticResource MaterialDesignComboBox}" 
                                   Margin="0,0,0,15"
                                   helpers:EnterKeyTraversal.IsEnabled="True"/>
+                        
+                        <Label Content="Seller"/>
+                        <ComboBox ItemsSource="{Binding Sellers}" 
+          DisplayMemberPath="UserName"
+          SelectedValuePath="Id"
+          SelectedValue="{Binding SelectedSellerId, UpdateSourceTrigger=PropertyChanged}"
+          Style="{StaticResource MaterialDesignComboBox}" 
+          Margin="0,0,0,15"
+          helpers:EnterKeyTraversal.IsEnabled="True"/>
+
 
                         <Label Content="Sold Date"/>
                         <DatePicker SelectedDate="{Binding SoldDate, UpdateSourceTrigger=PropertyChanged}"

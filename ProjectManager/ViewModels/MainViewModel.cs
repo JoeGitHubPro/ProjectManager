@@ -33,7 +33,7 @@ namespace ProjectManager.ViewModels
             ProjectVM = new ProjectViewModel();
             ProjectOrderVM = new ProjectOrderViewModel();
             UserManagementVM = new UserManagementViewModel();
-            BusinessBalanceVM = new BusinessBalanceViewModel();
+            BusinessBalanceVM = BusinessBalanceViewModel.Instance;
             WelcomeVM = new WelcomeViewModel();
 
             SetupRoleBasedAccess();

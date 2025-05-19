@@ -1,7 +1,10 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
+using ProjectManager.Constants;
 using ProjectManager.Data;
 using ProjectManager.Helpers;
 using ProjectManager.Models;
+using ProjectManager.Service;
 using ProjectManager.ViewModels.CapitalManagement;
 using ProjectManager.Views.Dialogs;
 using System.Collections;
@@ -20,6 +23,7 @@ namespace ProjectManager.ViewModels
 
         public ObservableCollection<ProjectOrder> ProjectOrders { get; } = new();
         public ObservableCollection<Consumer> Consumers { get; } = new();
+        public ObservableCollection<IdentityUser> Sellers { get; } = new();
         public ObservableCollection<Project> Projects { get; } = new();
 
         public ProjectOrderViewModel()
@@ -97,6 +101,16 @@ namespace ProjectManager.ViewModels
                 ValidateProperty(value);
             }
         }
+        private string _selectedSellerId;
+        public string SelectedSellerId
+        {
+            get => _selectedSellerId;
+            set
+            {
+                SetProperty(ref _selectedSellerId, value);
+                ValidateProperty(value);
+            }
+        }
 
         private int _selectedProjectId;
         public int SelectedProjectId
@@ -142,6 +156,7 @@ namespace ProjectManager.ViewModels
                     {
                         Discount = value.Discount;
                         Commission = value.Commission;
+                        SelectedSellerId = value.SellerId;
                         InstallationSystemInfo = value.InstallationSystemInfo;
                         SoldDate = value.SoldDate;
                         Notes = value.Notes;
@@ -190,15 +205,27 @@ namespace ProjectManager.ViewModels
                 {
                     ProjectOrders.Clear();
                     Consumers.Clear();
+                    Sellers.Clear();
                     Projects.Clear();
                 });
 
                 var orders = await _context.ProjectOrders
                     .Include(p => p.Project)
                     .Include(p => p.Consumer)
+                    .Include(s => s.Seller)
                     .ToListAsync();
 
                 var consumers = await _context.Consumers.ToListAsync();
+
+
+
+                List<IdentityUser> sellers;
+
+                using (AuthenticationService service = new AuthenticationService())
+                {
+                    sellers = await service.GetUsersInRoleAsync(Roles.User);
+                }
+
                 var projects = await _context.Projects
                     .Include(p => p.ProjectCategory)
                     .ToListAsync();
@@ -207,6 +234,7 @@ namespace ProjectManager.ViewModels
                 {
                     foreach (var o in orders) ProjectOrders.Add(o);
                     foreach (var c in consumers) Consumers.Add(c);
+                    foreach (var s in sellers) Sellers.Add(s);
                     foreach (var p in projects) Projects.Add(p);
                 });
             }
@@ -272,6 +300,7 @@ namespace ProjectManager.ViewModels
                     {
                         FolderSerial = await FolderHelper.CreateUniqueFolder(),
                         Discount = Discount,
+                        SellerId = SelectedSellerId,
                         Commission = Commission,
                         InstallationSystemInfo = InstallationSystemInfo,
                         SoldDate = SoldDate,
@@ -282,7 +311,7 @@ namespace ProjectManager.ViewModels
                     };
 
                     // Save income record
-                    var balanceVm = new BusinessBalanceViewModel();
+                    var balanceVm = BusinessBalanceViewModel.Instance;
 
                     await balanceVm.SaveIncomeAsync(
                         order.TotalPrice,
@@ -294,6 +323,7 @@ namespace ProjectManager.ViewModels
                 {
                     SelectedOrder.Discount = Discount;
                     SelectedOrder.Commission = Commission;
+                    SelectedOrder.SellerId = SelectedSellerId;
                     SelectedOrder.InstallationSystemInfo = InstallationSystemInfo;
                     SelectedOrder.SoldDate = SoldDate;
                     SelectedOrder.Notes = Notes;

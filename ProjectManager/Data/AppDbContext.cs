@@ -51,6 +51,7 @@ public partial class AppDbContext : IdentityDbContext<IdentityUser>
             .WithMany(p => p.ProjectOrders)
             .HasForeignKey(po => po.ProjectId);
 
+
         OnModelCreatingPartial(modelBuilder);
     }
     protected override async void OnConfiguring(DbContextOptionsBuilder optionsBuilder)

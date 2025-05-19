@@ -12,6 +12,11 @@ namespace ProjectManager.ViewModels.CapitalManagement
 {
     public class BusinessBalanceViewModel : BaseViewModel
     {
+        private static readonly Lazy<BusinessBalanceViewModel> _instance =
+        new Lazy<BusinessBalanceViewModel>(() => new BusinessBalanceViewModel());
+
+        public static BusinessBalanceViewModel Instance => _instance.Value;
+
         private readonly AppDbContext _context;
         private LoanModel? selectedLoan;
 
@@ -54,7 +59,7 @@ namespace ProjectManager.ViewModels.CapitalManagement
         public ICommand AddReserveCommand { get; }
         public ICommand ReleaseReserveCommand { get; }
 
-        public BusinessBalanceViewModel()
+        private BusinessBalanceViewModel()
         {
             _context = new AppDbContext();
 
