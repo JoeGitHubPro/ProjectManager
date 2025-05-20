@@ -173,44 +173,57 @@ namespace ProjectManager.Service
 
         public async Task<bool> EditUserAsync(UserViewModel user)
         {
-            using var userManager = CreateUserManager();
-            var existingUser = await userManager.FindByIdAsync(user.UserId);
-
-            if (existingUser == null)
-                return false;
-
-            // Check for duplicate email
-            var emailUser = await userManager.FindByEmailAsync(user.Email);
-            if (emailUser != null && emailUser.Id != user.UserId)
-                throw new InvalidOperationException("Email is already taken by another user.");
-
-            // Check for duplicate username
-            var usernameUser = await userManager.FindByNameAsync(user.UserName);
-            if (usernameUser != null && usernameUser.Id != user.UserId)
-                throw new InvalidOperationException("Username is already taken by another user.");
-
-            // Update user properties
-            existingUser.UserName = user.UserName;
-            existingUser.Email = user.Email;
-            existingUser.PhoneNumber = user.PhoneNumber;
-
-            // Update roles
-            var currentRoles = await userManager.GetRolesAsync(existingUser);
-            await userManager.RemoveFromRolesAsync(existingUser, currentRoles);
-            await userManager.AddToRoleAsync(existingUser, user.Roles);
-
-            // Update password if provided
-            if (!string.IsNullOrEmpty(user.Password))
+            using (var userManager = CreateUserManager())
             {
-                var token = await userManager.GeneratePasswordResetTokenAsync(existingUser);
-                var result = await userManager.ResetPasswordAsync(existingUser, token, user.Password);
-                if (!result.Succeeded)
-                    throw new InvalidOperationException($"Password update failed: {string.Join(", ", result.Errors.Select(e => e.Description))}");
-            }
+                var editUser = await userManager.FindByIdAsync(user.UserId); // Get user by ID
 
-            var updateResult = await userManager.UpdateAsync(existingUser);
-            return updateResult.Succeeded;
+                if (editUser == null)
+                    return false; // User does not exist
+
+                // Check if email is already used by another user (excluding the current user)
+                var emailExists = await userManager.Users.AnyAsync(u => u.Email == user.Email && u.Id != user.UserId);
+                if (emailExists)
+                    throw new InvalidOperationException("Email is already taken by another user.");
+
+                // Check if username is already used by another user (excluding the current user)
+                var usernameExists = await userManager.Users.AnyAsync(u => u.UserName == user.UserName && u.Id != user.UserId);
+                if (usernameExists)
+                    throw new InvalidOperationException("Username is already taken by another user.");
+
+                // Update user details
+                editUser.UserName = user.UserName;
+                editUser.Email = user.Email;
+                editUser.PhoneNumber = user.PhoneNumber;
+
+                // Update roles
+                var currentRoles = await userManager.GetRolesAsync(editUser);
+                await userManager.RemoveFromRolesAsync(editUser, currentRoles);
+                await userManager.AddToRoleAsync(editUser, user.Roles);
+
+                // Update password if a new password is provided
+                if (!string.IsNullOrEmpty(user.Password))
+                {
+                    // Remove the current password
+                    var removePasswordResult = await userManager.RemovePasswordAsync(editUser);
+                    if (!removePasswordResult.Succeeded)
+                    {
+                        throw new InvalidOperationException("Failed to remove the current password.");
+                    }
+
+                    // Add the new password
+                    var addPasswordResult = await userManager.AddPasswordAsync(editUser, user.Password);
+                    if (!addPasswordResult.Succeeded)
+                    {
+                        throw new InvalidOperationException("Failed to set the new password.");
+                    }
+                }
+
+                _context.Update(editUser);
+                await _context.SaveChangesAsync();
+                return true;
+            }
         }
+
 
         public async Task<IdentityResultViewModel> DeleteUserAsync(string email)
         {

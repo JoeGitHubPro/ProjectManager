@@ -24,7 +24,7 @@ namespace ProjectManager.ViewModels
         public bool IsProjectsEnabled { get; private set; }
         public bool IsConsumersEnabled { get; private set; } = true; // Enabled for all roles
         public bool IsUsersManagementEnabled { get; private set; }
-        public bool IsLocationsEnabled { get; private set; }
+        public bool IsLocationsEnabled { get; private set; } = true; // Enabled for all roles
         public bool IsBusinessBalanceEnabled { get; private set; }
 
         public MainViewModel()
@@ -52,14 +52,12 @@ namespace ProjectManager.ViewModels
                     IsProjectCategoriesEnabled = true;
                     IsProjectsEnabled = true;
                     IsBusinessBalanceEnabled = true;
-                    IsLocationsEnabled = true;
                     break;
 
                 case Roles.Manager:
                     IsProjectOrderEnabled = true;
                     IsProjectCategoriesEnabled = true;
                     IsProjectsEnabled = true;
-                    IsLocationsEnabled = true;
                     IsBusinessBalanceEnabled = true;
                     break;
 

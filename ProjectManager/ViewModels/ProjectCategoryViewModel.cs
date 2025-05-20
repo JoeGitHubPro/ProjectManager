@@ -322,7 +322,7 @@ namespace ProjectManager.ViewModels
         {
             await Application.Current.Dispatcher.InvokeAsync(() =>
             {
-                new WarningDialog(message).ShowDialog();
+                new WarningDialog(message);
             });
         }
 
