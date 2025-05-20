@@ -345,7 +345,10 @@ namespace ProjectManager.Migrations
                     b.Property<string>("Instagram")
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<string>("Location")
+                    b.Property<int>("LocationId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("LocationMap")
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("Name")
@@ -358,8 +361,14 @@ namespace ProjectManager.Migrations
                     b.Property<string>("Phone")
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<string>("ResponsibleSellerId")
+                        .HasColumnType("nvarchar(450)");
+
                     b.Property<string>("Site")
                         .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("int");
 
                     b.Property<string>("TikTok")
                         .HasColumnType("nvarchar(max)");
@@ -372,8 +381,12 @@ namespace ProjectManager.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("LocationId");
+
                     b.HasIndex("Name")
                         .IsUnique();
+
+                    b.HasIndex("ResponsibleSellerId");
 
                     b.ToTable("Consumers");
                 });
@@ -564,6 +577,23 @@ namespace ProjectManager.Migrations
                         .IsRequired();
 
                     b.Navigation("Lender");
+                });
+
+            modelBuilder.Entity("ProjectManager.Models.Consumer", b =>
+                {
+                    b.HasOne("ProjectManager.Models.Location", "Location")
+                        .WithMany()
+                        .HasForeignKey("LocationId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Microsoft.AspNetCore.Identity.IdentityUser", "ResponsibleSeller")
+                        .WithMany()
+                        .HasForeignKey("ResponsibleSellerId");
+
+                    b.Navigation("Location");
+
+                    b.Navigation("ResponsibleSeller");
                 });
 
             modelBuilder.Entity("ProjectManager.Models.Project", b =>

@@ -116,7 +116,7 @@ public class BaseViewModel : INotifyPropertyChanged
     {
         await Application.Current.Dispatcher.InvokeAsync(() =>
         {
-            new InformationDialog(message).ShowDialog();
+            new InformationDialog(message);
         });
     }
 
@@ -124,7 +124,7 @@ public class BaseViewModel : INotifyPropertyChanged
     {
         await Application.Current.Dispatcher.InvokeAsync(() =>
         {
-            new WarningDialog(message).ShowDialog();
+            new WarningDialog(message);
         });
     }
 

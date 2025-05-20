@@ -52,7 +52,34 @@
         <Setter Property="BorderThickness" Value="1" />
         <Setter Property="FontSize" Value="16" />
     </Style>
-
+    <Style x:Key="ConsumerRowStyle" TargetType="DataGridRow">
+        <Style.Triggers>
+            <DataTrigger Binding="{Binding Status}" Value="Inactive">
+                <Setter Property="Background" Value="LightGray"/>
+            </DataTrigger>
+            <DataTrigger Binding="{Binding Status}" Value="Prospect">
+                <Setter Property="Background" Value="LightBlue"/>
+            </DataTrigger>
+            <DataTrigger Binding="{Binding Status}" Value="Lead">
+                <Setter Property="Background" Value="LightGoldenrodYellow"/>
+            </DataTrigger>
+            <DataTrigger Binding="{Binding Status}" Value="Follow_up_Needed">
+                <Setter Property="Background" Value="LightCoral"/>
+            </DataTrigger>
+            <DataTrigger Binding="{Binding Status}" Value="Converted">
+                <Setter Property="Background" Value="LightGreen"/>
+            </DataTrigger>
+            <DataTrigger Binding="{Binding Status}" Value="Churned">
+                <Setter Property="Background" Value="OrangeRed"/>
+            </DataTrigger>
+            <DataTrigger Binding="{Binding Status}" Value="Lost">
+                <Setter Property="Background" Value="Tomato"/>
+            </DataTrigger>
+            <DataTrigger Binding="{Binding Status}" Value="Default">
+                <Setter Property="Background" Value="White"/>
+            </DataTrigger>
+        </Style.Triggers>
+    </Style>
     <!-- ComboBox Style -->
     <Style x:Key="MaterialDesignComboBox" TargetType="ComboBox">
         <Setter Property="FontFamily" Value="Roboto" />

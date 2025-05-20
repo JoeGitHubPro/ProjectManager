@@ -1,5 +1,7 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Win32;
+using ProjectManager.Constants;
 using ProjectManager.Data;
 using ProjectManager.Helpers;
 using ProjectManager.Models;
@@ -19,7 +21,7 @@ namespace ProjectManager.ViewModels
         private string _commercialRegisterNo = string.Empty;
         private string _name = string.Empty;
         private string _description = string.Empty;
-        private string _location = string.Empty;
+        private string _locationMap = string.Empty;
         private string _whatsapp = string.Empty;
         private string _facebook = string.Empty;
         private string _tikTok = string.Empty;
@@ -27,6 +29,12 @@ namespace ProjectManager.ViewModels
         private string _instagram = string.Empty;
         private string _site = string.Empty;
         private string _notes = string.Empty;
+        private Location _selectedLocation;
+        private int _locationId;
+        private IdentityUser _selectedSeller;
+        private ConsumerStatus? _selectedStatus = null;
+        private string _responsibleSellerId;
+        private ConsumerStatus _consumerStatus = ConsumerStatus.Default;
         private bool _isNewRecord = true;
 
         public ConsumerViewModel()
@@ -38,38 +46,170 @@ namespace ProjectManager.ViewModels
         #region Properties
         public ObservableCollection<Consumer> Consumers { get; private set; } = new();
         public ObservableCollection<Consumer> FilteredConsumers { get; private set; } = new();
+        public ObservableCollection<Location> Locations { get; private set; } = new();
+        public ObservableCollection<IdentityUser> Sellers { get; private set; } = new();
+        public Array ConsumerStatuses => Enum.GetValues(typeof(ConsumerStatus));
 
+        public Location SelectedLocationFilter
+        {
+            get => selectedLocationFilter;
+            set
+            {
+                selectedLocationFilter = value;
+                FilterConsumers();
+            }
+        }
         public Consumer SelectedConsumer
         {
             get => _selectedConsumer;
             set
             {
-                _selectedConsumer = value;
-                OnPropertyChanged();
-                OnPropertyChanged(nameof(CanDelete));
+                if (_selectedConsumer != value)
+                {
+                    _selectedConsumer = value;
+                    OnPropertyChanged();
+                    OnPropertyChanged(nameof(CanDelete));
 
-                if (value != null)
+
+
+                    if (value != null)
+                    {
+                        _isNewRecord = false;
+
+                        Phone = value.Phone;
+                        CommercialRegisterNo = value.CommercialRegisterNo;
+                        Name = value.Name;
+                        Description = value.Description;
+                        LocationId = value.LocationId;
+                        LocationMap = value.LocationMap;
+                        ConsumerStatus = value.Status;
+                        ResponsibleSellerId = value.ResponsibleSellerId;
+                        Whatsapp = value.Whatsapp;
+                        Facebook = value.Facebook;
+                        TikTok = value.TikTok;
+                        X = value.X;
+                        Instagram = value.Instagram;
+                        Site = value.Site;
+                        Notes = value.Notes;
+
+                        // Find and set the selected location
+                        SelectedLocation = Locations.FirstOrDefault(l => l.Id == value.LocationId);
+
+                        // Find and set the selected seller
+                        SelectedSeller = Sellers.FirstOrDefault(s => s.Id == value.ResponsibleSellerId);
+                    }
+                }
+            }
+        }
+        private ObservableCollection<Consumer> _selectedConsumers = new ObservableCollection<Consumer>();
+        public ObservableCollection<Consumer> SelectedConsumers
+        {
+            get => _selectedConsumers;
+            set
+            {
+                _selectedConsumers = value;
+                OnPropertyChanged();
+
+                // You can trigger any logic that depends on the selection here
+                OnPropertyChanged(nameof(CanDelete));
+                IsFormVisible = _selectedConsumers.Any();
+
+                // Example: if you want to use the first selected item to populate form fields
+                var first = _selectedConsumers.FirstOrDefault();
+                if (first != null)
                 {
                     _isNewRecord = false;
-                    IsFormVisible = true;
+                    Phone = first.Phone;
+                    CommercialRegisterNo = first.CommercialRegisterNo;
+                    Name = first.Name;
+                    Description = first.Description;
+                    LocationId = first.LocationId;
+                    LocationMap = first.LocationMap;
+                    ConsumerStatus = first.Status;
+                    ResponsibleSellerId = first.ResponsibleSellerId;
+                    Whatsapp = first.Whatsapp;
+                    Facebook = first.Facebook;
+                    TikTok = first.TikTok;
+                    X = first.X;
+                    Instagram = first.Instagram;
+                    Site = first.Site;
+                    Notes = first.Notes;
 
-                    Phone = value.Phone;
-                    CommercialRegisterNo = value.CommercialRegisterNo;
-                    Name = value.Name;
-                    Description = value.Description;
-                    Location = value.Location;
-                    Whatsapp = value.Whatsapp;
-                    Facebook = value.Facebook;
-                    TikTok = value.TikTok;
-                    X = value.X;
-                    Instagram = value.Instagram;
-                    Site = value.Site;
-                    Notes = value.Notes;
+                    // Set selected location and seller from the first consumer
+                    SelectedLocation = Locations.FirstOrDefault(l => l.Id == first.LocationId);
+                    SelectedSeller = Sellers.FirstOrDefault(s => s.Id == first.ResponsibleSellerId);
                 }
             }
         }
 
+        public Location SelectedLocation
+        {
+            get => _selectedLocation;
+            set
+            {
+                _selectedLocation = value;
+                if (value != null)
+                {
+                    LocationId = value.Id;
+                }
+                OnPropertyChanged();
+            }
+        }
+
+        public IdentityUser SelectedSeller
+        {
+            get => _selectedSeller;
+            set
+            {
+                _selectedSeller = value;
+                if (value != null)
+                {
+                    ResponsibleSellerId = value.Id;
+                }
+                OnPropertyChanged();
+            }
+        }
+        public IdentityUser SelectedSellerFilter
+        {
+            get => selectedSellerFilter;
+            set
+            {
+                selectedSellerFilter = value;
+                FilterConsumers();
+                OnPropertyChanged();
+            }
+        }
+        public ConsumerStatus? SelectedStatus
+        {
+            get => _selectedStatus;
+            set
+            {
+                if (_selectedStatus != value)
+                {
+                    _selectedStatus = value;
+                    FilterConsumers();
+                    OnPropertyChanged();
+                }
+            }
+        }
+
+
+        public ConsumerStatus ConsumerStatus
+        {
+            get => _consumerStatus;
+            set
+            {
+                _consumerStatus = value;
+                OnPropertyChanged();
+            }
+        }
+
         private bool _isFormVisible = false;
+        private Location selectedLocationFilter;
+        private IdentityUser selectedSellerFilter;
+        private string rangeStart;
+        private string rangeEnd;
+
         public bool IsFormVisible
         {
             get => _isFormVisible;
@@ -87,7 +227,9 @@ namespace ProjectManager.ViewModels
         }
 
         public string Description { get => _description; set => SetField(ref _description, value); }
-        public string Location { get => _location; set => SetField(ref _location, value); }
+        public int LocationId { get => _locationId; set => SetField(ref _locationId, value); }
+        public string LocationMap { get => _locationMap; set => SetField(ref _locationMap, value); }
+        public string ResponsibleSellerId { get => _responsibleSellerId; set => SetField(ref _responsibleSellerId, value); }
         public string Whatsapp { get => string.IsNullOrEmpty(_whatsapp) ? Phone : _whatsapp; set => SetField(ref _whatsapp, value); }
         public string Facebook { get => _facebook; set => SetField(ref _facebook, value); }
         public string TikTok { get => _tikTok; set => SetField(ref _tikTok, value); }
@@ -96,7 +238,8 @@ namespace ProjectManager.ViewModels
         public string Site { get => _site; set => SetField(ref _site, value); }
         public string Notes { get => _notes; set => SetField(ref _notes, value); }
         public string Phone { get => _phone; set => SetField(ref _phone, value); }
-
+        public string RangeStart { get => rangeStart; set { SetField(ref rangeStart, value); FilterConsumers(); } }
+        public string RangeEnd { get => rangeEnd; set { SetField(ref rangeEnd, value); FilterConsumers(); } }
         public string CommercialRegisterNo
         {
             get => _commercialRegisterNo;
@@ -122,7 +265,9 @@ namespace ProjectManager.ViewModels
         public ICommand DeleteCommand { get; private set; }
         public ICommand RefreshCommand { get; private set; }
         public ICommand SearchCommand { get; private set; }
+        public ICommand ApplyRangeFilterCommand { get; private set; }
         public ICommand AddNewCommand { get; private set; }
+        public ICommand AssignCommand { get; private set; }
         public ICommand ReadExcelCommand { get; private set; }
         public ICommand EditCommand { get; private set; }
         public ICommand ClearCommand { get; private set; }
@@ -133,11 +278,40 @@ namespace ProjectManager.ViewModels
             DeleteCommand = new AsyncRelayCommand(DeleteConsumerAsync);
             RefreshCommand = new AsyncRelayCommand(LoadDataAsync);
             SearchCommand = new RelayCommand(FilterConsumers);
+            ApplyRangeFilterCommand = new RelayCommand(FilterConsumers);
             AddNewCommand = new RelayCommand(AddNewConsumer);
+            AssignCommand = new AsyncRelayCommand(AssignConsumerAsync);
             ReadExcelCommand = new AsyncRelayCommand(ReadExcelAsync);
             EditCommand = new RelayCommand(EditConsumer);
             ClearCommand = new RelayCommand(ClearFields);
         }
+
+        private async Task AssignConsumerAsync()
+        {
+            var dialog = new AssignConsumers();
+
+            if (dialog.ShowDialog() == true)
+            {
+                string? sellerId = dialog.SelectedUserId;
+
+                if (!string.IsNullOrWhiteSpace(sellerId) && SelectedConsumers?.Any() == true)
+                {
+                    var consumers = SelectedConsumers.ToList();
+
+                    foreach (var consumer in consumers)
+                    {
+                        consumer.ResponsibleSellerId = sellerId;
+                    }
+
+                    _context.Consumers.UpdateRange(consumers);
+                    await _context.SaveChangesAsync();
+                    await ShowInfoAsync($"Consumers assigned successfully");
+                    await LoadDataAsync();
+                }
+            }
+        }
+
+
         #endregion
 
         #region Async Methods
@@ -148,14 +322,25 @@ namespace ProjectManager.ViewModels
                 ClearFields();
                 _context = new AppDbContext();
 
-                var consumers = await _context.Consumers.ToListAsync();
+                var consumers = await _context.Consumers
+                    .Include(c => c.Location)
+                    .Include(c => c.ResponsibleSeller)
+                    .ToListAsync();
+
+                var locations = await _context.Set<Location>().ToListAsync();
+                var sellers = await _context.Set<IdentityUser>().ToListAsync();
 
                 await Application.Current.Dispatcher.InvokeAsync(() =>
                 {
                     Consumers = new ObservableCollection<Consumer>(consumers);
                     FilteredConsumers = new ObservableCollection<Consumer>(consumers);
+                    Locations = new ObservableCollection<Location>(locations);
+                    Sellers = new ObservableCollection<IdentityUser>(sellers);
+
                     OnPropertyChanged(nameof(Consumers));
                     OnPropertyChanged(nameof(FilteredConsumers));
+                    OnPropertyChanged(nameof(Locations));
+                    OnPropertyChanged(nameof(Sellers));
                 });
             }
             catch (Exception ex)
@@ -224,6 +409,19 @@ namespace ProjectManager.ViewModels
                 .Where(g => g.Count() == 1)
                 .Select(g => g.First())
                 .ToList();
+
+            // Set default location and status if needed
+            foreach (var consumer in uniqueCRNs.Concat(withoutCRNs).Concat(withoutPhones))
+            {
+                // Set default location if not specified
+                if (consumer.LocationId == 0 && Locations.Any())
+                {
+                    consumer.LocationId = Locations.First().Id;
+                }
+
+                // Set default status
+                consumer.Status = ConsumerStatus.Default;
+            }
 
             // Combine all valid entries
             return uniqueCRNs
@@ -295,8 +493,11 @@ namespace ProjectManager.ViewModels
                     {
                         await _context.Consumers.AddRangeAsync(newConsumers);
                         await _context.SaveChangesAsync();
+                        SelectedConsumers = new ObservableCollection<Consumer>(newConsumers);
+                        await AssignConsumerAsync();
                         await ShowInfoAsync($"{newConsumers.Count} consumers imported successfully");
                         await LoadDataAsync();
+
                     }
                     else
                     {
@@ -317,6 +518,12 @@ namespace ProjectManager.ViewModels
                 return;
             }
 
+            if (LocationId == 0)
+            {
+                await ShowWarningAsync("Please select a location.");
+                return;
+            }
+
             bool result = _isNewRecord ?
                 await SaveNewConsumerAsync() :
                 await UpdateExistingConsumerAsync();
@@ -325,16 +532,24 @@ namespace ProjectManager.ViewModels
             {
                 FilterConsumers();
                 await ShowInfoAsync("Consumer saved successfully.");
+                await LoadDataAsync();
+
+
             }
         }
 
         private async Task<bool> SaveNewConsumerAsync()
         {
-            if (await _context.Consumers.AnyAsync(c => c.Phone == Phone || c.CommercialRegisterNo == CommercialRegisterNo))
+            if (!string.IsNullOrWhiteSpace(Phone) && !string.IsNullOrWhiteSpace(CommercialRegisterNo))
             {
-                await ShowWarningAsync("A consumer with this phone number or commercial register already exists.");
-                return false;
+                if (await _context.Consumers.AnyAsync(c =>
+                    c.Phone == Phone || c.CommercialRegisterNo == CommercialRegisterNo))
+                {
+                    await ShowWarningAsync("A consumer with this phone number or commercial register already exists.");
+                    return false;
+                }
             }
+
 
             var consumer = new Consumer
             {
@@ -342,18 +557,27 @@ namespace ProjectManager.ViewModels
                 CommercialRegisterNo = CommercialRegisterNo,
                 Name = Name,
                 Description = Description,
+                LocationId = LocationId,
+                LocationMap = LocationMap,
+                Status = ConsumerStatus,
+                ResponsibleSellerId = ResponsibleSellerId,
                 Whatsapp = Whatsapp,
                 Facebook = Facebook,
                 TikTok = TikTok,
                 X = X,
                 Instagram = Instagram,
                 Site = Site,
-                Notes = Notes,
-                Location = Location
+                Notes = Notes
             };
 
             await _context.Consumers.AddAsync(consumer);
             await _context.SaveChangesAsync();
+
+            // Reload the consumer to get navigation properties
+            consumer = await _context.Consumers
+                .Include(c => c.Location)
+                .Include(c => c.ResponsibleSeller)
+                .FirstOrDefaultAsync(c => c.Id == consumer.Id);
 
             await Application.Current.Dispatcher.InvokeAsync(() =>
             {
@@ -373,7 +597,10 @@ namespace ProjectManager.ViewModels
             SelectedConsumer.CommercialRegisterNo = CommercialRegisterNo;
             SelectedConsumer.Name = Name;
             SelectedConsumer.Description = Description;
-            SelectedConsumer.Location = Location;
+            SelectedConsumer.LocationId = LocationId;
+            SelectedConsumer.LocationMap = LocationMap;
+            SelectedConsumer.Status = ConsumerStatus;
+            SelectedConsumer.ResponsibleSellerId = ResponsibleSellerId;
             SelectedConsumer.Whatsapp = Whatsapp;
             SelectedConsumer.Facebook = Facebook;
             SelectedConsumer.TikTok = TikTok;
@@ -384,6 +611,30 @@ namespace ProjectManager.ViewModels
 
             _context.Consumers.Update(SelectedConsumer);
             await _context.SaveChangesAsync();
+
+            // Reload the consumer to get updated navigation properties
+            var updatedConsumer = await _context.Consumers
+                .Include(c => c.Location)
+                .Include(c => c.ResponsibleSeller)
+                .FirstOrDefaultAsync(c => c.Id == SelectedConsumer.Id);
+
+            // Update the collections in UI
+            await Application.Current.Dispatcher.InvokeAsync(() =>
+            {
+                var index = Consumers.IndexOf(SelectedConsumer);
+                if (index >= 0)
+                {
+                    Consumers[index] = updatedConsumer;
+                }
+
+                index = FilteredConsumers.IndexOf(SelectedConsumer);
+                if (index >= 0)
+                {
+                    FilteredConsumers[index] = updatedConsumer;
+                }
+
+                SelectedConsumer = updatedConsumer;
+            });
 
             return true;
         }
@@ -421,37 +672,73 @@ namespace ProjectManager.ViewModels
         #region Synchronous Methods
         private void FilterConsumers()
         {
-            if (string.IsNullOrWhiteSpace(SearchText))
-            {
-                FilteredConsumers = new ObservableCollection<Consumer>(Consumers);
-            }
-            else
+            IEnumerable<Consumer> filtered = Consumers;
+
+            // Apply Search Text Filter
+            if (!string.IsNullOrWhiteSpace(SearchText))
             {
                 var search = SearchText.ToLower();
-                FilteredConsumers = new ObservableCollection<Consumer>(
-                    Consumers.Where(c =>
-                        (!string.IsNullOrEmpty(c.Name) && c.Name.ToLower().Contains(search)) ||
-                        (!string.IsNullOrEmpty(c.Description) && c.Description.ToLower().Contains(search)) ||
-                        (!string.IsNullOrEmpty(c.Location) && c.Location.ToLower().Contains(search)) ||
-                        (!string.IsNullOrEmpty(c.Phone) && c.Phone.ToLower().Contains(search)) ||
-                        (!string.IsNullOrEmpty(c.Whatsapp) && c.Whatsapp.ToLower().Contains(search)) ||
-                        (!string.IsNullOrEmpty(c.Facebook) && c.Facebook.ToLower().Contains(search)) ||
-                        (!string.IsNullOrEmpty(c.TikTok) && c.TikTok.ToLower().Contains(search)) ||
-                        (!string.IsNullOrEmpty(c.X) && c.X.ToLower().Contains(search)) ||
-                        (!string.IsNullOrEmpty(c.Instagram) && c.Instagram.ToLower().Contains(search)) ||
-                        (!string.IsNullOrEmpty(c.Site) && c.Site.ToLower().Contains(search)) ||
-                        (!string.IsNullOrEmpty(c.Notes) && c.Notes.ToLower().Contains(search)) ||
-                        (!string.IsNullOrEmpty(c.CommercialRegisterNo) && c.CommercialRegisterNo.ToLower().Contains(search))
-                    ));
+                filtered = filtered.Where(c =>
+                    (!string.IsNullOrEmpty(c.Name) && c.Name.ToLower().Contains(search)) ||
+                    (!string.IsNullOrEmpty(c.Description) && c.Description.ToLower().Contains(search)) ||
+                    (c.Location != null && !string.IsNullOrEmpty(c.Location.Name) && c.Location.Name.ToLower().Contains(search)) ||
+                    (!string.IsNullOrEmpty(c.LocationMap) && c.LocationMap.ToLower().Contains(search)) ||
+                    (!string.IsNullOrEmpty(c.Phone) && c.Phone.ToLower().Contains(search)) ||
+                    (!string.IsNullOrEmpty(c.Whatsapp) && c.Whatsapp.ToLower().Contains(search)) ||
+                    (!string.IsNullOrEmpty(c.Facebook) && c.Facebook.ToLower().Contains(search)) ||
+                    (!string.IsNullOrEmpty(c.TikTok) && c.TikTok.ToLower().Contains(search)) ||
+                    (!string.IsNullOrEmpty(c.X) && c.X.ToLower().Contains(search)) ||
+                    (!string.IsNullOrEmpty(c.Instagram) && c.Instagram.ToLower().Contains(search)) ||
+                    (!string.IsNullOrEmpty(c.Site) && c.Site.ToLower().Contains(search)) ||
+                    (!string.IsNullOrEmpty(c.Notes) && c.Notes.ToLower().Contains(search)) ||
+                    (!string.IsNullOrEmpty(c.CommercialRegisterNo) && c.CommercialRegisterNo.ToLower().Contains(search)) ||
+                    (c.ResponsibleSeller != null && !string.IsNullOrEmpty(c.ResponsibleSeller.UserName) && c.ResponsibleSeller.UserName.ToLower().Contains(search))
+                );
             }
 
+            // Apply Location Filter
+            if (selectedLocationFilter != null)
+            {
+                filtered = filtered.Where(c => c.LocationId == selectedLocationFilter.Id);
+            }
+
+            // Apply Responsible Seller Filter
+            if (selectedSellerFilter != null)
+            {
+                filtered = filtered.Where(c => c.ResponsibleSellerId == selectedSellerFilter.Id);
+            }
+
+            // Apply Status Filter
+            if (SelectedStatus != null)
+            {
+                filtered = filtered.Where(c => c.Status == SelectedStatus);
+            }
+
+            // Apply Range Filter
+            if (int.TryParse(RangeStart, out int start) && int.TryParse(RangeEnd, out int end) && (start >= 0 || end >= 0))
+            {
+                filtered = filtered.Where(c => c.Id >= start && c.Id <= end);
+            }
+
+            FilteredConsumers = new ObservableCollection<Consumer>(filtered);
             OnPropertyChanged(nameof(FilteredConsumers));
         }
+
 
         private void AddNewConsumer()
         {
             ClearFields();
             _isNewRecord = true;
+
+            // Set defaults for new consumer
+            ConsumerStatus = ConsumerStatus.Default;
+
+            // Set default location if available
+            if (Locations.Count > 0)
+            {
+                SelectedLocation = Locations.First();
+            }
+
             IsFormVisible = true;
         }
 
@@ -463,8 +750,18 @@ namespace ProjectManager.ViewModels
         private void ClearFields()
         {
             SelectedConsumer = null;
-            Phone = CommercialRegisterNo = Name = Description = Location = Whatsapp =
+            Phone = CommercialRegisterNo = Name = Description = LocationMap = Whatsapp =
                 Facebook = TikTok = X = Instagram = Site = Notes = string.Empty;
+
+            RangeStart = RangeEnd = SearchText = string.Empty;
+
+            LocationId = 0;
+            SelectedLocation = null;
+            SelectedSeller = null;
+            SelectedStatus = null;
+            ResponsibleSellerId = null;
+            ConsumerStatus = ConsumerStatus.Default;
+
 
             _isNewRecord = true;
             IsFormVisible = false;
@@ -520,6 +817,13 @@ namespace ProjectManager.ViewModels
             field = value;
             OnPropertyChanged(propertyName);
         }
+
+        private void SetField(ref int field, int value, [System.Runtime.CompilerServices.CallerMemberName] string propertyName = null)
+        {
+            field = value;
+            OnPropertyChanged(propertyName);
+        }
+
         private async Task<bool> ShowConfirmationDialogAsync(string message)
         {
             bool? result = await Application.Current.Dispatcher.InvokeAsync(() =>

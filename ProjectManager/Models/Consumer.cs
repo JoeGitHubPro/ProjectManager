@@ -1,4 +1,7 @@
-﻿namespace ProjectManager.Models
+﻿using Microsoft.AspNetCore.Identity;
+using ProjectManager.Constants;
+
+namespace ProjectManager.Models
 {
     public class Consumer
     {
@@ -15,7 +18,14 @@
         public string? Notes { get; set; }
         public string? CommercialRegisterNo { get; set; }
 
-        public string? Location { get; set; }
+        public ConsumerStatus Status { get; set; } = ConsumerStatus.Default;
+        public int LocationId { get; set; }
+        public Location Location { get; set; }
+        public string? LocationMap { get; set; }
+
+        public string? ResponsibleSellerId { get; set; }
+        public IdentityUser? ResponsibleSeller { get; set; }
+
 
         // Navigation
         public ICollection<ProjectOrder> ProjectOrders { get; set; }

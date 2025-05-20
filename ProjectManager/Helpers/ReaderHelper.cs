@@ -1,4 +1,6 @@
 ﻿using ClosedXML.Excel;
+using ProjectManager.Constants;
+using ProjectManager.Data;
 using ProjectManager.Models;
 using ProjectManager.Views.Dialogs;
 using System.IO;
@@ -20,6 +22,12 @@ namespace ProjectManager.Helpers
                 return await Task.Run(() =>
                 {
                     var consumers = new List<Consumer>();
+                    List<Location> locations = new List<Location>();
+                    using (AppDbContext context = new AppDbContext())
+                    {
+                        locations.AddRange(context.Locations.ToList());
+                    }
+
 
                     using (var workbook = new XLWorkbook(filePath))
                     {
@@ -45,8 +53,11 @@ namespace ProjectManager.Helpers
                                     Instagram = GetCellValue(row, 8),
                                     Site = GetCellValue(row, 9),
                                     Notes = GetCellValue(row, 10),
-                                    Location = GetCellValue(row, 11),
-                                    CommercialRegisterNo = GetCellValue(row, 12)
+                                    LocationId = locations.Where(a => a.Name.ToLower() == GetCellValue(row, 10).ToString().ToLower()).Select(a => a.Id).SingleOrDefault(),
+                                    LocationMap = GetCellValue(row, 12),
+                                    CommercialRegisterNo = GetCellValue(row, 13),
+                                    Status = ConsumerStatus.Default
+
                                 };
 
                                 if (!string.IsNullOrWhiteSpace(consumer.Name))
