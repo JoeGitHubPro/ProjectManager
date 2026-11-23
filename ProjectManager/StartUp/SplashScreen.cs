@@ -7,10 +7,10 @@ namespace ProjectManager.StartUp
 {
     public static class SplashScreen
     {
-        public static async Task StartAsync()
+        public static async Task StartAsync(IServiceProvider serviceProvider)
         {
             var splashScreen = new SplashWindow();
-            var loginScreen = new LogInWindow();
+            var loginScreen = new LogInWindow(serviceProvider);
             splashScreen.Show();
 
             try

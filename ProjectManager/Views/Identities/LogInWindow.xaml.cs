@@ -10,10 +10,10 @@ namespace ProjectManager.Views.Identities
     /// </summary>
     public partial class LogInWindow : Window
     {
-        public LogInWindow()
+        public LogInWindow(IServiceProvider serviceProvider)
         {
             InitializeComponent();
-            DataContext = new LogInViewModel(this);
+            DataContext = new LogInViewModel(this, serviceProvider);
             UsernameOrEmailTextBox.Focus();
         }
 

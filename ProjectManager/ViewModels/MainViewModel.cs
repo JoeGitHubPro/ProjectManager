@@ -1,4 +1,5 @@
-﻿using ProjectManager.Constants;
+﻿using Microsoft.Extensions.DependencyInjection;
+using ProjectManager.Constants;
 using ProjectManager.ViewModels.CapitalManagement;
 using ProjectManager.ViewModels.Identities;
 using ProjectManager.Views.Dialogs;
@@ -8,6 +9,8 @@ namespace ProjectManager.ViewModels
 {
     public class MainViewModel : BaseViewModel
     {
+        private readonly IServiceProvider _serviceProvider;
+
         // ViewModel instances
         public ConsumerViewModel ConsumerVM { get; private set; }
         public ProjectCategoryViewModel ProjectCategoryVM { get; private set; }
@@ -22,24 +25,29 @@ namespace ProjectManager.ViewModels
         public bool IsProjectOrderEnabled { get; private set; }
         public bool IsProjectCategoriesEnabled { get; private set; }
         public bool IsProjectsEnabled { get; private set; }
-        public bool IsConsumersEnabled { get; private set; } = true; // Enabled for all roles
+        public bool IsConsumersEnabled { get; private set; } = true;
         public bool IsUsersManagementEnabled { get; private set; }
-        public bool IsLocationsEnabled { get; private set; } = true; // Enabled for all roles
+        public bool IsLocationsEnabled { get; private set; } = true;
         public bool IsBusinessBalanceEnabled { get; private set; }
 
-        public MainViewModel()
+        public MainViewModel(IServiceProvider serviceProvider)
         {
-            // Initialize ViewModels (actual async loading will happen when needed)
-            ConsumerVM = new ConsumerViewModel();
-            ProjectCategoryVM = new ProjectCategoryViewModel();
-            ProjectVM = new ProjectViewModel();
-            ProjectOrderVM = new ProjectOrderViewModel();
-            UserManagementVM = new UserManagementViewModel();
-            BusinessBalanceVM = BusinessBalanceViewModel.Instance;
-            LocationVM = new LocationViewModel();
-            WelcomeVM = new WelcomeViewModel();
-
+            _serviceProvider = serviceProvider;
+            InitializeViewModels();
             SetupRoleBasedAccess();
+        }
+
+        private void InitializeViewModels()
+        {
+            // Get all ViewModels from DI container
+            ConsumerVM = _serviceProvider.GetRequiredService<ConsumerViewModel>();
+            ProjectCategoryVM = _serviceProvider.GetRequiredService<ProjectCategoryViewModel>();
+            ProjectVM = _serviceProvider.GetRequiredService<ProjectViewModel>();
+            ProjectOrderVM = _serviceProvider.GetRequiredService<ProjectOrderViewModel>();
+            UserManagementVM = _serviceProvider.GetRequiredService<UserManagementViewModel>();
+            BusinessBalanceVM = _serviceProvider.GetRequiredService<BusinessBalanceViewModel>();
+            LocationVM = _serviceProvider.GetRequiredService<LocationViewModel>();
+            WelcomeVM = _serviceProvider.GetRequiredService<WelcomeViewModel>();
         }
 
         private void SetupRoleBasedAccess()
@@ -61,9 +69,7 @@ namespace ProjectManager.ViewModels
                     IsBusinessBalanceEnabled = true;
                     break;
 
-                // Add other roles as needed
                 default:
-                    // Basic access for other roles
                     IsProjectOrderEnabled = false;
                     IsProjectCategoriesEnabled = false;
                     IsProjectsEnabled = false;
@@ -71,7 +77,7 @@ namespace ProjectManager.ViewModels
                     break;
             }
 
-            // Notify property changes for all access properties
+            // Notify property changes
             OnPropertyChanged(nameof(IsProjectOrderEnabled));
             OnPropertyChanged(nameof(IsProjectCategoriesEnabled));
             OnPropertyChanged(nameof(IsProjectsEnabled));
@@ -81,24 +87,22 @@ namespace ProjectManager.ViewModels
             OnPropertyChanged(nameof(IsLocationsEnabled));
         }
 
-        // Optional: Async initialization if needed
         public async Task InitializeAsync()
         {
             try
             {
-                // If any ViewModels need async initialization
                 await Task.WhenAll(
                     WelcomeVM.LoadInitialDataAsync(),
-                    BusinessBalanceVM.LoadInitialDataAsync()
-                // Add other async initializations as needed
+                    BusinessBalanceVM.LoadInitialDataAsync(),
+                    ConsumerVM.LoadDataAsync() // Initialize consumer data
+                                               // Add other async initializations as needed
                 );
             }
             catch (Exception ex)
             {
                 await Application.Current.Dispatcher.InvokeAsync(() =>
                 {
-                    // Handle initialization errors
-                    new ErrorDialog("Initialization Error", "Failed to initialize application data");
+                    new ErrorDialog("Initialization Error", $"Failed to initialize application data: {ex.Message}").ShowDialog();
                 });
             }
         }

@@ -8,7 +8,7 @@ namespace ProjectManager.Services
     public static class ExceptionHandler
     {
         private static string _lastKnownState = "Application Started";
-        private const string LogFileName = "ErrorLog.txt";
+        private const string LogFileName = "Log.txt";
         private static readonly object _logLock = new object();
 
         public static void App_DispatcherUnhandledException(object sender, DispatcherUnhandledExceptionEventArgs e)

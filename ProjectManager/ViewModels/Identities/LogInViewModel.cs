@@ -1,4 +1,5 @@
-﻿using ProjectManager.Constants;
+﻿using Microsoft.Extensions.DependencyInjection;
+using ProjectManager.Constants;
 using ProjectManager.Service;
 using ProjectManager.Views;
 using ProjectManager.Views.Dialogs;
@@ -12,6 +13,7 @@ namespace ProjectManager.ViewModels.Identities
         private readonly Window _window;
         private readonly Dictionary<string, string> _errors = new();
         private bool _isLoggingIn;
+        private readonly IServiceProvider _serviceProvider;
 
         private string _usernameOrEmail;
         public string UsernameOrEmail
@@ -40,11 +42,12 @@ namespace ProjectManager.ViewModels.Identities
         public ICommand LoginCommand { get; }
         public ICommand TogglePasswordVisibilityCommand { get; }
 
-        public LogInViewModel(Window window)
+        public LogInViewModel(Window window, IServiceProvider serviceProvider)
         {
             _window = window;
             LoginCommand = new AsyncRelayCommand(ExecuteLoginAsync, () => !_isLoggingIn);
             TogglePasswordVisibilityCommand = new RelayCommand(TogglePasswordVisibility);
+            _serviceProvider = serviceProvider;
         }
 
         private void TogglePasswordVisibility()
@@ -86,7 +89,7 @@ namespace ProjectManager.ViewModels.Identities
 
                 await Application.Current.Dispatcher.InvokeAsync(() =>
                 {
-                    var mainWindow = new MainWindow();
+                    var mainWindow = _serviceProvider.GetRequiredService<MainWindow>();
                     mainWindow.Show();
                     _window.Close();
                 });

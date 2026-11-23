@@ -43,6 +43,10 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\ProjectManager.BAL\ProjectManager.BAL.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
     <Compile Update="Converters\NullOrWhiteSpaceToVisibilityConverter.cs">
       <Generator></Generator>
       <CustomToolNamespace></CustomToolNamespace>

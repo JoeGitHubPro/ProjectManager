@@ -7,6 +7,7 @@ namespace ProjectManager.Views
         public ConsumerView()
         {
             InitializeComponent();
+            //  DataContext = App.Current.Services.GetRequiredService<ConsumerViewModel>();
             SearchTextBox.Focus();
         }
     }

@@ -1,7 +1,6 @@
 ﻿using ProjectManager.Constants;
 using ProjectManager.Views.Database;
 using ProjectManager.Views.Dialogs;
-using ProjectManager.Views.Identities;
 using System.ComponentModel;
 using System.ComponentModel.DataAnnotations;
 using System.Runtime.CompilerServices;
@@ -20,7 +19,7 @@ public class BaseViewModel : INotifyPropertyChanged
     public BaseViewModel()
     {
         BackupAndRestoreCommand = new AsyncRelayCommand(BackupAndRestoreAsync);
-        LogOutCommand = new AsyncRelayCommand(LogOutAsync);
+        //  LogOutCommand = new AsyncRelayCommand(LogOutAsync);
         CloseCommand = new RelayCommand(Close); // Keeping this synchronous
     }
 
@@ -45,36 +44,36 @@ public class BaseViewModel : INotifyPropertyChanged
         Application.Current.Shutdown();
     }
 
-    public async Task LogOutAsync()
-    {
-        var result = await ShowConfirmationDialogAsync("Are you sure you want to log out?");
-        if (!result) return;
+    //public async Task LogOutAsync()
+    //{
+    //    var result = await ShowConfirmationDialogAsync("Are you sure you want to log out?");
+    //    if (!result) return;
 
-        await Application.Current.Dispatcher.InvokeAsync(() =>
-        {
+    //    await Application.Current.Dispatcher.InvokeAsync(() =>
+    //    {
 
-            // Clear session
-            UserSession.ClearSession();
+    //        // Clear session
+    //        UserSession.ClearSession();
 
-            // Show login window
-            var loginWindow = new LogInWindow();
-            loginWindow.Show();
+    //        // Show login window
+    //        var loginWindow = new LogInWindow();
+    //        loginWindow.Show();
 
-            // Close all windows
-            foreach (Window window in Application.Current.Windows.OfType<Window>().ToList())
-            {
-                if (window != loginWindow)
-                {
-                    window.Close();
+    //        // Close all windows
+    //        foreach (Window window in Application.Current.Windows.OfType<Window>().ToList())
+    //        {
+    //            if (window != loginWindow)
+    //            {
+    //                window.Close();
 
-                }
-            }
+    //            }
+    //        }
 
 
-        });
+    //    });
 
-        await ShowInformationDialogAsync("Successfully logged out!");
-    }
+    //    await ShowInformationDialogAsync("Successfully logged out!");
+    //}
 
 
     #endregion
@@ -88,7 +87,13 @@ public class BaseViewModel : INotifyPropertyChanged
         if (validate) ValidateProperty(propertyName, value);
         return true;
     }
-
+    protected bool SetField<T>(ref T field, T value, [CallerMemberName] string propertyName = null)
+    {
+        if (EqualityComparer<T>.Default.Equals(field, value)) return false;
+        field = value;
+        OnPropertyChanged(propertyName);
+        return true;
+    }
     private void ValidateProperty(string propertyName, object value)
     {
         var validationResults = new List<ValidationResult>();
@@ -112,7 +117,7 @@ public class BaseViewModel : INotifyPropertyChanged
     #endregion
 
     #region Async Dialog Helpers
-    private async Task ShowInformationDialogAsync(string message)
+    protected async Task ShowInformationDialogAsync(string message)
     {
         await Application.Current.Dispatcher.InvokeAsync(() =>
         {
@@ -120,15 +125,18 @@ public class BaseViewModel : INotifyPropertyChanged
         });
     }
 
-    private async Task ShowWarningDialogAsync(string message)
+    protected async Task ShowWarningDialogAsync(string message)
     {
         await Application.Current.Dispatcher.InvokeAsync(() =>
         {
             new WarningDialog(message);
         });
     }
-
-    private async Task<bool> ShowConfirmationDialogAsync(string message)
+    protected async Task ShowErrorAsync(string message)
+    {
+        await Application.Current.Dispatcher.InvokeAsync(() => new ErrorDialog("Error", message));
+    }
+    protected async Task<bool> ShowConfirmationDialogAsync(string message)
     {
         return await Application.Current.Dispatcher.InvokeAsync(() =>
         {
